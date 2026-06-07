@@ -1,0 +1,468 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
+
+/* ========================
+   EXPERT DIRECTORY LAYOUT
+   ======================== */
+.expert-screen {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: var(--canvas);
+  font-family: "Inter", system-ui, sans-serif;
+  color: var(--ink-700);
+}
+
+/* ========================
+   TOP HEADER BAR
+   ======================== */
+.expert-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 20px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  min-height: 56px;
+  box-sizing: border-box;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.expert-header-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--ink-900);
+  margin: 0;
+  flex: 1;
+}
+
+/* ========================
+   MAIN CONTENT AREA
+   ======================== */
+.expert-container {
+  max-width: 900px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 24px 20px 40px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Page Intro */
+.expert-intro h2 {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--ink-900);
+  margin: 0 0 6px;
+}
+
+.expert-intro p {
+  font-size: 14px;
+  color: var(--ink-500);
+  margin: 0;
+}
+
+/* ========================
+   SEARCH & FILTERS PANEL
+   ======================== */
+.expert-search-panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-shadow: var(--shadow);
+}
+
+/* Custom search input rules */
+.expert-search-icon {
+  position: absolute;
+  left: 14px;
+  font-size: 20px;
+  color: var(--ink-500);
+  pointer-events: none;
+}
+
+.expert-search-input {
+  padding: 12px 16px 12px 44px;
+}
+
+.expert-clear-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0 12px;
+  color: var(--ink-500);
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  transition: color 0.15s ease;
+}
+
+.expert-clear-btn:hover {
+  color: var(--ink-900);
+}
+
+/* Filters row */
+.expert-filters-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.expert-filter-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.expert-filter-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-500);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  min-width: 90px;
+  flex-shrink: 0;
+}
+
+.expert-filter-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.expert-filter-chip {
+  background: var(--canvas);
+  border: 1px solid var(--border);
+  color: var(--ink-700);
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: "Inter", system-ui, sans-serif;
+  min-height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.expert-filter-chip:hover {
+  border-color: var(--brand-600);
+  color: var(--brand-700);
+  background: var(--brand-050);
+}
+
+.expert-filter-chip.active {
+  background: var(--brand-700);
+  border-color: var(--brand-700);
+  color: #ffffff;
+}
+
+/* ========================
+   EXPERT DENSE LIST
+   ======================== */
+.expert-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.expert-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px;
+  display: flex;
+  gap: 16px;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+}
+
+.expert-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  border-color: var(--brand-100);
+}
+
+.expert-avatar-box {
+  width: 56px;
+  height: 56px;
+  border-radius: 8px;
+  background: var(--brand-050);
+  border: 1px solid var(--brand-100);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  flex-shrink: 0;
+}
+
+.expert-card-details {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.expert-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.expert-name-row {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.expert-name {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ink-900);
+  margin: 0;
+  line-height: 22px;
+}
+
+.expert-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--ink-500);
+  flex-wrap: wrap;
+}
+
+.expert-rating {
+  color: #ffb100;
+  font-weight: 600;
+}
+
+.expert-desc {
+  font-size: 13.5px;
+  line-height: 18px;
+  color: var(--ink-700);
+  margin: 2px 0 4px;
+}
+
+.expert-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.expert-tag {
+  font-size: 11.5px;
+  font-weight: 500;
+  background: var(--surface-muted);
+  color: var(--ink-700);
+  padding: 3px 8px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+}
+
+/* Price & Book action */
+.expert-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 10px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--border);
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.expert-price-box {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.expert-price-label {
+  font-size: 11px;
+  color: var(--ink-500);
+}
+
+.expert-price-val {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--brand-700);
+}
+
+.expert-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* Empty state */
+.expert-empty {
+  text-align: center;
+  padding: 40px 20px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.expert-empty-icon {
+  font-size: 40px;
+  color: var(--ink-500);
+}
+
+.expert-empty h3 {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ink-900);
+  margin: 0;
+}
+
+.expert-empty p {
+  font-size: 13.5px;
+  color: var(--ink-500);
+  margin: 0;
+  max-width: 300px;
+}
+
+/* ========================
+   BOOKING MODAL & TOAST
+   ======================== */
+.book-expert-summary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--brand-050);
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid var(--brand-100);
+}
+
+.book-expert-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink-900);
+  margin: 0 0 2px;
+}
+
+.book-expert-spec {
+  font-size: 12px;
+  color: var(--brand-700);
+  margin: 0;
+}
+
+.book-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.book-form-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-700);
+}
+
+.book-slots-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.book-slot-btn {
+  padding: 8px;
+  background: var(--canvas);
+  border: 1.5px solid var(--border);
+  color: var(--ink-700);
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: "Inter", system-ui, sans-serif;
+  text-align: center;
+}
+
+.book-slot-btn:hover {
+  border-color: var(--brand-600);
+  color: var(--brand-700);
+}
+
+.book-slot-btn.selected {
+  background: var(--brand-700);
+  border-color: var(--brand-700);
+  color: #ffffff;
+}
+
+.book-toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background: var(--success);
+  color: #ffffff;
+  padding: 14px 20px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  font-size: 14px;
+  font-weight: 500;
+  z-index: 2000;
+  animation: toastSlideIn 0.3s ease forwards;
+}
+
+@keyframes toastSlideIn {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* ========================
+   RESPONSIVE
+   ======================== */
+@media (max-width: 600px) {
+  .expert-card {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .expert-card-top {
+    align-items: flex-start;
+  }
+
+  .expert-card-footer {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .expert-actions {
+    justify-content: flex-end;
+  }
+
+  .book-slots-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

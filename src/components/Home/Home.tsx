@@ -2,9 +2,10 @@ import './Home.css';
 
 interface HomeProps {
   onOpenAIChat: () => void;
+  onOpenExpertDirectory: () => void;
 }
 
-function Home({ onOpenAIChat }: HomeProps) {
+function Home({ onOpenAIChat, onOpenExpertDirectory }: HomeProps) {
   return (
     <div className="home-page">
       {/* ===== 1. HEADER / NAVIGATION ===== */}
@@ -17,7 +18,7 @@ function Home({ onOpenAIChat }: HomeProps) {
           <nav className="home-nav" id="home-nav">
             <a href="#about" className="home-nav-link">Về chúng tớ</a>
             <a href="#ai-companion" className="home-nav-link">AI Companion</a>
-            <a href="#clinic" className="home-nav-link">Phòng khám ẩn danh</a>
+            <a href="#clinic" className="home-nav-link" onClick={(e) => { e.preventDefault(); onOpenExpertDirectory(); }}>Phòng khám ẩn danh</a>
             <a href="#forum" className="home-nav-link">Góc tâm sự</a>
           </nav>
           <button className="home-cta-btn" id="join-now-btn">Tham gia ngay</button>
@@ -41,7 +42,7 @@ function Home({ onOpenAIChat }: HomeProps) {
               <button className="home-btn-primary" id="chat-ai-btn" onClick={onOpenAIChat}>
                 Trò chuyện với AI (Miễn phí)
               </button>
-              <button className="home-btn-secondary" id="find-expert-btn">
+              <button className="home-btn-secondary" id="find-expert-btn" onClick={onOpenExpertDirectory}>
                 Tìm chuyên gia phù hợp
               </button>
             </div>

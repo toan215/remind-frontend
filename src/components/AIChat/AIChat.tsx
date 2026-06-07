@@ -157,7 +157,7 @@ function AIChat({ onBack }: AIChatProps) {
       {/* ===== HEADER ===== */}
       <header className="aichat-header" id="aichat-header">
         <button
-          className="aichat-back-btn"
+          className="rm-back-btn"
           id="aichat-back-btn"
           onClick={onBack}
           title="Quay lại"
@@ -177,14 +177,14 @@ function AIChat({ onBack }: AIChatProps) {
 
         <div className="aichat-header-actions">
           <button
-            className="aichat-action-btn"
+            className="rm-action-btn"
             id="aichat-new-chat"
             title="Cuộc trò chuyện mới"
           >
             <i className="bx bx-edit"></i>
           </button>
           <button
-            className="aichat-action-btn"
+            className="rm-action-btn"
             id="aichat-more"
             title="Thêm tùy chọn"
           >
@@ -296,7 +296,7 @@ function AIChat({ onBack }: AIChatProps) {
                         </li>
                       </ol>
                       <button
-                        className="aichat-exercise-btn"
+                        className="rm-btn rm-btn-primary aichat-exercise-btn"
                         id="start-breathing-exercise"
                       >
                         Bắt đầu bài tập
@@ -344,10 +344,10 @@ function AIChat({ onBack }: AIChatProps) {
       {/* ===== INPUT AREA ===== */}
       <div className="aichat-input-area" id="aichat-input-area">
         <form className="aichat-input-row" onSubmit={handleSubmit}>
-          <div className="aichat-input-wrapper">
+          <div className="rm-input-wrapper aichat-input-wrapper">
             <textarea
               ref={textareaRef}
-              className="aichat-textarea"
+              className="rm-input-field aichat-textarea"
               id="aichat-textarea"
               placeholder="Nhập tâm sự của bạn..."
               value={inputValue}
@@ -357,19 +357,21 @@ function AIChat({ onBack }: AIChatProps) {
             />
             <button
               type="button"
-              className="aichat-attach-btn"
+              className="rm-action-btn aichat-attach-btn"
               id="aichat-attach"
               title="Đính kèm"
+              style={{ width: "32px", height: "32px" }}
             >
               <i className="bx bx-paperclip"></i>
             </button>
           </div>
           <button
             type="submit"
-            className="aichat-send-btn"
+            className="rm-btn rm-btn-primary aichat-send-btn"
             id="aichat-send"
             disabled={!inputValue.trim()}
             title="Gửi tin nhắn"
+            style={{ width: "40px", height: "40px", padding: 0 }}
           >
             <i className="bx bx-send"></i>
           </button>

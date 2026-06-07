@@ -2,6 +2,7 @@ import { useState } from "react";
 import Login from "./components/Login/Login";
 import Home from "./components/Home/Home";
 import AIChat from "./components/AIChat/AIChat";
+import ExpertDirectory from "./components/ExpertDirectory/ExpertDirectory";
 import "./App.css";
 
 function App() {
@@ -16,8 +17,15 @@ function App() {
     return <AIChat onBack={() => setCurrentScreen("home")} />;
   }
 
+  if (currentScreen === "expert") {
+    return <ExpertDirectory onBack={() => setCurrentScreen("home")} />;
+  }
+
   return (
-    <Home onOpenAIChat={() => setCurrentScreen("aichat")} />
+    <Home
+      onOpenAIChat={() => setCurrentScreen("aichat")}
+      onOpenExpertDirectory={() => setCurrentScreen("expert")}
+    />
   );
 }
 

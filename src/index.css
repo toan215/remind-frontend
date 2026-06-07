@@ -116,3 +116,262 @@ code {
   padding: 4px 8px;
   background: var(--surface-muted);
 }
+
+/* ==========================================================================
+   GLOBAL COMMON COMPONENT UTILITIES (To reduce component CSS duplication)
+   ========================================================================== */
+
+/* Buttons */
+.rm-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-family: var(--sans);
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 0.15s ease;
+  min-height: 36px;
+  box-sizing: border-box;
+}
+
+.rm-btn:disabled {
+  background: var(--surface-muted) !important;
+  border-color: var(--border) !important;
+  color: var(--ink-500) !important;
+  cursor: not-allowed !important;
+  transform: none !important;
+}
+
+.rm-btn-primary {
+  background: var(--brand-700);
+  border-color: var(--brand-700);
+  color: #ffffff;
+}
+
+.rm-btn-primary:hover {
+  background: var(--brand-600);
+  border-color: var(--brand-600);
+}
+
+.rm-btn-secondary {
+  background: var(--calm-blue-600);
+  border-color: var(--calm-blue-600);
+  color: #ffffff;
+}
+
+.rm-btn-secondary:hover {
+  background: #3c6e90;
+  border-color: #3c6e90;
+}
+
+.rm-btn-outline {
+  background: transparent;
+  border-color: var(--border-strong);
+  color: var(--ink-700);
+}
+
+.rm-btn-outline:hover {
+  background: var(--surface-muted);
+  border-color: var(--ink-500);
+  color: var(--ink-900);
+}
+
+.rm-back-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: none;
+  background: transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  color: var(--ink-700);
+  font-size: 24px;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.rm-back-btn:hover {
+  background: var(--surface-muted);
+  color: var(--ink-900);
+}
+
+.rm-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: none;
+  background: transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  color: var(--ink-500);
+  font-size: 20px;
+  transition: all 0.15s ease;
+}
+
+.rm-action-btn:hover {
+  background: var(--surface-muted);
+  color: var(--ink-900);
+}
+
+/* Badges */
+.rm-badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+  display: inline-block;
+}
+
+.rm-badge-success {
+  background: var(--success-bg);
+  color: var(--success);
+}
+
+.rm-badge-warning {
+  background: var(--warning-bg);
+  color: var(--warning);
+}
+
+.rm-badge-error {
+  background: var(--error-bg);
+  color: var(--error);
+}
+
+.rm-badge-info {
+  background: var(--info-bg);
+  color: var(--info);
+}
+
+/* Input Fields */
+.rm-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  background: var(--canvas);
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  box-sizing: border-box;
+}
+
+.rm-input-wrapper:focus-within {
+  border-color: var(--brand-600);
+  box-shadow: 0 0 0 3px rgba(35, 129, 125, 0.1);
+}
+
+.rm-input-field {
+  width: 100%;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 14px;
+  font-family: var(--sans);
+  color: var(--ink-900);
+  box-sizing: border-box;
+}
+
+.rm-input-field::placeholder {
+  color: var(--ink-500);
+}
+
+/* Modals */
+.rm-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(23, 42, 42, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.rm-modal {
+  background: var(--surface);
+  border-radius: 8px;
+  width: 100%;
+  border: 1px solid var(--border);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  animation: rmModalSlideUp 0.25s ease forwards;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+@keyframes rmModalSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.rm-modal-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.rm-modal-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ink-900);
+  margin: 0;
+}
+
+.rm-modal-close {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 22px;
+  color: var(--ink-500);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 4px;
+  transition: background 0.15s ease;
+}
+
+.rm-modal-close:hover {
+  background: var(--surface-muted);
+  color: var(--ink-900);
+}
+
+.rm-modal-body {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+.rm-modal-footer {
+  padding: 16px 20px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
