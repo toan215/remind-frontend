@@ -1,6 +1,6 @@
 import './Home.css';
 
-function Home() {
+function Home({ onOpenAIChat }) {
   return (
     <div className="home-page">
       {/* ===== 1. HEADER / NAVIGATION ===== */}
@@ -34,7 +34,7 @@ function Home() {
               Không gian hoàn toàn ẩn danh để bạn giải tỏa gánh nặng tinh thần. Sơ cứu tâm lý miễn phí với Trợ lý AI và kết nối Chuyên gia khi bạn cần can thiệp sâu.
             </p>
             <div className="home-hero-actions">
-              <button className="home-btn-primary" id="chat-ai-btn">
+              <button className="home-btn-primary" id="chat-ai-btn" onClick={onOpenAIChat}>
                 Trò chuyện với AI (Miễn phí)
               </button>
               <button className="home-btn-secondary" id="find-expert-btn">
