@@ -52,14 +52,26 @@ const AI_RESPONSES = [
 const DEFAULT_RESPONSE =
   "Cảm ơn bạn đã chia sẻ. Tớ nghe thấy bạn rồi. 💚\n\nBạn muốn nói thêm về điều này không? Hoặc nếu bạn cảm thấy cần hỗ trợ chuyên sâu hơn, tớ có thể giúp bạn kết nối với chuyên gia tâm lý.";
 
-function AIChat({ onBack }) {
-  const [messages, setMessages] = useState(INITIAL_MESSAGES);
+interface AIChatProps {
+  onBack: () => void;
+}
+
+interface Message {
+  id: number;
+  sender: string;
+  text: string;
+  time: string;
+  hasExercise?: boolean;
+}
+
+function AIChat({ onBack }: AIChatProps) {
+  const [messages, setMessages] = useState<Message[]>(INITIAL_MESSAGES);
   const [inputValue, setInputValue] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [showBanner, setShowBanner] = useState(true);
   const [showWelcome, setShowWelcome] = useState(true);
-  const messagesEndRef = useRef(null);
-  const textareaRef = useRef(null);
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -70,23 +82,23 @@ function AIChat({ onBack }) {
   }, [messages, isTyping]);
 
   // Auto-resize textarea
-  const handleTextareaChange = (e) => {
+  const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setInputValue(e.target.value);
     e.target.style.height = "auto";
     e.target.style.height = Math.min(e.target.scrollHeight, 120) + "px";
   };
 
-  const getAIResponse = (userMsg) => {
+  const getAIResponse = (userMsg: string) => {
     const lower = userMsg.toLowerCase();
     for (const resp of AI_RESPONSES) {
       if (lower.includes(resp.trigger)) {
         return resp;
       }
     }
-    return { response: DEFAULT_RESPONSE };
+    return { response: DEFAULT_RESPONSE, hasExercise: false };
   };
 
-  const sendMessage = (text) => {
+  const sendMessage = (text: string) => {
     if (!text.trim()) return;
 
     setShowWelcome(false);
@@ -124,19 +136,19 @@ function AIChat({ onBack }) {
     }, delay);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     sendMessage(inputValue);
   };
 
-  const handleKeyDown = (e) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       sendMessage(inputValue);
     }
   };
 
-  const handleChipClick = (chipText) => {
+  const handleChipClick = (chipText: string) => {
     sendMessage(chipText);
   };
 

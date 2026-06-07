@@ -2,7 +2,11 @@ import { useState } from "react";
 import Register from "../Register/Register";
 import "./Login.css";
 
-function Login({ onLoginSuccess }) {
+interface LoginProps {
+  onLoginSuccess: () => void;
+}
+
+function Login({ onLoginSuccess }: LoginProps) {
   const [isSignUp, setIsSignUp] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);

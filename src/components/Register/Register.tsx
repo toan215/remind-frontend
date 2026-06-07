@@ -1,7 +1,12 @@
 import { useState } from 'react';
 import './Register.css';
 
-function Register({ isLoading, onSubmit }) {
+interface RegisterProps {
+  isLoading: boolean;
+  onSubmit: (data: any, resetForm: () => void) => void;
+}
+
+function Register({ isLoading, onSubmit }: RegisterProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [registerData, setRegisterData] = useState({
     fullname: '',
@@ -10,7 +15,7 @@ function Register({ isLoading, onSubmit }) {
     password: '',
     confirmPassword: '',
   });
-  const [errors, setErrors] = useState({});
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const validate = () => {
     const newErrors = {};

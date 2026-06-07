@@ -1,6 +1,10 @@
 import './Home.css';
 
-function Home({ onOpenAIChat }) {
+interface HomeProps {
+  onOpenAIChat: () => void;
+}
+
+function Home({ onOpenAIChat }: HomeProps) {
   return (
     <div className="home-page">
       {/* ===== 1. HEADER / NAVIGATION ===== */}
