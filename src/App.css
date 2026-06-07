@@ -1,18 +1,18 @@
 .counter {
   font-size: 16px;
   padding: 5px 10px;
-  border-radius: 5px;
-  color: var(--accent);
-  background: var(--accent-bg);
+  border-radius: 8px;
+  color: var(--brand-700);
+  background: var(--brand-050);
   border: 2px solid transparent;
-  transition: border-color 0.3s;
+  transition: border-color 0.2s;
   margin-bottom: 24px;
 
   &:hover {
-    border-color: var(--accent-border);
+    border-color: var(--brand-600);
   }
   &:focus-visible {
-    outline: 2px solid var(--accent);
+    outline: 2px solid var(--brand-700);
     outline-offset: 2px;
   }
 }
@@ -116,16 +116,16 @@
   }
 
   a {
-    color: var(--text-h);
+    color: var(--ink-900);
     font-size: 16px;
-    border-radius: 6px;
-    background: var(--social-bg);
+    border-radius: 8px;
+    background: var(--surface-muted);
     display: flex;
     padding: 6px 12px;
     align-items: center;
     gap: 8px;
     text-decoration: none;
-    transition: box-shadow 0.3s;
+    transition: box-shadow 0.2s;
 
     &:hover {
       box-shadow: var(--shadow);
