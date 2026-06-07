@@ -13,10 +13,10 @@ function Login({ onLoginSuccess }: LoginProps) {
 
   // Login form state
   const [loginData, setLoginData] = useState({ username: "", password: "" });
-  const [loginErrors, setLoginErrors] = useState({});
+  const [loginErrors, setLoginErrors] = useState<Record<string, string>>({});
 
   const validateLogin = () => {
-    const errors = {};
+    const errors: Record<string, string> = {};
     if (!loginData.username.trim()) errors.username = "Username is required";
     if (!loginData.password.trim()) errors.password = "Password is required";
     else if (loginData.password.length < 6)
@@ -24,7 +24,7 @@ function Login({ onLoginSuccess }: LoginProps) {
     return errors;
   };
 
-  const handleLoginSubmit = (e) => {
+  const handleLoginSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const errors = validateLogin();
     setLoginErrors(errors);
@@ -37,7 +37,7 @@ function Login({ onLoginSuccess }: LoginProps) {
     }
   };
 
-  const handleRegisterSubmit = (data, resetForm) => {
+  const handleRegisterSubmit = (data: any, resetForm: () => void) => {
     setIsLoading(true);
     setTimeout(() => {
       setIsLoading(false);

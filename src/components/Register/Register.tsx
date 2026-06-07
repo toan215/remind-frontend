@@ -18,7 +18,7 @@ function Register({ isLoading, onSubmit }: RegisterProps) {
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const validate = () => {
-    const newErrors = {};
+    const newErrors: Record<string, string> = {};
     if (!registerData.fullname.trim()) newErrors.fullname = 'Full name is required';
     if (!registerData.email.trim()) newErrors.email = 'Email is required';
     else if (!/\S+@\S+\.\S+/.test(registerData.email))
@@ -34,7 +34,7 @@ function Register({ isLoading, onSubmit }: RegisterProps) {
     return newErrors;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const validationErrors = validate();
     setErrors(validationErrors);
@@ -46,7 +46,7 @@ function Register({ isLoading, onSubmit }: RegisterProps) {
     }
   };
 
-  const updateField = (field, value) => {
+  const updateField = (field: string, value: string) => {
     setRegisterData({ ...registerData, [field]: value });
     if (errors[field]) setErrors({ ...errors, [field]: '' });
   };
