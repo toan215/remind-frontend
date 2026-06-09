@@ -3,7 +3,7 @@ import Register from "../Register/Register";
 import "./Login.css";
 
 interface LoginProps {
-  onLoginSuccess: () => void;
+  onLoginSuccess: (role: "user" | "admin") => void;
 }
 
 function Login({ onLoginSuccess }: LoginProps) {
@@ -32,7 +32,10 @@ function Login({ onLoginSuccess }: LoginProps) {
       setIsLoading(true);
       setTimeout(() => {
         setIsLoading(false);
-        if (onLoginSuccess) onLoginSuccess();
+        if (onLoginSuccess) {
+          const role = loginData.username.toLowerCase() === "admin" ? "admin" : "user";
+          onLoginSuccess(role);
+        }
       }, 1500);
     }
   };

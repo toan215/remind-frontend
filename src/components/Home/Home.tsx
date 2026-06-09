@@ -3,9 +3,11 @@ import './Home.css';
 interface HomeProps {
   onOpenAIChat: () => void;
   onOpenExpertDirectory: () => void;
+  userRole: string;
+  onOpenAdminPortal: () => void;
 }
 
-function Home({ onOpenAIChat, onOpenExpertDirectory }: HomeProps) {
+function Home({ onOpenAIChat, onOpenExpertDirectory, userRole, onOpenAdminPortal }: HomeProps) {
   return (
     <div className="home-page">
       {/* ===== 1. HEADER / NAVIGATION ===== */}
@@ -20,6 +22,19 @@ function Home({ onOpenAIChat, onOpenExpertDirectory }: HomeProps) {
             <a href="#ai-companion" className="home-nav-link">AI Companion</a>
             <a href="#clinic" className="home-nav-link" onClick={(e) => { e.preventDefault(); onOpenExpertDirectory(); }}>Phòng khám ẩn danh</a>
             <a href="#forum" className="home-nav-link">Góc tâm sự</a>
+            {userRole === "admin" && (
+              <a
+                href="#admin"
+                className="home-nav-link"
+                onClick={(e) => {
+                  e.preventDefault();
+                  onOpenAdminPortal();
+                }}
+                style={{ color: "var(--brand-700)", fontWeight: "600" }}
+              >
+                Quản trị 🛠️
+              </a>
+            )}
           </nav>
           <button className="home-cta-btn" id="join-now-btn">Tham gia ngay</button>
         </div>

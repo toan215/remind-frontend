@@ -1,103 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { ExpertController } from "../../controllers/ExpertController";
+import { Expert } from "../../models/Expert";
 import "./ExpertDirectory.css";
-
-interface Expert {
-  id: number;
-  name: string;
-  avatar: string;
-  specialty: string;
-  experience: string;
-  rating: string;
-  reviews: number;
-  languages: string[];
-  cost: number;
-  costDisplay: string;
-  status: "available" | "limited" | "unavailable";
-  statusLabel: string;
-  desc: string;
-}
 
 interface ExpertDirectoryProps {
   onBack: () => void;
 }
-
-const EXPERTS_DATA: Expert[] = [
-  {
-    id: 1,
-    name: "ThS. BS. Nguyễn Minh Anh",
-    avatar: "👩‍⚕️",
-    specialty: "Trầm cảm",
-    experience: "8 năm kinh nghiệm",
-    rating: "4.9",
-    reviews: 142,
-    languages: ["Tiếng Việt", "Tiếng Anh"],
-    cost: 450000,
-    costDisplay: "450.000đ / 50 phút",
-    status: "available",
-    statusLabel: "Sẵn sàng hỗ trợ",
-    desc: "Chuyên trị liệu nhận thức hành vi (CBT) cho người trẻ gặp áp lực học tập và công việc.",
-  },
-  {
-    id: 2,
-    name: "TS. BS. Trần Hoàng Nam",
-    avatar: "👨‍⚕️",
-    specialty: "Stress công việc",
-    experience: "12 năm kinh nghiệm",
-    rating: "5.0",
-    reviews: 89,
-    languages: ["Tiếng Việt"],
-    cost: 600000,
-    costDisplay: "600.000đ / 50 phút",
-    status: "limited",
-    statusLabel: "Lịch hẹn giới hạn",
-    desc: "Hỗ trợ vượt qua khủng hoảng hiện sinh, stress nơi công sở và cân bằng cuộc sống.",
-  },
-  {
-    id: 3,
-    name: "Chuyên gia Tâm lý Lê Thị Mỹ Linh",
-    avatar: "👩‍⚕️",
-    specialty: "Mối quan hệ",
-    experience: "6 năm kinh nghiệm",
-    rating: "4.8",
-    reviews: 75,
-    languages: ["Tiếng Việt", "Tiếng Anh"],
-    cost: 350000,
-    costDisplay: "350.000đ / 50 phút",
-    status: "available",
-    statusLabel: "Sẵn sàng hỗ trợ",
-    desc: "Hỗ trợ giải quyết mâu thuẫn cặp đôi, gia đình và vượt qua đổ vỡ tình cảm.",
-  },
-  {
-    id: 4,
-    name: "ThS. BS. Phạm Thanh Sơn",
-    avatar: "👨‍⚕️",
-    specialty: "Lo âu",
-    experience: "15 năm kinh nghiệm",
-    rating: "4.9",
-    reviews: 210,
-    languages: ["Tiếng Việt"],
-    cost: 700000,
-    costDisplay: "700.000đ / 50 phút",
-    status: "unavailable",
-    statusLabel: "Bận / Đầy lịch",
-    desc: "Điều trị các hội chứng rối loạn lo âu xã hội, mất ngủ mãn tính và stress kéo dài.",
-  },
-  {
-    id: 5,
-    name: "Tư vấn viên Nguyễn Hữu Nhân",
-    avatar: "🧑‍⚕️",
-    specialty: "LGBTQ+",
-    experience: "4 năm kinh nghiệm",
-    rating: "4.7",
-    reviews: 54,
-    languages: ["Tiếng Việt"],
-    cost: 0,
-    costDisplay: "Miễn phí (Hỗ trợ cộng đồng)",
-    status: "available",
-    statusLabel: "Sẵn sàng hỗ trợ",
-    desc: "Lắng nghe, chia sẻ và đồng hành cùng các bạn trẻ LGBTQ+ trong hành trình định vị bản thân.",
-  }
-];
 
 const TIME_SLOTS = [
   "09:00 - 10:00",
@@ -109,6 +17,7 @@ const TIME_SLOTS = [
 ];
 
 function ExpertDirectory({ onBack }: ExpertDirectoryProps) {
+  const [expertsData, setExpertsData] = useState<Expert[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedSpecialty, setSelectedSpecialty] = useState("Tất cả");
   const [selectedLanguage, setSelectedLanguage] = useState("Tất cả");
@@ -120,13 +29,17 @@ function ExpertDirectory({ onBack }: ExpertDirectoryProps) {
   const [selectedSlot, setSelectedSlot] = useState("");
   const [bookingSuccess, setBookingSuccess] = useState(false);
 
+  useEffect(() => {
+    setExpertsData(ExpertController.getApprovedExpertsForGuest());
+  }, []);
+
   // Filter handlers
   const handleClearSearch = () => {
     setSearchTerm("");
   };
 
   // Filter Logic
-  const filteredExperts = EXPERTS_DATA.filter((expert) => {
+  const filteredExperts = expertsData.filter((expert) => {
     // Search Term
     const matchesSearch =
       expert.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
