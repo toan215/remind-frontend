@@ -4,9 +4,10 @@ import "./Login.css";
 
 interface LoginProps {
   onLoginSuccess: (role: "user" | "admin") => void;
+  onBack?: () => void;
 }
 
-function Login({ onLoginSuccess }: LoginProps) {
+function Login({ onLoginSuccess, onBack }: LoginProps) {
   const [isSignUp, setIsSignUp] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -68,6 +69,16 @@ function Login({ onLoginSuccess }: LoginProps) {
         <div className="shape shape-3"></div>
         <div className="shape shape-4"></div>
       </div>
+
+      {onBack && (
+        <button 
+          onClick={onBack}
+          style={{ position: 'absolute', top: '20px', left: '20px', zIndex: 1000, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '50%', width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', boxShadow: 'var(--shadow)', color: 'var(--ink-700)' }}
+          title="Quay lại"
+        >
+          <i className="bx bx-arrow-back" style={{ fontSize: '20px' }}></i>
+        </button>
+      )}
 
       <div className={`login-container ${isSignUp ? "active" : ""}`}>
         {/* ===== LOGIN FORM (right side by default) ===== */}

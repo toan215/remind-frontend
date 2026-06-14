@@ -6,21 +6,26 @@ import ExpertDirectory from "./components/ExpertDirectory/ExpertDirectory";
 import AdminGuard from "./middleware/adminGuard";
 import AdminLayout from "./components/Admin/AdminLayout";
 import { AdminRouteDispatcher, AdminRoute } from "./routes/adminRoutes";
+import Forum from "./components/Forum/Forum";
 import "./App.css";
 
 function App() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [userRole, setUserRole] = useState<"user" | "admin">("user");
+  const [userRole, setUserRole] = useState<"guest" | "user" | "admin">("guest");
   const [currentScreen, setCurrentScreen] = useState("home");
   const [adminRoute, setAdminRoute] = useState<AdminRoute>("dashboard");
 
-  if (!isLoggedIn) {
+  const handleLoginRequired = () => {
+    setCurrentScreen("login");
+  };
+
+  if (currentScreen === "login") {
     return (
       <Login
         onLoginSuccess={(role) => {
-          setIsLoggedIn(true);
           setUserRole(role);
+          setCurrentScreen("home");
         }}
+        onBack={() => setCurrentScreen("home")}
       />
     );
   }
@@ -30,7 +35,11 @@ function App() {
   }
 
   if (currentScreen === "expert") {
-    return <ExpertDirectory onBack={() => setCurrentScreen("home")} />;
+    return <ExpertDirectory onBack={() => setCurrentScreen("home")} userRole={userRole} onLoginRequired={handleLoginRequired} />;
+  }
+
+  if (currentScreen === "forum") {
+    return <Forum onBack={() => setCurrentScreen("home")} userRole={userRole} onLoginRequired={handleLoginRequired} />;
   }
 
   if (currentScreen === "admin") {
@@ -53,8 +62,14 @@ function App() {
 
   return (
     <Home
-      onOpenAIChat={() => setCurrentScreen("aichat")}
+      onOpenAIChat={() => {
+        if (userRole === "guest") handleLoginRequired();
+        else setCurrentScreen("aichat");
+      }}
       onOpenExpertDirectory={() => setCurrentScreen("expert")}
+      onOpenForum={() => setCurrentScreen("forum")}
+      onOpenLogin={handleLoginRequired}
+      onLogout={() => setUserRole("guest")}
       userRole={userRole}
       onOpenAdminPortal={() => {
         setAdminRoute("dashboard");

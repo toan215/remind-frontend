@@ -5,6 +5,8 @@ import "./ExpertDirectory.css";
 
 interface ExpertDirectoryProps {
   onBack: () => void;
+  userRole?: string;
+  onLoginRequired?: () => void;
 }
 
 const TIME_SLOTS = [
@@ -16,7 +18,7 @@ const TIME_SLOTS = [
   "20:30 - 21:30"
 ];
 
-function ExpertDirectory({ onBack }: ExpertDirectoryProps) {
+function ExpertDirectory({ onBack, userRole = "guest", onLoginRequired }: ExpertDirectoryProps) {
   const [expertsData, setExpertsData] = useState<Expert[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedSpecialty, setSelectedSpecialty] = useState("Tất cả");
@@ -70,6 +72,14 @@ function ExpertDirectory({ onBack }: ExpertDirectoryProps) {
   });
 
   const handleOpenBooking = (expert: Expert) => {
+    if (userRole === "guest") {
+      alert("Vui lòng đăng nhập để đặt lịch hẹn với chuyên gia.");
+      if (onLoginRequired) {
+        onLoginRequired();
+      }
+      return;
+    }
+
     setBookingExpert(expert);
     // Set default date to tomorrow
     const tomorrow = new Date();

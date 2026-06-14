@@ -3,11 +3,14 @@ import './Home.css';
 interface HomeProps {
   onOpenAIChat: () => void;
   onOpenExpertDirectory: () => void;
+  onOpenForum: () => void;
+  onOpenLogin: () => void;
+  onLogout: () => void;
   userRole: string;
   onOpenAdminPortal: () => void;
 }
 
-function Home({ onOpenAIChat, onOpenExpertDirectory, userRole, onOpenAdminPortal }: HomeProps) {
+function Home({ onOpenAIChat, onOpenExpertDirectory, onOpenForum, onOpenLogin, onLogout, userRole, onOpenAdminPortal }: HomeProps) {
   return (
     <div className="home-page">
       {/* ===== 1. HEADER / NAVIGATION ===== */}
@@ -21,7 +24,7 @@ function Home({ onOpenAIChat, onOpenExpertDirectory, userRole, onOpenAdminPortal
             <a href="#about" className="home-nav-link">Về chúng tớ</a>
             <a href="#ai-companion" className="home-nav-link">AI Companion</a>
             <a href="#clinic" className="home-nav-link" onClick={(e) => { e.preventDefault(); onOpenExpertDirectory(); }}>Phòng khám ẩn danh</a>
-            <a href="#forum" className="home-nav-link">Góc tâm sự</a>
+            <a href="#forum" className="home-nav-link" onClick={(e) => { e.preventDefault(); onOpenForum(); }}>Góc tâm sự</a>
             {userRole === "admin" && (
               <a
                 href="#admin"
@@ -36,7 +39,18 @@ function Home({ onOpenAIChat, onOpenExpertDirectory, userRole, onOpenAdminPortal
               </a>
             )}
           </nav>
-          <button className="home-cta-btn" id="join-now-btn">Tham gia ngay</button>
+          
+          {userRole === "guest" ? (
+            <div className="home-auth-btns">
+              <button className="home-login-btn" id="login-btn" onClick={onOpenLogin}>Đăng nhập</button>
+              <button className="home-cta-btn" id="join-now-btn" onClick={onOpenLogin}>Đăng ký</button>
+            </div>
+          ) : (
+            <div className="home-auth-btns">
+              <span className="home-user-greeting">Xin chào, {userRole === "admin" ? "Quản trị viên" : "bạn"}!</span>
+              <button className="home-logout-btn" id="logout-btn" onClick={onLogout}>Đăng xuất</button>
+            </div>
+          )}
         </div>
       </header>
 

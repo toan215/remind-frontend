@@ -124,6 +124,54 @@
   transform: translateY(0);
 }
 
+.home-auth-btns {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.home-login-btn {
+  background: transparent;
+  color: var(--ink-700);
+  font-size: 14px;
+  font-weight: 600;
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: "Inter", system-ui, sans-serif;
+}
+
+.home-login-btn:hover {
+  background: var(--surface-muted);
+  border-color: var(--border-strong);
+}
+
+.home-user-greeting {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink-700);
+}
+
+.home-logout-btn {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: "Inter", system-ui, sans-serif;
+}
+
+.home-logout-btn:hover {
+  background: rgba(239, 68, 68, 0.2);
+  color: #b91c1c;
+}
+
 /* ========================
    HERO SECTION
    ======================== */
