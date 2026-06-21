@@ -1,5 +1,6 @@
 import { useState } from "react";
 import Register from "../Register/Register";
+import { AuthController } from "../../controllers/AuthController";
 import "./Login.css";
 
 interface LoginProps {
@@ -18,37 +19,48 @@ function Login({ onLoginSuccess, onBack }: LoginProps) {
 
   const validateLogin = () => {
     const errors: Record<string, string> = {};
-    if (!loginData.username.trim()) errors.username = "Username is required";
+    if (!loginData.username.trim()) errors.username = "Email or Username is required";
     if (!loginData.password.trim()) errors.password = "Password is required";
     else if (loginData.password.length < 6)
       errors.password = "Password must be at least 6 characters";
     return errors;
   };
 
-  const handleLoginSubmit = (e: React.FormEvent) => {
+  const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const errors = validateLogin();
     setLoginErrors(errors);
     if (Object.keys(errors).length === 0) {
       setIsLoading(true);
-      setTimeout(() => {
+      try {
+        const response = await AuthController.login(loginData.username, loginData.password);
         setIsLoading(false);
         if (onLoginSuccess) {
-          const role = loginData.username.toLowerCase() === "admin" ? "admin" : "user";
+          const role =
+            response.user.role === "admin" || response.user.role === "system_manager"
+              ? "admin"
+              : "user";
           onLoginSuccess(role);
         }
-      }, 1500);
+      } catch (err: any) {
+        setIsLoading(false);
+        setLoginErrors({ global: err.message });
+      }
     }
   };
 
-  const handleRegisterSubmit = (data: any, resetForm: () => void) => {
+  const handleRegisterSubmit = async (data: any, resetForm: () => void) => {
     setIsLoading(true);
-    setTimeout(() => {
+    try {
+      await AuthController.register(data.fullname, data.email, data.password, "student");
       setIsLoading(false);
-      alert(`Registration successful!\nWelcome, ${data.fullname}!`);
+      alert(`Đăng ký thành công!\nChào mừng, ${data.fullname}!`);
       resetForm();
       setIsSignUp(false);
-    }, 1500);
+    } catch (err: any) {
+      setIsLoading(false);
+      alert(err.message);
+    }
   };
 
   const switchToSignUp = () => {
@@ -89,6 +101,24 @@ function Login({ onLoginSuccess, onBack }: LoginProps) {
               <p className="login-subtitle">
                 Sign in to your account to continue
               </p>
+
+              {loginErrors.global && (
+                <div 
+                  className="login-error-global" 
+                  style={{ 
+                    color: "var(--red, #ef4444)", 
+                    marginBottom: "15px", 
+                    textAlign: "center", 
+                    fontSize: "14px",
+                    padding: "8px",
+                    background: "rgba(239, 68, 68, 0.1)",
+                    borderRadius: "6px",
+                    border: "1px solid rgba(239, 68, 68, 0.2)"
+                  }}
+                >
+                  {loginErrors.global}
+                </div>
+              )}
 
               <div
                 className={`login-input-box ${loginErrors.username ? "error" : ""}`}
