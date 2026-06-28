@@ -1,0 +1,130 @@
+@import "tailwindcss";
+
+/*
+  Admin-scoped Tailwind styles.
+  This file is only imported inside admin route components,
+  so Tailwind's base/reset won't affect existing vanilla CSS pages.
+*/
+
+/* ===== Custom Admin Theme ===== */
+@theme {
+  --color-admin-bg: #0f172a;
+  --color-admin-surface: #1e293b;
+  --color-admin-surface-hover: #334155;
+  --color-admin-border: #334155;
+  --color-admin-border-light: #475569;
+  --color-admin-text: #f8fafc;
+  --color-admin-text-muted: #94a3b8;
+  --color-admin-text-dim: #64748b;
+  --color-admin-primary: #6366f1;
+  --color-admin-primary-hover: #818cf8;
+  --color-admin-primary-light: rgba(99, 102, 241, 0.1);
+  --color-admin-success: #22c55e;
+  --color-admin-success-light: rgba(34, 197, 94, 0.1);
+  --color-admin-warning: #f59e0b;
+  --color-admin-warning-light: rgba(245, 158, 11, 0.1);
+  --color-admin-danger: #ef4444;
+  --color-admin-danger-light: rgba(239, 68, 68, 0.1);
+  --color-admin-info: #3b82f6;
+  --color-admin-info-light: rgba(59, 130, 246, 0.1);
+
+  /* Light mode overrides */
+  --color-admin-light-bg: #f8fafc;
+  --color-admin-light-surface: #ffffff;
+  --color-admin-light-surface-hover: #f1f5f9;
+  --color-admin-light-border: #e2e8f0;
+  --color-admin-light-border-light: #cbd5e1;
+  --color-admin-light-text: #0f172a;
+  --color-admin-light-text-muted: #64748b;
+  --color-admin-light-text-dim: #94a3b8;
+}
+
+/* ===== Typography & Color Reset for Admin ===== */
+/* This overrides the global font and color settings from index.css */
+.admin-root {
+  font-family: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  color: var(--color-admin-text);
+}
+
+.admin-light.admin-root {
+  color: var(--color-admin-light-text);
+}
+
+.admin-root h1, 
+.admin-root h2, 
+.admin-root h3, 
+.admin-root h4, 
+.admin-root h5, 
+.admin-root h6 {
+  color: inherit;
+  font-family: inherit;
+  margin: 0;
+}
+
+/* ===== Scrollbar Styling ===== */
+.admin-root ::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.admin-root ::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.admin-root ::-webkit-scrollbar-thumb {
+  background: var(--color-admin-border);
+  border-radius: 3px;
+}
+
+.admin-root ::-webkit-scrollbar-thumb:hover {
+  background: var(--color-admin-border-light);
+}
+
+/* ===== Skeleton Loading Animation ===== */
+@keyframes admin-shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.admin-skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--color-admin-surface) 25%,
+    var(--color-admin-surface-hover) 50%,
+    var(--color-admin-surface) 75%
+  );
+  background-size: 200% 100%;
+  animation: admin-shimmer 1.5s ease-in-out infinite;
+  border-radius: 6px;
+}
+
+.admin-light .admin-skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--color-admin-light-surface-hover) 25%,
+    var(--color-admin-light-border) 50%,
+    var(--color-admin-light-surface-hover) 75%
+  );
+  background-size: 200% 100%;
+}
+
+/* ===== Sidebar transition ===== */
+.admin-sidebar-transition {
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
+              transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ===== Fade-in animation for cards ===== */
+@keyframes admin-fadeInUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.admin-fade-in {
+  animation: admin-fadeInUp 0.4s ease forwards;
+}
+
+.admin-fade-in-delay-1 { animation-delay: 0.05s; opacity: 0; }
+.admin-fade-in-delay-2 { animation-delay: 0.1s; opacity: 0; }
+.admin-fade-in-delay-3 { animation-delay: 0.15s; opacity: 0; }
+.admin-fade-in-delay-4 { animation-delay: 0.2s; opacity: 0; }

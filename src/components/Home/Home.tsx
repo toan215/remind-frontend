@@ -1,56 +1,270 @@
-import './Home.css';
+import { useState, useEffect, useRef } from "react";
+import "./Home.css";
 
 interface HomeProps {
   onOpenAIChat: () => void;
   onOpenExpertDirectory: () => void;
   onOpenForum: () => void;
   onOpenLogin: () => void;
+  onOpenRegister: () => void;
   onLogout: () => void;
   userRole: string;
-  onOpenAdminPortal: () => void;
 }
 
-function Home({ onOpenAIChat, onOpenExpertDirectory, onOpenForum, onOpenLogin, onLogout, userRole, onOpenAdminPortal }: HomeProps) {
+function Home({
+  onOpenAIChat,
+  onOpenExpertDirectory,
+  onOpenForum,
+  onOpenLogin,
+  onOpenRegister,
+  onLogout,
+  userRole,
+}: HomeProps) {
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isNotifOpen, setIsNotifOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(1);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const notifRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 50) {
+        setIsScrolled(true);
+      } else {
+        setIsScrolled(false);
+      }
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsDropdownOpen(false);
+      }
+      if (
+        notifRef.current &&
+        !notifRef.current.contains(event.target as Node)
+      ) {
+        setIsNotifOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   return (
     <div className="home-page">
       {/* ===== 1. HEADER / NAVIGATION ===== */}
-      <header className="home-header" id="home-header">
+      <header
+        className={`home-header ${isScrolled ? "scrolled" : ""}`}
+        id="home-header"
+      >
         <div className="home-header-inner">
           <div className="home-logo">
             <div className="home-logo-icon">R</div>
             <span className="home-logo-text">ReMind</span>
           </div>
           <nav className="home-nav" id="home-nav">
-            <a href="#about" className="home-nav-link">Về chúng tớ</a>
-            <a href="#ai-companion" className="home-nav-link">AI Companion</a>
-            <a href="#clinic" className="home-nav-link" onClick={(e) => { e.preventDefault(); onOpenExpertDirectory(); }}>Phòng khám ẩn danh</a>
-            <a href="#forum" className="home-nav-link" onClick={(e) => { e.preventDefault(); onOpenForum(); }}>Góc tâm sự</a>
+            <a href="#about" className="home-nav-link">
+              Về chúng tớ
+            </a>
+            <a href="#ai-companion" className="home-nav-link">
+              AI Companion
+            </a>
+            <a
+              href="#clinic"
+              className="home-nav-link"
+              onClick={(e) => {
+                e.preventDefault();
+                onOpenExpertDirectory();
+              }}
+            >
+              Phòng khám ẩn danh
+            </a>
+            <a
+              href="#forum"
+              className="home-nav-link"
+              onClick={(e) => {
+                e.preventDefault();
+                onOpenForum();
+              }}
+            >
+              Góc tâm sự
+            </a>
             {userRole === "admin" && (
               <a
-                href="#admin"
+                href="/admin/dashboard"
                 className="home-nav-link"
-                onClick={(e) => {
-                  e.preventDefault();
-                  onOpenAdminPortal();
-                }}
                 style={{ color: "var(--brand-700)", fontWeight: "600" }}
               >
-                Quản trị 🛠️
+                Quản trị <i className="bx bx-wrench"></i>
               </a>
             )}
           </nav>
-          
-          {userRole === "guest" ? (
-            <div className="home-auth-btns">
-              <button className="home-login-btn" id="login-btn" onClick={onOpenLogin}>Đăng nhập</button>
-              <button className="home-cta-btn" id="join-now-btn" onClick={onOpenLogin}>Đăng ký</button>
+
+          <div className="home-auth-pills">
+            <div className="auth-pill-dropdown-container" ref={notifRef}>
+              <div
+                className="auth-pill bell-pill"
+                onClick={() => {
+                  setIsNotifOpen(!isNotifOpen);
+                  if (!isNotifOpen) setUnreadCount(0);
+                }}
+              >
+                <i className="bx bx-bell"></i>
+                {unreadCount > 0 && (
+                  <span className="bell-badge">{unreadCount}</span>
+                )}
+              </div>
+
+              {isNotifOpen && (
+                <div className="auth-dropdown-menu notif-dropdown">
+                  <div className="notif-header">
+                    <h4>Thông báo</h4>
+                  </div>
+                  <div className="notif-list">
+                    <div className="notif-item">
+                      <div className="notif-icon like-icon">
+                        <i className="bx bxs-heart"></i>
+                      </div>
+                      <div className="notif-content">
+                        <p>
+                          <strong>Admin</strong> đã thích bài viết của bạn
+                        </p>
+                        <span>Vừa xong</span>
+                      </div>
+                    </div>
+                    <div className="notif-item">
+                      <div className="notif-icon comment-icon">
+                        <i className="bx bxs-comment-detail"></i>
+                      </div>
+                      <div className="notif-content">
+                        <p>
+                          <strong>Chuyên gia</strong> đã trả lời bình luận của
+                          bạn
+                        </p>
+                        <span>2 giờ trước</span>
+                      </div>
+                    </div>
+                    <div className="notif-item">
+                      <div className="notif-icon check-icon">
+                        <i className="bx bx-check-circle"></i>
+                      </div>
+                      <div className="notif-content">
+                        <p>
+                          Bài viết của bạn đã được <strong>phê duyệt</strong>
+                        </p>
+                        <span>1 ngày trước</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
-          ) : (
-            <div className="home-auth-btns">
-              <span className="home-user-greeting">Xin chào, {userRole === "admin" ? "Quản trị viên" : "bạn"}!</span>
-              <button className="home-logout-btn" id="logout-btn" onClick={onLogout}>Đăng xuất</button>
+
+            <div className="auth-pill-dropdown-container" ref={dropdownRef}>
+              {userRole === "guest" ? (
+                <div
+                  className="auth-pill user-pill guest-pill"
+                  onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                >
+                  <div className="user-pill-avatar">
+                    <i className="bx bx-user"></i>
+                  </div>
+                  <div className="user-pill-info">
+                    <span className="user-pill-name">Khách</span>
+                    <span className="user-pill-status">KHÁCH</span>
+                  </div>
+                  <i className="bx bx-chevron-down"></i>
+                </div>
+              ) : (
+                <div
+                  className="auth-pill user-pill logged-pill"
+                  onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                >
+                  <div className="user-pill-avatar">
+                    <img
+                      src="https://api.dicebear.com/7.x/avataaars/svg?seed=PhucHoang"
+                      alt="Avatar"
+                    />
+                  </div>
+                  <div className="user-pill-info">
+                    <span className="user-pill-name">
+                      {userRole === "admin" ? "Quản trị viên" : "Phuc Hoang"}
+                    </span>
+                    <span className="user-pill-status active-status">
+                      <span className="status-dot"></span> ONLINE
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {isDropdownOpen && (
+                <div className="auth-dropdown-menu">
+                  {userRole === "guest" ? (
+                    <>
+                      <button
+                        className="auth-dropdown-item"
+                        onClick={() => {
+                          setIsDropdownOpen(false);
+                          onOpenLogin();
+                        }}
+                      >
+                        <div className="dropdown-item-icon login-icon">
+                          <i className="bx bx-log-in"></i>
+                        </div>
+                        <span>Đăng nhập tài khoản</span>
+                      </button>
+                      <button
+                        className="auth-dropdown-item"
+                        onClick={() => {
+                          setIsDropdownOpen(false);
+                          onOpenRegister();
+                        }}
+                      >
+                        <div className="dropdown-item-icon register-icon">
+                          <i className="bx bx-user-plus"></i>
+                        </div>
+                        <span>Tạo tài khoản mới</span>
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <button
+                        className="auth-dropdown-item"
+                        onClick={() => {
+                          setIsDropdownOpen(false);
+                        }}
+                      >
+                        <div className="dropdown-item-icon setting-icon">
+                          <i className="bx bx-cog"></i>
+                        </div>
+                        <span>Cài đặt tài khoản</span>
+                      </button>
+                      <button
+                        className="auth-dropdown-item"
+                        onClick={() => {
+                          setIsDropdownOpen(false);
+                          onLogout();
+                        }}
+                      >
+                        <div className="dropdown-item-icon logout-icon">
+                          <i className="bx bx-log-out"></i>
+                        </div>
+                        <span>Đăng xuất</span>
+                      </button>
+                    </>
+                  )}
+                </div>
+              )}
             </div>
-          )}
+          </div>
         </div>
       </header>
 
@@ -59,19 +273,34 @@ function Home({ onOpenAIChat, onOpenExpertDirectory, onOpenForum, onOpenLogin, o
         <div className="home-hero-inner">
           <div className="home-hero-text">
             <div className="home-hero-badge">
-              ✨ Nền tảng hỗ trợ tâm lý ẩn danh 24/7 cho Gen Z
+              <i
+                className="bx bxs-star"
+                style={{ color: "var(--brand-500)" }}
+              ></i>{" "}
+              Nền tảng hỗ trợ tâm lý ẩn danh 24/7 cho Gen Z
             </div>
             <h1 className="home-hero-title">
-              Áp lực này, để <span className="home-highlight">ReMind</span> gánh cùng bạn.
+              Áp lực này, để <span className="home-highlight">ReMind</span> gánh
+              cùng bạn.
             </h1>
             <p className="home-hero-desc">
-              Không gian hoàn toàn ẩn danh để bạn giải tỏa gánh nặng tinh thần. Sơ cứu tâm lý miễn phí với Trợ lý AI và kết nối Chuyên gia khi bạn cần can thiệp sâu.
+              Không gian hoàn toàn ẩn danh để bạn giải tỏa gánh nặng tinh thần.
+              Sơ cứu tâm lý miễn phí với Trợ lý AI và kết nối Chuyên gia khi bạn
+              cần can thiệp sâu.
             </p>
             <div className="home-hero-actions">
-              <button className="home-btn-primary" id="chat-ai-btn" onClick={onOpenAIChat}>
+              <button
+                className="home-btn-primary"
+                id="chat-ai-btn"
+                onClick={onOpenAIChat}
+              >
                 Trò chuyện với AI (Miễn phí)
               </button>
-              <button className="home-btn-secondary" id="find-expert-btn" onClick={onOpenExpertDirectory}>
+              <button
+                className="home-btn-secondary"
+                id="find-expert-btn"
+                onClick={onOpenExpertDirectory}
+              >
                 Tìm chuyên gia phù hợp
               </button>
             </div>
@@ -81,7 +310,9 @@ function Home({ onOpenAIChat, onOpenExpertDirectory, onOpenForum, onOpenLogin, o
           <div className="home-hero-visual">
             <div className="home-chatbot-card">
               <div className="chatbot-header">
-                <div className="chatbot-avatar">🤖</div>
+                <div className="chatbot-avatar">
+                  <i className="bx bx-bot"></i>
+                </div>
                 <div className="chatbot-info">
                   <h4>AI Therapist</h4>
                   <p>Đang hoạt động • Luôn ẩn danh</p>
@@ -89,13 +320,17 @@ function Home({ onOpenAIChat, onOpenExpertDirectory, onOpenForum, onOpenLogin, o
               </div>
               <div className="chatbot-messages">
                 <div className="chat-msg bot">
-                  Chào bạn, tớ ở đây để lắng nghe. Hôm nay của bạn thế nào? Cứ chia sẻ nhé, không ai biết bạn là ai đâu.
+                  Chào bạn, tớ ở đây để lắng nghe. Hôm nay của bạn thế nào? Cứ
+                  chia sẻ nhé, không ai biết bạn là ai đâu.
                 </div>
                 <div className="chat-msg user">
-                  Tớ vừa trượt bài kiểm tra, áp lực đồng lứa làm tớ ngột ngạt quá...
+                  Tớ vừa trượt bài kiểm tra, áp lực đồng lứa làm tớ ngột ngạt
+                  quá...
                 </div>
                 <div className="chat-msg bot">
-                  Tớ hiểu cảm giác đó. Thất bại một bài kiểm tra không định nghĩa giá trị của bạn. Hãy cùng tớ thực hiện bài tập thở sâu 4-7-8 để bình tĩnh lại nhé?
+                  Tớ hiểu cảm giác đó. Thất bại một bài kiểm tra không định
+                  nghĩa giá trị của bạn. Hãy cùng tớ thực hiện bài tập thở sâu
+                  4-7-8 để bình tĩnh lại nhé?
                 </div>
               </div>
               <div className="chatbot-input">
@@ -105,7 +340,9 @@ function Home({ onOpenAIChat, onOpenExpertDirectory, onOpenForum, onOpenLogin, o
                   disabled
                   id="chatbot-input-field"
                 />
-                <button className="chatbot-send-btn" id="chatbot-send-btn">Gửi</button>
+                <button className="chatbot-send-btn" id="chatbot-send-btn">
+                  Gửi
+                </button>
               </div>
             </div>
           </div>
@@ -118,39 +355,160 @@ function Home({ onOpenAIChat, onOpenExpertDirectory, onOpenForum, onOpenLogin, o
           <div className="home-values-header">
             <h2>An toàn hơn - Tiết kiệm hơn - Thấu hiểu hơn</h2>
             <p>
-              Hệ sinh thái thông minh giúp bạn gạt bỏ hoàn toàn rào cản e ngại khi đi chăm sóc sức khỏe tinh thần.
+              Hệ sinh thái thông minh giúp bạn gạt bỏ hoàn toàn rào cản e ngại
+              khi đi chăm sóc sức khỏe tinh thần.
             </p>
           </div>
           <div className="home-values-grid">
             {/* Card 1 */}
             <div className="home-value-card" id="card-ai">
-              <div className="value-icon value-icon-indigo">💬</div>
+              <div className="value-icon value-icon-indigo">
+                <i className="bx bx-chat"></i>
+              </div>
               <h3>AI Companion 24/7</h3>
               <p>
-                Sơ cứu tâm lý tức thời vào bất kể khung giờ nào. Hoàn toàn miễn phí, đưa ra lời khuyên khoa học và bài tập thư giãn.
+                Sơ cứu tâm lý tức thời vào bất kể khung giờ nào. Hoàn toàn miễn
+                phí, đưa ra lời khuyên khoa học và bài tập thư giãn.
               </p>
             </div>
             {/* Card 2 */}
             <div className="home-value-card" id="card-privacy">
-              <div className="value-icon value-icon-emerald">🔒</div>
+              <div className="value-icon value-icon-emerald">
+                <i className="bx bx-lock-alt"></i>
+              </div>
               <h3>Ẩn danh tuyệt đối</h3>
               <p>
-                Hệ thống bảo mật băm dữ liệu và phân quyền chặt chẽ. Bạn thoải mái chia sẻ ở Diễn đàn với bộ lọc từ khóa văn minh.
+                Hệ thống bảo mật băm dữ liệu và phân quyền chặt chẽ. Bạn thoải
+                mái chia sẻ ở Diễn đàn với bộ lọc từ khóa văn minh.
               </p>
             </div>
             {/* Card 3 */}
             <div className="home-value-card" id="card-expert">
-              <div className="value-icon value-icon-amber">🩺</div>
+              <div className="value-icon value-icon-amber">
+                <i className="bx bx-plus-medical"></i>
+              </div>
               <h3>Chuyên gia thấu hiểu</h3>
               <p>
-                Đội ngũ bác sĩ thật được kiểm định bằng cấp kỹ càng. Đặc biệt, AI sẽ tóm tắt trước lịch sử cảm xúc giúp giảm thời gian chẩn đoán ban đầu.
+                Đội ngũ bác sĩ thật được kiểm định bằng cấp kỹ càng. Đặc biệt,
+                AI sẽ tóm tắt trước lịch sử cảm xúc giúp giảm thời gian chẩn
+                đoán ban đầu.
               </p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ===== 4. FOOTER ===== */}
+      {/* ===== 4. HOW IT WORKS ===== */}
+      <section className="home-how-it-works" id="how-it-works">
+        <div className="home-hiw-inner">
+          <div className="home-hiw-header">
+            <h2>Hành trình chữa lành cùng ReMind</h2>
+            <p>
+              Quy trình 3 bước đơn giản giúp bạn lấy lại sự cân bằng trong cuộc
+              sống.
+            </p>
+          </div>
+          <div className="home-hiw-steps">
+            <div className="home-hiw-step">
+              <div className="step-number">01</div>
+              <div className="step-icon">
+                <i className="bx bx-bot"></i>
+              </div>
+              <h3>Sơ cứu cùng AI</h3>
+              <p>
+                Trò chuyện ẩn danh với AI Therapist để giải tỏa áp lực tức thời
+                và nhận các bài tập tâm lý cơ bản.
+              </p>
+            </div>
+            <div className="home-hiw-step">
+              <div className="step-number">02</div>
+              <div className="step-icon">
+                <i className="bx bx-group"></i>
+              </div>
+              <h3>Chia sẻ cộng đồng</h3>
+              <p>
+                Tham gia Góc Tâm Sự để đọc những câu chuyện tương tự và nhận lời
+                khuyên từ những người đồng cảnh ngộ.
+              </p>
+            </div>
+            <div className="home-hiw-step">
+              <div className="step-number">03</div>
+              <div className="step-icon">
+                <i className="bx bx-calendar-heart"></i>
+              </div>
+              <h3>Đặt lịch chuyên gia</h3>
+              <p>
+                Khi cần hỗ trợ chuyên sâu, kết nối nhanh chóng với các chuyên
+                gia tâm lý đã được kiểm duyệt của chúng tôi.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ===== 5. EXPERTS PREVIEW ===== */}
+      <section className="home-experts-preview" id="experts-preview">
+        <div className="home-experts-inner">
+          <div className="home-experts-header">
+            <h2>Đội ngũ chuyên gia hàng đầu</h2>
+            <p>
+              Các bác sĩ, thạc sĩ tâm lý học với nhiều năm kinh nghiệm luôn sẵn
+              sàng đồng hành cùng bạn.
+            </p>
+          </div>
+          <div className="home-experts-grid">
+            <div className="home-expert-card">
+              <div className="expert-avatar">
+                <i className="bx bx-user-circle"></i>
+              </div>
+              <div className="expert-info">
+                <h4>ThS. BS. Nguyễn Văn A</h4>
+                <p className="expert-title">Chuyên gia Tâm lý học Lâm sàng</p>
+                <div className="expert-tags">
+                  <span>Trầm cảm</span>
+                  <span>Rối loạn lo âu</span>
+                </div>
+              </div>
+            </div>
+            <div className="home-expert-card">
+              <div className="expert-avatar">
+                <i className="bx bx-user-circle"></i>
+              </div>
+              <div className="expert-info">
+                <h4>ThS. Trần Thị B</h4>
+                <p className="expert-title">Cố vấn Tâm lý Học đường</p>
+                <div className="expert-tags">
+                  <span>Áp lực đồng lứa</span>
+                  <span>Định hướng</span>
+                </div>
+              </div>
+            </div>
+            <div className="home-expert-card">
+              <div className="expert-avatar">
+                <i className="bx bx-user-circle"></i>
+              </div>
+              <div className="expert-info">
+                <h4>BS. Lê Hoàng C</h4>
+                <p className="expert-title">Chuyên gia Trị liệu Gia đình</p>
+                <div className="expert-tags">
+                  <span>Mâu thuẫn</span>
+                  <span>Giao tiếp</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="home-experts-action">
+            <button
+              className="home-btn-secondary"
+              onClick={onOpenExpertDirectory}
+            >
+              Xem tất cả chuyên gia <i className="bx bx-right-arrow-alt"></i>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* ===== 6. FOOTER ===== */}
       <footer className="home-footer" id="home-footer">
         <div className="home-footer-inner">
           <div className="home-footer-brand">
