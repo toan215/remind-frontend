@@ -1,5 +1,6 @@
 export const BASE_URL =
-  import.meta.env.VITE_LOCAL_API_URL || "https://remind-backend-wdv3.onrender.com";
+  import.meta.env.VITE_LOCAL_API_URL ||
+  "https://remind-backend-wdv3.onrender.com";
 export const API_BASE_URL = `${BASE_URL}/api`;
 
 export const API_ENDPOINTS = {

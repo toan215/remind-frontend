@@ -1,13 +1,21 @@
-import { useState } from "react";
-import Login from "./components/Login/Login";
-import Home from "./components/Home/Home";
-import AIChat from "./components/AIChat/AIChat";
-import ExpertDirectory from "./components/ExpertDirectory/ExpertDirectory";
-import AdminGuard from "./middleware/adminGuard";
-import AdminLayout from "./components/Admin/AdminLayout";
-import { AdminRouteDispatcher, AdminRoute } from "./routes/adminRoutes";
-import Forum from "./components/Forum/Forum";
+import { useState, Suspense, lazy } from "react";
+import { AdminRoute } from "./routes/adminRoutes";
 import "./App.css";
+
+const Login = lazy(() => import("./components/Login/Login"));
+const Home = lazy(() => import("./components/Home/Home"));
+const AIChat = lazy(() => import("./components/AIChat/AIChat"));
+const ExpertDirectory = lazy(() => import("./components/ExpertDirectory/ExpertDirectory"));
+const AdminGuard = lazy(() => import("./middleware/adminGuard"));
+const AdminLayout = lazy(() => import("./components/Admin/AdminLayout"));
+const AdminRouteDispatcher = lazy(() => import("./routes/adminRoutes").then(module => ({ default: module.AdminRouteDispatcher })));
+const Forum = lazy(() => import("./components/Forum/Forum"));
+
+const LoadingFallback = () => (
+  <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', background: 'var(--canvas)' }}>
+    <div className="login-spinner" style={{ borderColor: 'var(--brand-300)', borderTopColor: 'var(--brand-700)', width: '40px', height: '40px', borderWidth: '4px' }}></div>
+  </div>
+);
 
 function App() {
   const [userRole, setUserRole] = useState<"guest" | "user" | "admin">("guest");
@@ -18,64 +26,74 @@ function App() {
     setCurrentScreen("login");
   };
 
-  if (currentScreen === "login") {
-    return (
-      <Login
-        onLoginSuccess={(role) => {
-          setUserRole(role);
-          setCurrentScreen("home");
-        }}
-        onBack={() => setCurrentScreen("home")}
-      />
-    );
-  }
+  const renderScreen = () => {
+    if (currentScreen === "login" || currentScreen === "register") {
+      return (
+        <Login
+          initialMode={currentScreen === "register" ? "register" : "login"}
+          onLoginSuccess={(role) => {
+            setUserRole(role);
+            setCurrentScreen("home");
+          }}
+          onBack={() => setCurrentScreen("home")}
+        />
+      );
+    }
 
-  if (currentScreen === "aichat") {
-    return <AIChat onBack={() => setCurrentScreen("home")} />;
-  }
+    if (currentScreen === "aichat") {
+      return <AIChat onBack={() => setCurrentScreen("home")} />;
+    }
 
-  if (currentScreen === "expert") {
-    return <ExpertDirectory onBack={() => setCurrentScreen("home")} userRole={userRole} onLoginRequired={handleLoginRequired} />;
-  }
+    if (currentScreen === "expert") {
+      return <ExpertDirectory onBack={() => setCurrentScreen("home")} userRole={userRole} onLoginRequired={handleLoginRequired} />;
+    }
 
-  if (currentScreen === "forum") {
-    return <Forum onBack={() => setCurrentScreen("home")} userRole={userRole} onLoginRequired={handleLoginRequired} />;
-  }
+    if (currentScreen === "forum") {
+      return <Forum onBack={() => setCurrentScreen("home")} userRole={userRole} onLoginRequired={handleLoginRequired} />;
+    }
 
-  if (currentScreen === "admin") {
-    return (
-      <AdminGuard userRole={userRole} onBackToHome={() => setCurrentScreen("home")}>
-        <AdminLayout
-          currentRoute={adminRoute}
-          onNavigate={(route) => setAdminRoute(route)}
-          onBackToHome={() => setCurrentScreen("home")}
-        >
-          <AdminRouteDispatcher
+    if (currentScreen === "admin") {
+      return (
+        <AdminGuard userRole={userRole} onBackToHome={() => setCurrentScreen("home")}>
+          <AdminLayout
             currentRoute={adminRoute}
             onNavigate={(route) => setAdminRoute(route)}
             onBackToHome={() => setCurrentScreen("home")}
-          />
-        </AdminLayout>
-      </AdminGuard>
+          >
+            <AdminRouteDispatcher
+              currentRoute={adminRoute}
+              onNavigate={(route) => setAdminRoute(route)}
+              onBackToHome={() => setCurrentScreen("home")}
+            />
+          </AdminLayout>
+        </AdminGuard>
+      );
+    }
+
+    return (
+      <Home
+        onOpenAIChat={() => {
+          if (userRole === "guest") handleLoginRequired();
+          else setCurrentScreen("aichat");
+        }}
+        onOpenExpertDirectory={() => setCurrentScreen("expert")}
+        onOpenForum={() => setCurrentScreen("forum")}
+        onOpenLogin={handleLoginRequired}
+        onOpenRegister={() => setCurrentScreen("register")}
+        onLogout={() => setUserRole("guest")}
+        userRole={userRole}
+        onOpenAdminPortal={() => {
+          setAdminRoute("dashboard");
+          setCurrentScreen("admin");
+        }}
+      />
     );
-  }
+  };
 
   return (
-    <Home
-      onOpenAIChat={() => {
-        if (userRole === "guest") handleLoginRequired();
-        else setCurrentScreen("aichat");
-      }}
-      onOpenExpertDirectory={() => setCurrentScreen("expert")}
-      onOpenForum={() => setCurrentScreen("forum")}
-      onOpenLogin={handleLoginRequired}
-      onLogout={() => setUserRole("guest")}
-      userRole={userRole}
-      onOpenAdminPortal={() => {
-        setAdminRoute("dashboard");
-        setCurrentScreen("admin");
-      }}
-    />
+    <Suspense fallback={<LoadingFallback />}>
+      {renderScreen()}
+    </Suspense>
   );
 }
 

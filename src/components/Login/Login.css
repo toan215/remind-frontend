@@ -257,6 +257,7 @@
   cursor: pointer;
   transition: all 0.2s ease;
   letter-spacing: 0;
+  white-space: nowrap;
 }
 
 .overlay-btn i {
