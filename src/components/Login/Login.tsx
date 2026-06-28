@@ -1,6 +1,7 @@
 import { useState } from "react";
 import Register from "../Register/Register";
 import { AuthController } from "../../controllers/AuthController";
+import { useGoogleLogin } from '@react-oauth/google';
 import "./Login.css";
 
 interface LoginProps {
@@ -13,6 +14,19 @@ function Login({ onLoginSuccess, onBack, initialMode = "login" }: LoginProps) {
   const [isSignUp, setIsSignUp] = useState(initialMode === "register");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Khởi tạo hook Google Login
+  const loginWithGoogle = useGoogleLogin({
+    onSuccess: (tokenResponse) => {
+      console.log("Đăng nhập Google thành công, Token:", tokenResponse.access_token);
+      alert("Đăng nhập Google thành công!\n(Xem token trong Console F12)\nTiếp theo bạn cần gửi token này xuống backend.");
+      // TODO: Call API gửi tokenResponse.access_token xuống backend ở đây
+    },
+    onError: () => {
+      console.error("Đăng nhập Google thất bại");
+      alert("Đăng nhập Google thất bại!");
+    }
+  });
 
   // Login form state
   const [loginData, setLoginData] = useState({ email: "", password: "" });
@@ -86,10 +100,10 @@ function Login({ onLoginSuccess, onBack, initialMode = "login" }: LoginProps) {
       {onBack && (
         <button 
           onClick={onBack}
-          style={{ position: 'absolute', top: '20px', left: '20px', zIndex: 1000, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '50%', width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', boxShadow: 'var(--shadow)', color: 'var(--ink-700)' }}
-          title="Quay lại"
+          className="back-button-expandable"
         >
-          <i className="bx bx-arrow-back" style={{ fontSize: '20px' }}></i>
+          <i className="bx bx-arrow-back"></i>
+          <span className="back-text">Quay lại</span>
         </button>
       )}
 
@@ -211,32 +225,10 @@ function Login({ onLoginSuccess, onBack, initialMode = "login" }: LoginProps) {
                   className="login-social-btn"
                   id="login-google"
                   title="Đăng nhập bằng Google"
+                  onClick={(e) => { e.preventDefault(); loginWithGoogle(); }}
                 >
                   <i className="bx bxl-google"></i>
-                </a>
-                <a
-                  href="#"
-                  className="login-social-btn"
-                  id="login-facebook"
-                  title="Đăng nhập bằng Facebook"
-                >
-                  <i className="bx bxl-facebook"></i>
-                </a>
-                <a
-                  href="#"
-                  className="login-social-btn"
-                  id="login-tiktok"
-                  title="Đăng nhập bằng TikTok"
-                >
-                  <i className="bx bxl-tiktok"></i>
-                </a>
-                <a
-                  href="#"
-                  className="login-social-btn"
-                  id="login-github"
-                  title="Đăng nhập bằng GitHub"
-                >
-                  <i className="bx bxl-github"></i>
+                  <span>Đăng nhập bằng Google</span>
                 </a>
               </div>
             </form>

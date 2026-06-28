@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useGoogleLogin } from '@react-oauth/google';
 import './Register.css';
 
 interface RegisterProps {
@@ -16,6 +17,17 @@ function Register({ isLoading, onSubmit }: RegisterProps) {
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  const registerWithGoogle = useGoogleLogin({
+    onSuccess: (tokenResponse) => {
+      console.log("Đăng ký Google thành công, Token:", tokenResponse.access_token);
+      alert("Đăng ký Google thành công!\n(Xem token trong Console F12)\nTiếp theo bạn cần gửi token này xuống backend.");
+      // TODO: Gửi tokenResponse.access_token xuống backend
+    },
+    onError: () => {
+      console.error("Đăng ký Google thất bại");
+      alert("Đăng ký Google thất bại!");
+    }
+  });
   const validate = () => {
     const newErrors: Record<string, string> = {};
     if (!registerData.fullname.trim()) newErrors.fullname = 'Full name is required';
@@ -132,17 +144,8 @@ function Register({ isLoading, onSubmit }: RegisterProps) {
         </div>
 
         <div className="login-social-icons">
-          <a href="#" className="login-social-btn" id="signup-google" title="Đăng ký bằng Google">
+          <a href="#" className="login-social-btn" id="signup-google" title="Đăng ký bằng Google" onClick={(e) => { e.preventDefault(); registerWithGoogle(); }}>
             <i className="bx bxl-google"></i>
-          </a>
-          <a href="#" className="login-social-btn" id="signup-facebook" title="Đăng ký bằng Facebook">
-            <i className="bx bxl-facebook"></i>
-          </a>
-          <a href="#" className="login-social-btn" id="signup-tiktok" title="Đăng ký bằng TikTok">
-            <i className="bx bxl-tiktok"></i>
-          </a>
-          <a href="#" className="login-social-btn" id="signup-github" title="Đăng ký bằng GitHub">
-            <i className="bx bxl-github"></i>
           </a>
         </div>
       </form>

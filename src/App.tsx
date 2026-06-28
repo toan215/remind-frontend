@@ -10,6 +10,7 @@ const AdminGuard = lazy(() => import("./middleware/adminGuard"));
 const AdminLayout = lazy(() => import("./components/Admin/AdminLayout"));
 const AdminRouteDispatcher = lazy(() => import("./routes/adminRoutes").then(module => ({ default: module.AdminRouteDispatcher })));
 const Forum = lazy(() => import("./components/Forum/Forum"));
+const AboutUs = lazy(() => import("./components/AboutUs/AboutUs"));
 
 const LoadingFallback = () => (
   <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', background: 'var(--canvas)' }}>
@@ -52,6 +53,10 @@ function App() {
       return <Forum onBack={() => setCurrentScreen("home")} userRole={userRole} onLoginRequired={handleLoginRequired} />;
     }
 
+    if (currentScreen === "about") {
+      return <AboutUs onBack={() => setCurrentScreen("home")} />;
+    }
+
     if (currentScreen === "admin") {
       return (
         <AdminGuard userRole={userRole} onBackToHome={() => setCurrentScreen("home")}>
@@ -86,6 +91,7 @@ function App() {
           setAdminRoute("dashboard");
           setCurrentScreen("admin");
         }}
+        onOpenAbout={() => setCurrentScreen("about")}
       />
     );
   };
