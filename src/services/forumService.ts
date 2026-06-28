@@ -7,9 +7,16 @@ export const getForums = async (): Promise<ForumType[]> => {
   return response.data.forums;
 };
 
-export const getPosts = async (): Promise<PostType[]> => {
-  const response = await api.get(API_ENDPOINTS.FORUMS.LIST_POSTS);
-  return response.data.posts;
+export const getPosts = async (
+  cursor?: string,
+  limit: number = 10
+): Promise<{ posts: PostType[]; nextCursor: string | null; hasNext: boolean }> => {
+  let url = `${API_ENDPOINTS.FORUMS.LIST_POSTS}?limit=${limit}`;
+  if (cursor) {
+    url += `&cursor=${cursor}`;
+  }
+  const response = await api.get(url);
+  return response.data;
 };
 
 export const getPostDetail = async (postId: string): Promise<{ post: PostType; comments: CommentType[] }> => {

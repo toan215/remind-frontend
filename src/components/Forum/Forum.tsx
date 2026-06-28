@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import ForumDetail from "./ForumDetail";
 import type { PostType } from "./types";
-import { getPosts, createPost } from "../../services/forumService";
+import { getPosts, createPost, searchPosts } from "../../services/forumService";
 import "./Forum.css";
 import "./ForumModal.css";
 
@@ -17,6 +17,13 @@ function Forum({ onBack, userRole, onLoginRequired }: ForumProps) {
 
   const [posts, setPosts] = useState<PostType[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const [hasNext, setHasNext] = useState(false);
+
+  // Search states
+  const [searchResults, setSearchResults] = useState<PostType[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
 
   // Modal states
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -26,20 +33,86 @@ function Forum({ onBack, userRole, onLoginRequired }: ForumProps) {
 
   const [showAuthPrompt, setShowAuthPrompt] = useState(false);
 
+  const loaderRef = useRef<HTMLDivElement | null>(null);
+
+  const fetchInitialPosts = async () => {
+    try {
+      setLoading(true);
+      const res = await getPosts(undefined, 10);
+      setPosts(res.posts);
+      setNextCursor(res.nextCursor);
+      setHasNext(res.hasNext);
+    } catch (error) {
+      console.error("Failed to fetch posts", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchMorePosts = async () => {
+    if (loadingMore || !hasNext || !nextCursor) return;
+    try {
+      setLoadingMore(true);
+      const res = await getPosts(nextCursor, 10);
+      setPosts((prev) => [...prev, ...res.posts]);
+      setNextCursor(res.nextCursor);
+      setHasNext(res.hasNext);
+    } catch (error) {
+      console.error("Failed to fetch more posts", error);
+    } finally {
+      setLoadingMore(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchPosts = async () => {
+    fetchInitialPosts();
+  }, []);
+
+  // Debounced search logic
+  useEffect(() => {
+    if (!searchTerm.trim()) {
+      setSearchResults([]);
+      return;
+    }
+
+    const delayDebounceFn = setTimeout(async () => {
       try {
-        setLoading(true);
-        const fetchedPosts = await getPosts();
-        setPosts(fetchedPosts);
+        setIsSearching(true);
+        const results = await searchPosts(searchTerm);
+        setSearchResults(results);
       } catch (error) {
-        console.error("Failed to fetch posts", error);
+        console.error("Failed to search posts", error);
       } finally {
-        setLoading(false);
+        setIsSearching(false);
+      }
+    }, 300);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchTerm]);
+
+  // Intersection Observer for Infinite Scroll
+  useEffect(() => {
+    if (!hasNext || loading || loadingMore || searchTerm.trim()) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          fetchMorePosts();
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    if (loaderRef.current) {
+      observer.observe(loaderRef.current);
+    }
+
+    return () => {
+      if (loaderRef.current) {
+        observer.unobserve(loaderRef.current);
       }
     };
-    fetchPosts();
-  }, []);
+  }, [hasNext, loading, loadingMore, nextCursor, searchTerm]);
 
   const handleCreatePostClick = () => {
     if (userRole === "guest") {
@@ -102,14 +175,8 @@ function Forum({ onBack, userRole, onLoginRequired }: ForumProps) {
     }
   }
 
-  const filteredPosts = posts.filter(
-    (post) =>
-      post.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (post.tags &&
-        post.tags.some((tag) =>
-          tag.toLowerCase().includes(searchTerm.toLowerCase()),
-        )),
-  );
+  const displayPosts = searchTerm.trim() ? searchResults : posts;
+  const isFeedLoading = searchTerm.trim() ? isSearching : loading;
 
   return (
     <div className="forum-screen">
@@ -157,48 +224,55 @@ function Forum({ onBack, userRole, onLoginRequired }: ForumProps) {
           </div>
 
           <div className="forum-post-list">
-            {loading ? (
+            {isFeedLoading ? (
               <div className="forum-empty">
                 <p>Đang tải bài viết...</p>
               </div>
-            ) : filteredPosts.length > 0 ? (
-              filteredPosts.map((post) => (
-                <div
-                  key={post._id}
-                  className="forum-post-item"
-                  onClick={() => handlePostClick(post._id)}
-                >
-                  <div className="forum-post-header">
-                    <span className="forum-post-author">
-                      <i className="bx bxs-user-circle"></i>{" "}
-                      {post.publicAuthorName}
-                    </span>
-                    <span className="forum-post-time">
-                      {new Date(post.createdAt).toLocaleDateString()}
-                    </span>
-                  </div>
-                  <h3 className="forum-post-title">{post.title}</h3>
-                  <div className="forum-post-tags">
-                    {post.tags &&
-                      post.tags.map((tag) => (
-                        <span key={tag} className="forum-post-tag">
-                          #{tag}
-                        </span>
-                      ))}
-                  </div>
-                  <div className="forum-post-footer">
-                    <div className="forum-post-stats">
-                      <span className="forum-stat">
-                        <i className="bx bx-heart"></i> {post.likeCount}
+            ) : displayPosts.length > 0 ? (
+              <>
+                {displayPosts.map((post) => (
+                  <div
+                    key={post._id}
+                    className="forum-post-item"
+                    onClick={() => handlePostClick(post._id)}
+                  >
+                    <div className="forum-post-header">
+                      <span className="forum-post-author">
+                        <i className="bx bxs-user-circle"></i>{" "}
+                        {post.publicAuthorName}
                       </span>
-                      <span className="forum-stat">
-                        <i className="bx bx-message-rounded-dots"></i>{" "}
-                        {post.commentCount}
+                      <span className="forum-post-time">
+                        {new Date(post.createdAt).toLocaleDateString()}
                       </span>
                     </div>
+                    <h3 className="forum-post-title">{post.title}</h3>
+                    <div className="forum-post-tags">
+                      {post.tags &&
+                        post.tags.map((tag) => (
+                          <span key={tag} className="forum-post-tag">
+                            #{tag}
+                          </span>
+                        ))}
+                    </div>
+                    <div className="forum-post-footer">
+                      <div className="forum-post-stats">
+                        <span className="forum-stat">
+                          <i className="bx bx-heart"></i> {post.likeCount}
+                        </span>
+                        <span className="forum-stat">
+                          <i className="bx bx-message-rounded-dots"></i>{" "}
+                          {post.commentCount}
+                        </span>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              ))
+                ))}
+                {!searchTerm.trim() && hasNext && (
+                  <div ref={loaderRef} className="forum-loading-more">
+                    {loadingMore ? "Đang tải thêm bài viết..." : "Cuộn để tải thêm"}
+                  </div>
+                )}
+              </>
             ) : (
               <div className="forum-empty">
                 <i className="bx bx-search-alt"></i>
