@@ -1,5 +1,6 @@
-import AdminDashboard from "../components/Admin/AdminDashboard";
-import AdminExpertCrud from "../components/Admin/AdminExpertCrud";
+import { lazy } from "react";
+const AdminDashboard = lazy(() => import("../components/Admin/AdminDashboard"));
+const AdminExpertCrud = lazy(() => import("../components/Admin/AdminExpertCrud"));
 
 export type AdminRoute = "dashboard" | "expert-crud";
 
