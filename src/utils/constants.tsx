@@ -1,5 +1,5 @@
 export const BASE_URL =
-  import.meta.env.LOCAL_API_URL || "https://remind-backend-wdv3.onrender.com";
+  import.meta.env.VITE_LOCAL_API_URL || "https://remind-backend-wdv3.onrender.com";
 export const API_BASE_URL = `${BASE_URL}/api`;
 
 export const API_ENDPOINTS = {
@@ -46,8 +46,8 @@ export const API_ENDPOINTS = {
     POST_DETAIL: (postId: string) => `${API_BASE_URL}/forums/posts/${postId}`,
     UPDATE_POST: (postId: string) => `${API_BASE_URL}/forums/posts/${postId}`,
     DELETE_POST: (postId: string) => `${API_BASE_URL}/forums/posts/${postId}`,
-    CREATE_POST: (forumId: string) => `${API_BASE_URL}/forums/${forumId}/posts`,
-    LIST_POSTS: (forumId: string) => `${API_BASE_URL}/forums/${forumId}/posts`,
+    CREATE_POST: `${API_BASE_URL}/forums/posts`,
+    LIST_POSTS: `${API_BASE_URL}/forums/posts`,
 
     // Forum comments
     UPDATE_COMMENT: (commentId: string) =>

@@ -48,7 +48,7 @@ function CreatePostModal({ onClose, onPostCreated }: CreatePostModalProps) {
     setTags(tags.filter((t) => t !== tagToRemove));
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     const randomName =
       ANONYMOUS_NAMES[Math.floor(Math.random() * ANONYMOUS_NAMES.length)];
 
@@ -66,9 +66,14 @@ function CreatePostModal({ onClose, onPostCreated }: CreatePostModalProps) {
       return;
     }
 
-    ForumController.createPost(postData);
-    onPostCreated();
-    onClose();
+    try {
+      await ForumController.createPost(postData);
+      onPostCreated();
+      onClose();
+    } catch (err) {
+      console.error("Failed to create post:", err);
+      alert("Đã xảy ra lỗi khi đăng bài viết.");
+    }
   };
 
   return (

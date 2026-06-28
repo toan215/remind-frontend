@@ -1,4 +1,4 @@
-import './Home.css';
+import "./Home.css";
 
 interface HomeProps {
   onOpenAIChat: () => void;
@@ -10,7 +10,15 @@ interface HomeProps {
   onOpenAdminPortal: () => void;
 }
 
-function Home({ onOpenAIChat, onOpenExpertDirectory, onOpenForum, onOpenLogin, onLogout, userRole, onOpenAdminPortal }: HomeProps) {
+function Home({
+  onOpenAIChat,
+  onOpenExpertDirectory,
+  onOpenForum,
+  onOpenLogin,
+  onLogout,
+  userRole,
+  onOpenAdminPortal,
+}: HomeProps) {
   return (
     <div className="home-page">
       {/* ===== 1. HEADER / NAVIGATION ===== */}
@@ -21,10 +29,32 @@ function Home({ onOpenAIChat, onOpenExpertDirectory, onOpenForum, onOpenLogin, o
             <span className="home-logo-text">ReMind</span>
           </div>
           <nav className="home-nav" id="home-nav">
-            <a href="#about" className="home-nav-link">Về chúng tớ</a>
-            <a href="#ai-companion" className="home-nav-link">AI Companion</a>
-            <a href="#clinic" className="home-nav-link" onClick={(e) => { e.preventDefault(); onOpenExpertDirectory(); }}>Phòng khám ẩn danh</a>
-            <a href="#forum" className="home-nav-link" onClick={(e) => { e.preventDefault(); onOpenForum(); }}>Góc tâm sự</a>
+            <a href="#about" className="home-nav-link">
+              Về chúng tớ
+            </a>
+            <a href="#ai-companion" className="home-nav-link">
+              AI Companion
+            </a>
+            <a
+              href="#clinic"
+              className="home-nav-link"
+              onClick={(e) => {
+                e.preventDefault();
+                onOpenExpertDirectory();
+              }}
+            >
+              Phòng khám ẩn danh
+            </a>
+            <a
+              href="#forum"
+              className="home-nav-link"
+              onClick={(e) => {
+                e.preventDefault();
+                onOpenForum();
+              }}
+            >
+              Góc tâm sự
+            </a>
             {userRole === "admin" && (
               <a
                 href="#admin"
@@ -39,16 +69,36 @@ function Home({ onOpenAIChat, onOpenExpertDirectory, onOpenForum, onOpenLogin, o
               </a>
             )}
           </nav>
-          
+
           {userRole === "guest" ? (
             <div className="home-auth-btns">
-              <button className="home-login-btn" id="login-btn" onClick={onOpenLogin}>Đăng nhập</button>
-              <button className="home-cta-btn" id="join-now-btn" onClick={onOpenLogin}>Đăng ký</button>
+              <button
+                className="home-login-btn"
+                id="login-btn"
+                onClick={onOpenLogin}
+              >
+                Đăng nhập
+              </button>
+              <button
+                className="home-cta-btn"
+                id="join-now-btn"
+                onClick={onOpenLogin}
+              >
+                Đăng ký
+              </button>
             </div>
           ) : (
             <div className="home-auth-btns">
-              <span className="home-user-greeting">Xin chào, {userRole === "admin" ? "Quản trị viên" : "bạn"}!</span>
-              <button className="home-logout-btn" id="logout-btn" onClick={onLogout}>Đăng xuất</button>
+              <span className="home-user-greeting">
+                Xin chào, {userRole === "admin" ? "Quản trị viên" : "bạn"}!
+              </span>
+              <button
+                className="home-logout-btn"
+                id="logout-btn"
+                onClick={onLogout}
+              >
+                Đăng xuất
+              </button>
             </div>
           )}
         </div>
@@ -62,16 +112,27 @@ function Home({ onOpenAIChat, onOpenExpertDirectory, onOpenForum, onOpenLogin, o
               ✨ Nền tảng hỗ trợ tâm lý ẩn danh 24/7 cho Gen Z
             </div>
             <h1 className="home-hero-title">
-              Áp lực này, để <span className="home-highlight">ReMind</span> gánh cùng bạn.
+              Áp lực này, để <span className="home-highlight">ReMind</span> gánh
+              cùng bạn.
             </h1>
             <p className="home-hero-desc">
-              Không gian hoàn toàn ẩn danh để bạn giải tỏa gánh nặng tinh thần. Sơ cứu tâm lý miễn phí với Trợ lý AI và kết nối Chuyên gia khi bạn cần can thiệp sâu.
+              Không gian hoàn toàn ẩn danh để bạn giải tỏa gánh nặng tinh thần.
+              Sơ cứu tâm lý miễn phí với Trợ lý AI và kết nối Chuyên gia khi bạn
+              cần can thiệp sâu.
             </p>
             <div className="home-hero-actions">
-              <button className="home-btn-primary" id="chat-ai-btn" onClick={onOpenAIChat}>
+              <button
+                className="home-btn-primary"
+                id="chat-ai-btn"
+                onClick={onOpenAIChat}
+              >
                 Trò chuyện với AI (Miễn phí)
               </button>
-              <button className="home-btn-secondary" id="find-expert-btn" onClick={onOpenExpertDirectory}>
+              <button
+                className="home-btn-secondary"
+                id="find-expert-btn"
+                onClick={onOpenExpertDirectory}
+              >
                 Tìm chuyên gia phù hợp
               </button>
             </div>
@@ -89,13 +150,17 @@ function Home({ onOpenAIChat, onOpenExpertDirectory, onOpenForum, onOpenLogin, o
               </div>
               <div className="chatbot-messages">
                 <div className="chat-msg bot">
-                  Chào bạn, tớ ở đây để lắng nghe. Hôm nay của bạn thế nào? Cứ chia sẻ nhé, không ai biết bạn là ai đâu.
+                  Chào bạn, tớ ở đây để lắng nghe. Hôm nay của bạn thế nào? Cứ
+                  chia sẻ nhé, không ai biết bạn là ai đâu.
                 </div>
                 <div className="chat-msg user">
-                  Tớ vừa trượt bài kiểm tra, áp lực đồng lứa làm tớ ngột ngạt quá...
+                  Tớ vừa trượt bài kiểm tra, áp lực đồng lứa làm tớ ngột ngạt
+                  quá...
                 </div>
                 <div className="chat-msg bot">
-                  Tớ hiểu cảm giác đó. Thất bại một bài kiểm tra không định nghĩa giá trị của bạn. Hãy cùng tớ thực hiện bài tập thở sâu 4-7-8 để bình tĩnh lại nhé?
+                  Tớ hiểu cảm giác đó. Thất bại một bài kiểm tra không định
+                  nghĩa giá trị của bạn. Hãy cùng tớ thực hiện bài tập thở sâu
+                  4-7-8 để bình tĩnh lại nhé?
                 </div>
               </div>
               <div className="chatbot-input">
@@ -105,7 +170,9 @@ function Home({ onOpenAIChat, onOpenExpertDirectory, onOpenForum, onOpenLogin, o
                   disabled
                   id="chatbot-input-field"
                 />
-                <button className="chatbot-send-btn" id="chatbot-send-btn">Gửi</button>
+                <button className="chatbot-send-btn" id="chatbot-send-btn">
+                  Gửi
+                </button>
               </div>
             </div>
           </div>
@@ -118,7 +185,8 @@ function Home({ onOpenAIChat, onOpenExpertDirectory, onOpenForum, onOpenLogin, o
           <div className="home-values-header">
             <h2>An toàn hơn - Tiết kiệm hơn - Thấu hiểu hơn</h2>
             <p>
-              Hệ sinh thái thông minh giúp bạn gạt bỏ hoàn toàn rào cản e ngại khi đi chăm sóc sức khỏe tinh thần.
+              Hệ sinh thái thông minh giúp bạn gạt bỏ hoàn toàn rào cản e ngại
+              khi đi chăm sóc sức khỏe tinh thần.
             </p>
           </div>
           <div className="home-values-grid">
@@ -127,7 +195,8 @@ function Home({ onOpenAIChat, onOpenExpertDirectory, onOpenForum, onOpenLogin, o
               <div className="value-icon value-icon-indigo">💬</div>
               <h3>AI Companion 24/7</h3>
               <p>
-                Sơ cứu tâm lý tức thời vào bất kể khung giờ nào. Hoàn toàn miễn phí, đưa ra lời khuyên khoa học và bài tập thư giãn.
+                Sơ cứu tâm lý tức thời vào bất kể khung giờ nào. Hoàn toàn miễn
+                phí, đưa ra lời khuyên khoa học và bài tập thư giãn.
               </p>
             </div>
             {/* Card 2 */}
@@ -135,7 +204,8 @@ function Home({ onOpenAIChat, onOpenExpertDirectory, onOpenForum, onOpenLogin, o
               <div className="value-icon value-icon-emerald">🔒</div>
               <h3>Ẩn danh tuyệt đối</h3>
               <p>
-                Hệ thống bảo mật băm dữ liệu và phân quyền chặt chẽ. Bạn thoải mái chia sẻ ở Diễn đàn với bộ lọc từ khóa văn minh.
+                Hệ thống bảo mật băm dữ liệu và phân quyền chặt chẽ. Bạn thoải
+                mái chia sẻ ở Diễn đàn với bộ lọc từ khóa văn minh.
               </p>
             </div>
             {/* Card 3 */}
@@ -143,7 +213,9 @@ function Home({ onOpenAIChat, onOpenExpertDirectory, onOpenForum, onOpenLogin, o
               <div className="value-icon value-icon-amber">🩺</div>
               <h3>Chuyên gia thấu hiểu</h3>
               <p>
-                Đội ngũ bác sĩ thật được kiểm định bằng cấp kỹ càng. Đặc biệt, AI sẽ tóm tắt trước lịch sử cảm xúc giúp giảm thời gian chẩn đoán ban đầu.
+                Đội ngũ bác sĩ thật được kiểm định bằng cấp kỹ càng. Đặc biệt,
+                AI sẽ tóm tắt trước lịch sử cảm xúc giúp giảm thời gian chẩn
+                đoán ban đầu.
               </p>
             </div>
           </div>

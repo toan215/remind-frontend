@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ForumPost } from "../../models/ForumPost";
 import { ForumController } from "../../controllers/ForumController";
 import PostDetail from "./PostDetail";
@@ -12,12 +12,98 @@ interface ForumProps {
 }
 
 function Forum({ onBack, userRole, onLoginRequired }: ForumProps) {
+  const [posts, setPosts] = useState<ForumPost[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedPost, setSelectedPost] = useState<ForumPost | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
 
-  const refresh = () => setRefreshKey((k) => k + 1);
+  // Pagination states
+  const [cursor, setCursor] = useState<string | null>(null);
+  const [hasNext, setHasNext] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+
+  const refresh = () => {
+    setRefreshKey((k) => k + 1);
+  };
+
+  // 1. Fetch initial posts when searching, or on manual refresh
+  useEffect(() => {
+    const fetchInitialData = async () => {
+      setLoading(true);
+      try {
+        if (searchTerm.trim()) {
+          const searchResults = await ForumController.searchPosts(searchTerm);
+          setPosts(searchResults);
+          setHasNext(false);
+          setCursor(null);
+        } else {
+          const result = await ForumController.getPosts(10);
+          setPosts(result.posts);
+          setCursor(result.nextCursor);
+          setHasNext(result.hasNext);
+        }
+      } catch (err) {
+        console.error("Failed to load forum posts:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchInitialData();
+  }, [searchTerm, refreshKey]);
+
+  // 2. Load more posts for infinite scroll
+  const loadMorePosts = async () => {
+    if (!hasNext || loadingMore || searchTerm.trim()) return;
+
+    setLoadingMore(true);
+    try {
+      const result = await ForumController.getPosts(10, cursor || undefined);
+      setPosts((prev) => [...prev, ...result.posts]);
+      setCursor(result.nextCursor);
+      setHasNext(result.hasNext);
+    } catch (err) {
+      console.error("Failed to load more posts:", err);
+    } finally {
+      setLoadingMore(false);
+    }
+  };
+
+  // 3. Scroll listener for infinite scroll
+  useEffect(() => {
+    const handleScroll = () => {
+      const threshold = 150; // px from bottom
+      const totalHeight = document.documentElement.scrollHeight;
+      const scrollPosition = window.innerHeight + window.scrollY;
+
+      if (totalHeight - scrollPosition <= threshold) {
+        loadMorePosts();
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [hasNext, loadingMore, cursor, searchTerm]);
+
+  // 4. Handle like action on main post card
+  const handleLike = async (postId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (userRole === "guest") {
+      onLoginRequired();
+      return;
+    }
+    try {
+      const updatedPost = await ForumController.toggleLike(postId);
+      // Update post like states immediately in the posts list
+      setPosts((prevPosts) =>
+        prevPosts.map((post) => (post.id === postId ? updatedPost : post))
+      );
+    } catch (err) {
+      console.error("Failed to like post:", err);
+    }
+  };
 
   const handleCreatePost = () => {
     if (userRole === "guest") {
@@ -28,38 +114,16 @@ function Forum({ onBack, userRole, onLoginRequired }: ForumProps) {
     setShowCreateModal(true);
   };
 
-  const handleLike = (postId: number, e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (userRole === "guest") {
-      onLoginRequired();
-      return;
-    }
-    const userId = userRole === "admin" ? "admin-user" : "current-user";
-    ForumController.toggleLike(postId, userId);
-    refresh();
-  };
+  const userStr = localStorage.getItem("user");
+  const currentUser = userStr ? JSON.parse(userStr) : null;
+  const currentUserId = currentUser ? currentUser._id || currentUser.id : null;
 
-  // Force re-read from localStorage on refreshKey change
-  void refreshKey;
-  const allPosts = ForumController.getPosts();
-  const filteredPosts = searchTerm.trim()
-    ? ForumController.searchPosts(searchTerm)
-    : allPosts;
-
-  const currentUserId = userRole === "admin" ? "admin-user" : "current-user";
-
-  // If viewing a post detail, re-fetch fresh data
+  // If viewing a post detail, render it
   if (selectedPost) {
-    const freshPost = ForumController.getPostById(selectedPost.id);
-    if (!freshPost) {
-      setSelectedPost(null);
-      return null;
-    }
-
     return (
       <div className="forum-screen">
         <PostDetail
-          post={freshPost}
+          post={selectedPost}
           onBack={() => {
             setSelectedPost(null);
             refresh();
@@ -111,66 +175,77 @@ function Forum({ onBack, userRole, onLoginRequired }: ForumProps) {
         </div>
 
         <div className="forum-post-list">
-          {filteredPosts.length > 0 ? (
-            filteredPosts.map((post) => {
-              const commentCount = ForumController.getCommentCount(post.id);
-              const isLiked = post.likedBy.includes(currentUserId);
+          {loading && posts.length === 0 ? (
+            <div className="forum-empty">
+              <p>Đang tải bài viết...</p>
+            </div>
+          ) : posts.length > 0 ? (
+            <>
+              {posts.map((post) => {
+                const displayCommentCount = (post as any).commentCount !== undefined ? (post as any).commentCount : 0;
+                const isLiked = currentUserId ? post.likedBy.includes(currentUserId) : false;
 
-              return (
-                <div
-                  key={post.id}
-                  className="forum-post-card"
-                  onClick={() => setSelectedPost(post)}
-                  style={{ cursor: "pointer" }}
-                >
-                  <div className="forum-post-header">
-                    <span className="forum-post-author">
-                      <i className="bx bxs-user-circle"></i> {post.author}
-                    </span>
-                    <span className="forum-post-time">
-                      {ForumController.formatTimeAgo(post.createdAt)}
-                    </span>
-                  </div>
-                  <h3 className="forum-post-title">{post.title}</h3>
-                  <p className="forum-post-preview">
-                    {post.content.length > 120
-                      ? post.content.substring(0, 120) + "..."
-                      : post.content}
-                  </p>
-                  <div className="forum-post-tags">
-                    {post.tags.map((tag) => (
-                      <span key={tag} className="forum-post-tag">
-                        #{tag}
+                return (
+                  <div
+                    key={post.id}
+                    className="forum-post-card"
+                    onClick={() => setSelectedPost(post)}
+                    style={{ cursor: "pointer" }}
+                  >
+                    <div className="forum-post-header">
+                      <span className="forum-post-author">
+                        <i className="bx bxs-user-circle"></i> {post.author}
                       </span>
-                    ))}
-                  </div>
-                  <div className="forum-post-footer">
-                    <div className="forum-post-stats">
-                      <button
-                        className={`forum-stat forum-like-btn ${isLiked ? "liked" : ""}`}
-                        onClick={(e) => handleLike(post.id, e)}
-                      >
-                        <i className={`bx ${isLiked ? "bxs-heart" : "bx-heart"}`}></i>{" "}
-                        {post.likes}
-                      </button>
-                      <span className="forum-stat">
-                        <i className="bx bx-message-rounded-dots"></i>{" "}
-                        {commentCount}
+                      <span className="forum-post-time">
+                        {ForumController.formatTimeAgo(post.createdAt)}
                       </span>
                     </div>
-                    <button
-                      className="rm-btn rm-btn-outline forum-read-btn"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setSelectedPost(post);
-                      }}
-                    >
-                      Đọc tiếp
-                    </button>
+                    <h3 className="forum-post-title">{post.title}</h3>
+                    <p className="forum-post-preview">
+                      {post.content.length > 120
+                        ? post.content.substring(0, 120) + "..."
+                        : post.content}
+                    </p>
+                    <div className="forum-post-tags">
+                      {post.tags.map((tag) => (
+                        <span key={tag} className="forum-post-tag">
+                          #{tag}
+                        </span>
+                      ))}
+                    </div>
+                    <div className="forum-post-footer">
+                      <div className="forum-post-stats">
+                        <button
+                          className={`forum-stat forum-like-btn ${isLiked ? "liked" : ""}`}
+                          onClick={(e) => handleLike(post.id, e)}
+                        >
+                          <i className={`bx ${isLiked ? "bxs-heart" : "bx-heart"}`}></i>{" "}
+                          {post.likes}
+                        </button>
+                        <span className="forum-stat">
+                          <i className="bx bx-message-rounded-dots"></i>{" "}
+                          {displayCommentCount}
+                        </span>
+                      </div>
+                      <button
+                        className="rm-btn rm-btn-outline forum-read-btn"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedPost(post);
+                        }}
+                      >
+                        Đọc tiếp
+                      </button>
+                    </div>
                   </div>
+                );
+              })}
+              {loadingMore && (
+                <div className="forum-empty" style={{ padding: "16px", border: "none" }}>
+                  <p>Đang tải thêm bài viết...</p>
                 </div>
-              );
-            })
+              )}
+            </>
           ) : (
             <div className="forum-empty">
               <i className="bx bx-search-alt"></i>

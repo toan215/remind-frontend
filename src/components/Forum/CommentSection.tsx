@@ -1,62 +1,80 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Comment as CommentType } from "../../models/ForumPost";
 import { ForumController } from "../../controllers/ForumController";
 import "./CommentSection.css";
 
 interface CommentSectionProps {
-  postId: number;
+  postId: string;
   userRole: string;
   onLoginRequired: () => void;
 }
 
 function CommentSection({ postId, userRole, onLoginRequired }: CommentSectionProps) {
-  const [comments, setComments] = useState<CommentType[]>(
-    ForumController.getCommentsByPostId(postId)
-  );
+  const [comments, setComments] = useState<CommentType[]>([]);
   const [newComment, setNewComment] = useState("");
-  const [replyingTo, setReplyingTo] = useState<number | null>(null);
+  const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [replyContent, setReplyContent] = useState("");
+  const [loading, setLoading] = useState(true);
 
-  const refreshComments = () => {
-    setComments(ForumController.getCommentsByPostId(postId));
+  const fetchComments = async () => {
+    try {
+      const list = await ForumController.getCommentsByPostId(postId);
+      setComments(list);
+    } catch (err) {
+      console.error("Failed to load comments:", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleSubmitComment = () => {
+  useEffect(() => {
+    fetchComments();
+  }, [postId]);
+
+  const handleSubmitComment = async () => {
     if (userRole === "guest") {
       onLoginRequired();
       return;
     }
     if (!newComment.trim()) return;
 
-    ForumController.createComment({
-      postId,
-      author: userRole === "admin" ? "Admin" : "Bạn",
-      content: newComment,
-      parentId: null,
-    });
-    setNewComment("");
-    refreshComments();
+    try {
+      await ForumController.createComment(postId, {
+        content: newComment,
+        parentId: null,
+      });
+      setNewComment("");
+      await fetchComments();
+    } catch (err) {
+      console.error("Failed to post comment:", err);
+    }
   };
 
-  const handleSubmitReply = (parentId: number) => {
+  const handleSubmitReply = async (parentId: string) => {
     if (userRole === "guest") {
       onLoginRequired();
       return;
     }
     if (!replyContent.trim()) return;
 
-    ForumController.createComment({
-      postId,
-      author: userRole === "admin" ? "Admin" : "Bạn",
-      content: replyContent,
-      parentId,
-    });
-    setReplyContent("");
-    setReplyingTo(null);
-    refreshComments();
+    try {
+      await ForumController.createComment(postId, {
+        content: replyContent,
+        parentId,
+      });
+      setReplyContent("");
+      setReplyingTo(null);
+      await fetchComments();
+    } catch (err) {
+      console.error("Failed to post reply:", err);
+    }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent, type: "comment" | "reply", parentId?: number) => {
+  const handleKeyDown = (
+    e: React.KeyboardEvent,
+    type: "comment" | "reply",
+    parentId?: string
+  ) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       if (type === "comment") {
@@ -69,7 +87,7 @@ function CommentSection({ postId, userRole, onLoginRequired }: CommentSectionPro
 
   // Build threaded comments: top-level comments with their replies
   const topLevelComments = comments.filter((c) => c.parentId === null);
-  const getReplies = (commentId: number) =>
+  const getReplies = (commentId: string) =>
     comments.filter((c) => c.parentId === commentId);
 
   return (
@@ -115,7 +133,11 @@ function CommentSection({ postId, userRole, onLoginRequired }: CommentSectionPro
 
       {/* Comments List */}
       <div className="comment-list">
-        {topLevelComments.length === 0 ? (
+        {loading ? (
+          <div className="comment-empty">
+            <p>Đang tải bình luận...</p>
+          </div>
+        ) : topLevelComments.length === 0 ? (
           <div className="comment-empty">
             <i className="bx bx-chat"></i>
             <p>Chưa có bình luận nào. Hãy là người đầu tiên!</p>
