@@ -7,8 +7,8 @@ export const getForums = async (): Promise<ForumType[]> => {
   return response.data.forums;
 };
 
-export const getPosts = async (forumId: string): Promise<PostType[]> => {
-  const response = await api.get(API_ENDPOINTS.FORUMS.LIST_POSTS(forumId));
+export const getPosts = async (): Promise<PostType[]> => {
+  const response = await api.get(API_ENDPOINTS.FORUMS.LIST_POSTS);
   return response.data.posts;
 };
 

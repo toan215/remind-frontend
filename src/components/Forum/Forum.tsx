@@ -35,11 +35,10 @@ function Forum({ onBack, userRole, onLoginRequired }: ForumProps) {
         const fetchedForums = await getForums();
         setForums(fetchedForums);
         if (fetchedForums.length > 0) {
-          const firstForumId = fetchedForums[0]._id;
-          setCurrentForumId(firstForumId);
-          const fetchedPosts = await getPosts(firstForumId);
-          setPosts(fetchedPosts);
+          setCurrentForumId(fetchedForums[0]._id);
         }
+        const fetchedPosts = await getPosts();
+        setPosts(fetchedPosts);
       } catch (error) {
         console.error("Failed to fetch forums or posts", error);
       } finally {
