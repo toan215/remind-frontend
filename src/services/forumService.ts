@@ -7,8 +7,8 @@ export const getForums = async (): Promise<ForumType[]> => {
   return response.data.forums;
 };
 
-export const getPosts = async (forumId: string): Promise<PostType[]> => {
-  const response = await api.get(API_ENDPOINTS.FORUMS.LIST_POSTS(forumId));
+export const getPosts = async (): Promise<PostType[]> => {
+  const response = await api.get(API_ENDPOINTS.FORUMS.LIST_POSTS);
   return response.data.posts;
 };
 
@@ -17,8 +17,8 @@ export const getPostDetail = async (postId: string): Promise<{ post: PostType; c
   return response.data;
 };
 
-export const createPost = async (forumId: string, title: string, content: string, tags: string[], authorDisplayMode: number = 1): Promise<PostType> => {
-  const response = await api.post(API_ENDPOINTS.FORUMS.CREATE_POST(forumId), {
+export const createPost = async (title: string, content: string, tags: string[], authorDisplayMode: number = 1): Promise<PostType> => {
+  const response = await api.post(API_ENDPOINTS.FORUMS.CREATE_POST, {
     title,
     content,
     tags,

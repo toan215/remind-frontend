@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import ForumDetail from "./ForumDetail";
-import type { ForumType, PostType } from "./types";
-import { getForums, getPosts, createPost } from "../../services/forumService";
+import type { PostType } from "./types";
+import { getPosts, createPost } from "../../services/forumService";
 import "./Forum.css";
 import "./ForumModal.css";
 
@@ -12,12 +12,9 @@ interface ForumProps {
 }
 
 function Forum({ onBack, userRole, onLoginRequired }: ForumProps) {
-  const [posts, setPosts] = useState<ForumPost[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
 
-  const [forums, setForums] = useState<ForumType[]>([]);
-  const [currentForumId, setCurrentForumId] = useState<string | null>(null);
   const [posts, setPosts] = useState<PostType[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -30,24 +27,18 @@ function Forum({ onBack, userRole, onLoginRequired }: ForumProps) {
   const [showAuthPrompt, setShowAuthPrompt] = useState(false);
 
   useEffect(() => {
-    const fetchForumsAndPosts = async () => {
+    const fetchPosts = async () => {
       try {
         setLoading(true);
-        const fetchedForums = await getForums();
-        setForums(fetchedForums);
-        if (fetchedForums.length > 0) {
-          const firstForumId = fetchedForums[0]._id;
-          setCurrentForumId(firstForumId);
-          const fetchedPosts = await getPosts(firstForumId);
-          setPosts(fetchedPosts);
-        }
+        const fetchedPosts = await getPosts();
+        setPosts(fetchedPosts);
       } catch (error) {
-        console.error("Failed to fetch forums or posts", error);
+        console.error("Failed to fetch posts", error);
       } finally {
         setLoading(false);
       }
     };
-    fetchForumsAndPosts();
+    fetchPosts();
   }, []);
 
   const handleCreatePostClick = () => {
@@ -74,7 +65,6 @@ function Forum({ onBack, userRole, onLoginRequired }: ForumProps) {
   };
 
   const handleSubmitPost = async () => {
-    if (!currentForumId) return;
     if (!newPostTitle.trim() || !newPostContent.trim()) {
       alert("Vui lòng nhập tiêu đề và nội dung.");
       return;
@@ -85,7 +75,6 @@ function Forum({ onBack, userRole, onLoginRequired }: ForumProps) {
         .map((tag) => tag.trim())
         .filter(Boolean);
       const newPost = await createPost(
-        currentForumId,
         newPostTitle,
         newPostContent,
         tagsArray,
@@ -139,26 +128,6 @@ function Forum({ onBack, userRole, onLoginRequired }: ForumProps) {
               Nơi chia sẻ, lắng nghe và đồng cảm. Mọi tâm sự đều được trân trọng
               và ẩn danh tuyệt đối.
             </p>
-          </div>
-
-          <div className="forum-actions-bar">
-            <div className="rm-input-wrapper forum-search-wrapper">
-              <i className="bx bx-search forum-search-icon"></i>
-              <input
-                type="text"
-                className="rm-input-field"
-                placeholder="Tìm kiếm chủ đề, bài viết..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-            <button
-              className="rm-btn rm-btn-primary forum-create-btn"
-              onClick={handleCreatePost}
-            >
-              <i className="bx bx-edit"></i>
-              Tạo bài viết
-            </button>
           </div>
           <div className="forum-actions-bar">
             <div className="rm-input-wrapper forum-search-wrapper">
