@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import ForumDetail from "./ForumDetail";
 import type { PostType } from "./types";
-import { getPosts, createPost, searchPosts } from "../../services/forumService";
+import { getForums, getPosts, createPost, searchPosts } from "../../services/forumService";
+import type { ForumType } from "./types";
 import "./Forum.css";
 import "./ForumModal.css";
 
@@ -25,13 +26,18 @@ function Forum({ onBack, userRole, onLoginRequired }: ForumProps) {
   const [searchResults, setSearchResults] = useState<PostType[]>([]);
   const [isSearching, setIsSearching] = useState(false);
 
+  // Forum selector
+  const [forums, setForums] = useState<ForumType[]>([]);
+
   // Modal states
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedForumId, setSelectedForumId] = useState("");
   const [newPostTitle, setNewPostTitle] = useState("");
   const [newPostContent, setNewPostContent] = useState("");
   const [newPostTags, setNewPostTags] = useState("");
 
   const [showAuthPrompt, setShowAuthPrompt] = useState(false);
+  const [fallbackPost, setFallbackPost] = useState<PostType | null>(null);
 
   const loaderRef = useRef<HTMLDivElement | null>(null);
 
@@ -66,6 +72,7 @@ function Forum({ onBack, userRole, onLoginRequired }: ForumProps) {
 
   useEffect(() => {
     fetchInitialPosts();
+    getForums().then(setForums).catch(() => {});
   }, []);
 
   // Debounced search logic
@@ -132,6 +139,7 @@ function Forum({ onBack, userRole, onLoginRequired }: ForumProps) {
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
+    setSelectedForumId("");
     setNewPostTitle("");
     setNewPostContent("");
     setNewPostTags("");
@@ -142,12 +150,17 @@ function Forum({ onBack, userRole, onLoginRequired }: ForumProps) {
       alert("Vui lòng nhập tiêu đề và nội dung.");
       return;
     }
+    if (!selectedForumId) {
+      alert("Vui lòng chọn danh mục.");
+      return;
+    }
     try {
       const tagsArray = newPostTags
         .split(",")
         .map((tag) => tag.trim())
         .filter(Boolean);
       const newPost = await createPost(
+        selectedForumId,
         newPostTitle,
         newPostContent,
         tagsArray,
@@ -161,13 +174,27 @@ function Forum({ onBack, userRole, onLoginRequired }: ForumProps) {
     }
   };
 
+  // Fetch post detail when clicked from search results (not in local arrays)
+  useEffect(() => {
+    if (!selectedPostId) { setFallbackPost(null); return; }
+    const inPosts = posts.find((p) => p._id === selectedPostId);
+    const inSearch = searchResults.find((p) => p._id === selectedPostId);
+    if (!inPosts && !inSearch) {
+      import("../../services/forumService").then(({ getPostDetail }) =>
+        getPostDetail(selectedPostId).then((data) => setFallbackPost(data.post))
+      ).catch(() => {});
+    }
+  }, [selectedPostId, posts, searchResults]);
+
   if (selectedPostId) {
-    const post = posts.find((p) => p._id === selectedPostId);
+    const post = posts.find((p) => p._id === selectedPostId)
+      ?? searchResults.find((p) => p._id === selectedPostId)
+      ?? fallbackPost;
     if (post) {
       return (
         <ForumDetail
           post={post}
-          onBack={() => setSelectedPostId(null)}
+          onBack={() => { setSelectedPostId(null); setFallbackPost(null); }}
           userRole={userRole}
           onLoginRequired={onLoginRequired}
         />
@@ -363,6 +390,17 @@ function Forum({ onBack, userRole, onLoginRequired }: ForumProps) {
                 value={newPostTags}
                 onChange={(e) => setNewPostTags(e.target.value)}
               />
+              <select
+                className="forum-modal-input"
+                value={selectedForumId}
+                onChange={(e) => setSelectedForumId(e.target.value)}
+                style={{ padding: '12px' }}
+              >
+                <option value="">-- Chọn danh mục --</option>
+                {forums.map((f) => (
+                  <option key={f._id} value={f._id}>{f.title}</option>
+                ))}
+              </select>
               <div className="forum-modal-footer">
                 <button className="rm-btn" onClick={handleCloseModal}>
                   Hủy

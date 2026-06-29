@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { PostType, CommentType } from "./types";
-import { getPostDetail, createComment } from "../../services/forumService";
+import { getPostDetail, createComment, toggleLike } from "../../services/forumService";
 import "./ForumDetail.css";
 
 interface ForumDetailProps {
@@ -14,6 +14,7 @@ function ForumDetail({ post, onBack, userRole, onLoginRequired }: ForumDetailPro
   const [commentText, setCommentText] = useState("");
   const [comments, setComments] = useState<CommentType[]>([]);
   const [isLiked, setIsLiked] = useState(false);
+  const [likeCount, setLikeCount] = useState(post.likeCount);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -82,12 +83,20 @@ function ForumDetail({ post, onBack, userRole, onLoginRequired }: ForumDetailPro
           </div>
 
           <div className="forum-detail-footer">
-            <button 
+            <button
               className={`forum-detail-action ${isLiked ? 'active' : ''}`}
-              onClick={() => setIsLiked(!isLiked)}
+              onClick={async () => {
+                if (userRole === 'guest') {
+                  onLoginRequired();
+                  return;
+                }
+                const result = await toggleLike(post._id);
+                setIsLiked(result.liked);
+                setLikeCount(result.likeCount);
+              }}
             >
               <i className={isLiked ? "bx bxs-heart" : "bx bx-heart"}></i>
-              {post.likeCount + (isLiked ? 1 : 0)} Thích
+              {likeCount} Thích
             </button>
             <button className="forum-detail-action">
               <i className="bx bx-share-alt"></i> Chia sẻ

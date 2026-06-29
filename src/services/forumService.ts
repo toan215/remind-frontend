@@ -24,8 +24,9 @@ export const getPostDetail = async (postId: string): Promise<{ post: PostType; c
   return response.data;
 };
 
-export const createPost = async (title: string, content: string, tags: string[], authorDisplayMode: number = 1): Promise<PostType> => {
+export const createPost = async (forumId: string, title: string, content: string, tags: string[], authorDisplayMode: number = 1): Promise<PostType> => {
   const response = await api.post(API_ENDPOINTS.FORUMS.CREATE_POST, {
+    forumId,
     title,
     content,
     tags,
@@ -40,6 +41,11 @@ export const createComment = async (postId: string, content: string, authorDispl
     authorDisplayMode
   });
   return response.data.comment;
+};
+
+export const toggleLike = async (postId: string): Promise<{ liked: boolean; likeCount: number }> => {
+  const response = await api.post(`${API_ENDPOINTS.FORUMS.POST_DETAIL(postId)}/like`);
+  return { liked: response.data.liked ?? false, likeCount: response.data.post?.likeCount ?? 0 };
 };
 
 export const searchPosts = async (query: string): Promise<PostType[]> => {
