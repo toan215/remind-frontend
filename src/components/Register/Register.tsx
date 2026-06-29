@@ -1,13 +1,15 @@
 import { useState } from 'react';
 import { useGoogleLogin } from '@react-oauth/google';
+import { AuthController } from '../../controllers/AuthController';
 import './Register.css';
 
 interface RegisterProps {
   isLoading: boolean;
   onSubmit: (data: any, resetForm: () => void) => void;
+  onLoginSuccess?: (role: 'user' | 'admin') => void;
 }
 
-function Register({ isLoading, onSubmit }: RegisterProps) {
+function Register({ isLoading, onSubmit, onLoginSuccess }: RegisterProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [registerData, setRegisterData] = useState({
     fullname: '',
@@ -18,14 +20,22 @@ function Register({ isLoading, onSubmit }: RegisterProps) {
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const registerWithGoogle = useGoogleLogin({
-    onSuccess: (tokenResponse) => {
-      console.log("Đăng ký Google thành công, Token:", tokenResponse.access_token);
-      alert("Đăng ký Google thành công!\n(Xem token trong Console F12)\nTiếp theo bạn cần gửi token này xuống backend.");
-      // TODO: Gửi tokenResponse.access_token xuống backend
+    onSuccess: async (tokenResponse) => {
+      try {
+        const result = await AuthController.googleLogin(tokenResponse.access_token);
+        if (onLoginSuccess) {
+          const role =
+            result.user.role === 'admin' || result.user.role === 'system_manager'
+              ? 'admin'
+              : 'user';
+          onLoginSuccess(role);
+        }
+      } catch (err: any) {
+        alert(err.message);
+      }
     },
     onError: () => {
-      console.error("Đăng ký Google thất bại");
-      alert("Đăng ký Google thất bại!");
+      alert('Đăng ký Google thất bại');
     }
   });
   const validate = () => {

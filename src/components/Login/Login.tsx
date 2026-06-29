@@ -15,16 +15,24 @@ function Login({ onLoginSuccess, onBack, initialMode = "login" }: LoginProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Khởi tạo hook Google Login
   const loginWithGoogle = useGoogleLogin({
-    onSuccess: (tokenResponse) => {
-      console.log("Đăng nhập Google thành công, Token:", tokenResponse.access_token);
-      alert("Đăng nhập Google thành công!\n(Xem token trong Console F12)\nTiếp theo bạn cần gửi token này xuống backend.");
-      // TODO: Call API gửi tokenResponse.access_token xuống backend ở đây
+    onSuccess: async (tokenResponse) => {
+      try {
+        setIsLoading(true);
+        const result = await AuthController.googleLogin(tokenResponse.access_token);
+        setIsLoading(false);
+        const role =
+          result.user.role === "admin" || result.user.role === "system_manager"
+            ? "admin"
+            : "user";
+        onLoginSuccess(role);
+      } catch (err: any) {
+        setIsLoading(false);
+        setLoginErrors({ global: err.message });
+      }
     },
     onError: () => {
-      console.error("Đăng nhập Google thất bại");
-      alert("Đăng nhập Google thất bại!");
+      setLoginErrors({ global: "Đăng nhập Google thất bại" });
     }
   });
 
@@ -240,6 +248,7 @@ function Login({ onLoginSuccess, onBack, initialMode = "login" }: LoginProps) {
           <Register
             isLoading={isLoading && isSignUp}
             onSubmit={handleRegisterSubmit}
+            onLoginSuccess={onLoginSuccess}
           />
         </div>
 
