@@ -70,6 +70,23 @@ export class AuthController {
   }
 
   /**
+   * Logs in or registers via Google access token
+   */
+  static async googleLogin(googleToken: string): Promise<AuthResponse> {
+    const data = await apiHelper.post<AuthResponse>(API_ENDPOINTS.AUTH.GOOGLE, {
+      googleToken,
+    });
+
+    if (data && data.accessToken) {
+      localStorage.setItem("accessToken", data.accessToken);
+      localStorage.setItem("refreshToken", data.refreshToken);
+      localStorage.setItem("user", JSON.stringify(data.user));
+    }
+
+    return data;
+  }
+
+  /**
    * Logs out the current user, notifying the backend and clearing local tokens
    */
   static async logout(): Promise<void> {

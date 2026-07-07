@@ -13,6 +13,7 @@ export const API_ENDPOINTS = {
     LOGIN: `${API_BASE_URL}/auth/login`,
     REFRESH: `${API_BASE_URL}/auth/refresh`,
     LOGOUT: `${API_BASE_URL}/auth/logout`,
+    GOOGLE: `${API_BASE_URL}/auth/google`,
   },
 
   // Admin moderation and management endpoints

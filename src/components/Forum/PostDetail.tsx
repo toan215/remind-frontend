@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { ForumPost } from "../../models/ForumPost";
 import { ForumController } from "../../controllers/ForumController";
 import CommentSection from "./CommentSection";
@@ -11,21 +12,44 @@ interface PostDetailProps {
   onPostUpdate: () => void;
 }
 
-function PostDetail({ post, onBack, userRole, onLoginRequired, onPostUpdate }: PostDetailProps) {
-  const commentCount = ForumController.getCommentCount(post.id);
+function PostDetail({ post: initialPost, onBack, userRole, onLoginRequired, onPostUpdate }: PostDetailProps) {
+  const [post, setPost] = useState<ForumPost>(initialPost);
+  const [commentsCount, setCommentsCount] = useState(0);
 
-  const handleLike = () => {
+  const fetchPostDetails = async () => {
+    try {
+      const details = await ForumController.getPostDetail(post.id);
+      if (details) {
+        setPost(details.post);
+        setCommentsCount(details.comments.length);
+      }
+    } catch (err) {
+      console.error("Failed to fetch post details:", err);
+    }
+  };
+
+  useEffect(() => {
+    fetchPostDetails();
+  }, [post.id]);
+
+  const handleLike = async () => {
     if (userRole === "guest") {
       onLoginRequired();
       return;
     }
-    const userId = userRole === "admin" ? "admin-user" : "current-user";
-    ForumController.toggleLike(post.id, userId);
-    onPostUpdate();
+    try {
+      const updatedPost = await ForumController.toggleLike(post.id);
+      setPost(updatedPost);
+      onPostUpdate();
+    } catch (err) {
+      console.error("Failed to like post:", err);
+    }
   };
 
-  const currentUserId = userRole === "admin" ? "admin-user" : "current-user";
-  const isLiked = post.likedBy.includes(currentUserId);
+  const userStr = localStorage.getItem("user");
+  const currentUser = userStr ? JSON.parse(userStr) : null;
+  const currentUserId = currentUser ? currentUser._id || currentUser.id : null;
+  const isLiked = currentUserId ? post.likedBy.includes(currentUserId) : false;
 
   return (
     <div className="post-detail">
@@ -88,7 +112,7 @@ function PostDetail({ post, onBack, userRole, onLoginRequired, onPostUpdate }: P
             </button>
             <div className="post-action-btn">
               <i className="bx bx-message-rounded-dots"></i>
-              <span>{commentCount}</span>
+              <span>{commentsCount}</span>
             </div>
           </div>
         </article>

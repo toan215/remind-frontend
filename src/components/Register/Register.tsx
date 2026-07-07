@@ -1,36 +1,56 @@
 import { useState } from 'react';
+import { useGoogleLogin } from '@react-oauth/google';
+import { AuthController } from '../../controllers/AuthController';
 import './Register.css';
 
 interface RegisterProps {
   isLoading: boolean;
   onSubmit: (data: any, resetForm: () => void) => void;
+  onLoginSuccess?: (role: 'user' | 'admin') => void;
 }
 
-function Register({ isLoading, onSubmit }: RegisterProps) {
+function Register({ isLoading, onSubmit, onLoginSuccess }: RegisterProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [registerData, setRegisterData] = useState({
     fullname: '',
     email: '',
-    username: '',
     password: '',
     confirmPassword: '',
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  const registerWithGoogle = useGoogleLogin({
+    onSuccess: async (tokenResponse) => {
+      try {
+        const result = await AuthController.googleLogin(tokenResponse.access_token);
+        if (onLoginSuccess) {
+          const role =
+            result.user.role === 'admin' || result.user.role === 'system_manager'
+              ? 'admin'
+              : 'user';
+          onLoginSuccess(role);
+        }
+      } catch (err: any) {
+        alert(err.message);
+      }
+    },
+    onError: () => {
+      alert('Đăng ký Google thất bại');
+    }
+  });
   const validate = () => {
     const newErrors: Record<string, string> = {};
     if (!registerData.fullname.trim()) newErrors.fullname = 'Full name is required';
-    if (!registerData.email.trim()) newErrors.email = 'Email is required';
+    if (!registerData.email.trim()) newErrors.email = 'Email không được để trống';
     else if (!/\S+@\S+\.\S+/.test(registerData.email))
-      newErrors.email = 'Email is invalid';
-    if (!registerData.username.trim()) newErrors.username = 'Username is required';
-    if (!registerData.password.trim()) newErrors.password = 'Password is required';
+      newErrors.email = 'Email không hợp lệ';
+    if (!registerData.password.trim()) newErrors.password = 'Mật khẩu không được để trống';
     else if (registerData.password.length < 6)
-      newErrors.password = 'Password must be at least 6 characters';
+      newErrors.password = 'Mật khẩu phải dài ít nhất 6 ký tự';
     if (!registerData.confirmPassword.trim())
-      newErrors.confirmPassword = 'Please confirm your password';
+      newErrors.confirmPassword = 'Vui lòng xác nhận mật khẩu';
     else if (registerData.password !== registerData.confirmPassword)
-      newErrors.confirmPassword = 'Passwords do not match';
+      newErrors.confirmPassword = 'Mật khẩu không khớp';
     return newErrors;
   };
 
@@ -40,7 +60,7 @@ function Register({ isLoading, onSubmit }: RegisterProps) {
     setErrors(validationErrors);
     if (Object.keys(validationErrors).length === 0) {
       onSubmit(registerData, () => {
-        setRegisterData({ fullname: '', email: '', username: '', password: '', confirmPassword: '' });
+        setRegisterData({ fullname: '', email: '', password: '', confirmPassword: '' });
         setErrors({});
       });
     }
@@ -54,14 +74,14 @@ function Register({ isLoading, onSubmit }: RegisterProps) {
   return (
     <div className="login-form-box">
       <form onSubmit={handleSubmit} id="register-form">
-        <h1>Create Account</h1>
-        <p className="login-subtitle">Join us and start your journey</p>
+        <h1>Tạo tài khoản</h1>
+        <p className="login-subtitle">Tham gia cùng chúng tôi ngay hôm nay</p>
 
         <div className={`login-input-box ${errors.fullname ? 'error' : ''}`}>
           <input
             type="text"
             id="register-fullname"
-            placeholder="Full Name"
+            placeholder="Họ và tên"
             value={registerData.fullname}
             onChange={(e) => updateField('fullname', e.target.value)}
           />
@@ -81,23 +101,12 @@ function Register({ isLoading, onSubmit }: RegisterProps) {
           {errors.email && <span className="login-error-msg">{errors.email}</span>}
         </div>
 
-        <div className={`login-input-box ${errors.username ? 'error' : ''}`}>
-          <input
-            type="text"
-            id="register-username"
-            placeholder="Username"
-            value={registerData.username}
-            onChange={(e) => updateField('username', e.target.value)}
-          />
-          <i className="bx bx-user"></i>
-          {errors.username && <span className="login-error-msg">{errors.username}</span>}
-        </div>
 
         <div className={`login-input-box ${errors.password ? 'error' : ''}`}>
           <input
             type={showPassword ? 'text' : 'password'}
             id="register-password"
-            placeholder="Password"
+            placeholder="Mật khẩu"
             value={registerData.password}
             onChange={(e) => updateField('password', e.target.value)}
           />
@@ -105,7 +114,7 @@ function Register({ isLoading, onSubmit }: RegisterProps) {
             className={`bx ${showPassword ? 'bx-show' : 'bx-hide'}`}
             onClick={() => setShowPassword(!showPassword)}
             style={{ cursor: 'pointer' }}
-            title={showPassword ? 'Hide password' : 'Show password'}
+            title={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
           ></i>
           {errors.password && <span className="login-error-msg">{errors.password}</span>}
         </div>
@@ -114,7 +123,7 @@ function Register({ isLoading, onSubmit }: RegisterProps) {
           <input
             type="password"
             id="register-confirm-password"
-            placeholder="Confirm Password"
+            placeholder="Xác nhận mật khẩu"
             value={registerData.confirmPassword}
             onChange={(e) => updateField('confirmPassword', e.target.value)}
           />
@@ -134,28 +143,19 @@ function Register({ isLoading, onSubmit }: RegisterProps) {
             <span className="login-spinner"></span>
           ) : (
             <>
-              Sign Up
+              <span>Đăng ký</span>
               <i className="bx bx-user-plus"></i>
             </>
           )}
         </button>
 
         <div className="login-divider">
-          <span>or sign up with</span>
+          <span>hoặc đăng ký với</span>
         </div>
 
         <div className="login-social-icons">
-          <a href="#" className="login-social-btn" id="signup-google" title="Sign up with Google">
+          <a href="#" className="login-social-btn" id="signup-google" title="Đăng ký bằng Google" onClick={(e) => { e.preventDefault(); registerWithGoogle(); }}>
             <i className="bx bxl-google"></i>
-          </a>
-          <a href="#" className="login-social-btn" id="signup-facebook" title="Sign up with Facebook">
-            <i className="bx bxl-facebook"></i>
-          </a>
-          <a href="#" className="login-social-btn" id="signup-tiktok" title="Sign up with TikTok">
-            <i className="bx bxl-tiktok"></i>
-          </a>
-          <a href="#" className="login-social-btn" id="signup-github" title="Sign up with GitHub">
-            <i className="bx bxl-github"></i>
           </a>
         </div>
       </form>

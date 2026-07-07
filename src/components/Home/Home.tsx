@@ -9,6 +9,9 @@ interface HomeProps {
   onOpenRegister: () => void;
   onLogout: () => void;
   userRole: string;
+  onOpenAdminPortal: () => void;
+  onOpenAbout: () => void;
+  onOpenChat: () => void;
 }
 
 function Home({
@@ -19,6 +22,9 @@ function Home({
   onOpenRegister,
   onLogout,
   userRole,
+  onOpenAdminPortal,
+  onOpenAbout,
+  onOpenChat,
 }: HomeProps) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -71,8 +77,11 @@ function Home({
             <span className="home-logo-text">ReMind</span>
           </div>
           <nav className="home-nav" id="home-nav">
-            <a href="#about" className="home-nav-link">
-              Về chúng tớ
+            <a href="#about" className="home-nav-link" onClick={(e) => {
+                e.preventDefault();
+                onOpenAbout();
+              }}>
+              Về chúng tôi
             </a>
             <a href="#ai-companion" className="home-nav-link">
               AI Companion
@@ -109,6 +118,15 @@ function Home({
           </nav>
 
           <div className="home-auth-pills">
+            {/* Chat Pill */}
+            <div
+              className="auth-pill bell-pill"
+              onClick={onOpenChat}
+              title="Tin nhắn"
+            >
+              <i className="bx bx-message-rounded-dots"></i>
+            </div>
+
             <div className="auth-pill-dropdown-container" ref={notifRef}>
               <div
                 className="auth-pill bell-pill"
@@ -320,16 +338,16 @@ function Home({
               </div>
               <div className="chatbot-messages">
                 <div className="chat-msg bot">
-                  Chào bạn, tớ ở đây để lắng nghe. Hôm nay của bạn thế nào? Cứ
+                  Chào bạn, tôi ở đây để lắng nghe. Hôm nay của bạn thế nào? Cứ
                   chia sẻ nhé, không ai biết bạn là ai đâu.
                 </div>
                 <div className="chat-msg user">
-                  Tớ vừa trượt bài kiểm tra, áp lực đồng lứa làm tớ ngột ngạt
+                  Tôi vừa trượt bài kiểm tra, áp lực đồng lứa làm tôi ngột ngạt
                   quá...
                 </div>
                 <div className="chat-msg bot">
-                  Tớ hiểu cảm giác đó. Thất bại một bài kiểm tra không định
-                  nghĩa giá trị của bạn. Hãy cùng tớ thực hiện bài tập thở sâu
+                  Tôi hiểu cảm giác đó. Thất bại một bài kiểm tra không định
+                  nghĩa giá trị của bạn. Hãy cùng tôi thực hiện bài tập thở sâu
                   4-7-8 để bình tĩnh lại nhé?
                 </div>
               </div>
@@ -520,7 +538,7 @@ function Home({
           </div>
           <div className="home-footer-links">
             <h4>Liên kết</h4>
-            <a href="#about">Về chúng tớ</a>
+            <a href="#about" onClick={(e) => { e.preventDefault(); onOpenAbout(); }}>Về chúng tôi</a>
             <a href="#ai-companion">AI Companion</a>
             <a href="#clinic">Phòng khám</a>
             <a href="#forum">Góc tâm sự</a>

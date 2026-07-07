@@ -1,5 +1,5 @@
 export interface ForumPost {
-  id: number;
+  id: string;
   title: string;
   content: string;
   author: string;
@@ -12,11 +12,11 @@ export interface ForumPost {
 }
 
 export interface Comment {
-  id: number;
-  postId: number;
+  id: string;
+  postId: string;
   author: string;
   content: string;
-  parentId: number | null;
+  parentId: string | null;
   likes: number;
   createdAt: string;
 }
@@ -30,8 +30,8 @@ export interface CreatePostData {
 }
 
 export interface CreateCommentData {
-  postId: number;
+  postId: string;
   author: string;
   content: string;
-  parentId: number | null;
+  parentId: string | null;
 }

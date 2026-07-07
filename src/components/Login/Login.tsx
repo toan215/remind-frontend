@@ -1,54 +1,89 @@
 import { useState } from "react";
 import Register from "../Register/Register";
+import { AuthController } from "../../controllers/AuthController";
+import { useGoogleLogin } from '@react-oauth/google';
 import "./Login.css";
 
 interface LoginProps {
   onLoginSuccess: (role: "user" | "admin") => void;
   onBack?: () => void;
+  initialMode?: "login" | "register";
 }
 
-function Login({ onLoginSuccess, onBack }: LoginProps) {
-  const [isSignUp, setIsSignUp] = useState(false);
+function Login({ onLoginSuccess, onBack, initialMode = "login" }: LoginProps) {
+  const [isSignUp, setIsSignUp] = useState(initialMode === "register");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
+  const loginWithGoogle = useGoogleLogin({
+    onSuccess: async (tokenResponse) => {
+      try {
+        setIsLoading(true);
+        const result = await AuthController.googleLogin(tokenResponse.access_token);
+        setIsLoading(false);
+        const role =
+          result.user.role === "admin" || result.user.role === "system_manager"
+            ? "admin"
+            : "user";
+        onLoginSuccess(role);
+      } catch (err: any) {
+        setIsLoading(false);
+        setLoginErrors({ global: err.message });
+      }
+    },
+    onError: () => {
+      setLoginErrors({ global: "Đăng nhập Google thất bại" });
+    }
+  });
+
   // Login form state
-  const [loginData, setLoginData] = useState({ username: "", password: "" });
+  const [loginData, setLoginData] = useState({ email: "", password: "" });
   const [loginErrors, setLoginErrors] = useState<Record<string, string>>({});
 
   const validateLogin = () => {
     const errors: Record<string, string> = {};
-    if (!loginData.username.trim()) errors.username = "Username is required";
-    if (!loginData.password.trim()) errors.password = "Password is required";
+    if (!loginData.email.trim()) errors.email = "Email không được để trống";
+    if (!loginData.password.trim()) errors.password = "Mật khẩu không được để trống";
     else if (loginData.password.length < 6)
-      errors.password = "Password must be at least 6 characters";
+      errors.password = "Mật khẩu phải dài ít nhất 6 ký tự";
     return errors;
   };
 
-  const handleLoginSubmit = (e: React.FormEvent) => {
+  const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const errors = validateLogin();
     setLoginErrors(errors);
     if (Object.keys(errors).length === 0) {
       setIsLoading(true);
-      setTimeout(() => {
+      try {
+        const response = await AuthController.login(loginData.email, loginData.password);
         setIsLoading(false);
         if (onLoginSuccess) {
-          const role = loginData.username.toLowerCase() === "admin" ? "admin" : "user";
+          const role =
+            response.user.role === "admin" || response.user.role === "system_manager"
+              ? "admin"
+              : "user";
           onLoginSuccess(role);
         }
-      }, 1500);
+      } catch (err: any) {
+        setIsLoading(false);
+        setLoginErrors({ global: err.message });
+      }
     }
   };
 
-  const handleRegisterSubmit = (data: any, resetForm: () => void) => {
+  const handleRegisterSubmit = async (data: any, resetForm: () => void) => {
     setIsLoading(true);
-    setTimeout(() => {
+    try {
+      await AuthController.register(data.fullname, data.email, data.password, "student");
       setIsLoading(false);
-      alert(`Registration successful!\nWelcome, ${data.fullname}!`);
+      alert(`Đăng ký thành công!\nChào mừng, ${data.fullname}!`);
       resetForm();
       setIsSignUp(false);
-    }, 1500);
+    } catch (err: any) {
+      setIsLoading(false);
+      alert(err.message);
+    }
   };
 
   const switchToSignUp = () => {
@@ -73,10 +108,10 @@ function Login({ onLoginSuccess, onBack }: LoginProps) {
       {onBack && (
         <button 
           onClick={onBack}
-          style={{ position: 'absolute', top: '20px', left: '20px', zIndex: 1000, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '50%', width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', boxShadow: 'var(--shadow)', color: 'var(--ink-700)' }}
-          title="Quay lại"
+          className="back-button-expandable"
         >
-          <i className="bx bx-arrow-back" style={{ fontSize: '20px' }}></i>
+          <i className="bx bx-arrow-back"></i>
+          <span className="back-text">Quay lại</span>
         </button>
       )}
 
@@ -85,29 +120,47 @@ function Login({ onLoginSuccess, onBack }: LoginProps) {
         <div className="form-panel login-form-panel">
           <div className="login-form-box">
             <form onSubmit={handleLoginSubmit} id="login-form">
-              <h1>Welcome Back</h1>
+              <h1>Chào mừng trở lại</h1>
               <p className="login-subtitle">
-                Sign in to your account to continue
+                Đăng nhập vào tài khoản của bạn để tiếp tục
               </p>
 
+              {loginErrors.global && (
+                <div 
+                  className="login-error-global" 
+                  style={{ 
+                    color: "var(--red, #ef4444)", 
+                    marginBottom: "15px", 
+                    textAlign: "center", 
+                    fontSize: "14px",
+                    padding: "8px",
+                    background: "rgba(239, 68, 68, 0.1)",
+                    borderRadius: "6px",
+                    border: "1px solid rgba(239, 68, 68, 0.2)"
+                  }}
+                >
+                  {loginErrors.global}
+                </div>
+              )}
+
               <div
-                className={`login-input-box ${loginErrors.username ? "error" : ""}`}
+                className={`login-input-box ${loginErrors.email ? "error" : ""}`}
               >
                 <input
-                  type="text"
-                  id="login-username"
-                  placeholder="Username"
-                  value={loginData.username}
+                  type="email"
+                  id="login-email"
+                  placeholder="Email"
+                  value={loginData.email}
                   onChange={(e) => {
-                    setLoginData({ ...loginData, username: e.target.value });
-                    if (loginErrors.username)
-                      setLoginErrors({ ...loginErrors, username: "" });
+                    setLoginData({ ...loginData, email: e.target.value });
+                    if (loginErrors.email)
+                      setLoginErrors({ ...loginErrors, email: "" });
                   }}
                 />
-                <i className="bx bx-user"></i>
-                {loginErrors.username && (
+                <i className="bx bx-envelope"></i>
+                {loginErrors.email && (
                   <span className="login-error-msg">
-                    {loginErrors.username}
+                    {loginErrors.email}
                   </span>
                 )}
               </div>
@@ -118,7 +171,7 @@ function Login({ onLoginSuccess, onBack }: LoginProps) {
                 <input
                   type={showPassword ? "text" : "password"}
                   id="login-password"
-                  placeholder="Password"
+                  placeholder="Mật khẩu"
                   value={loginData.password}
                   onChange={(e) => {
                     setLoginData({ ...loginData, password: e.target.value });
@@ -130,7 +183,7 @@ function Login({ onLoginSuccess, onBack }: LoginProps) {
                   className={`bx ${showPassword ? "bx-show" : "bx-hide"}`}
                   onClick={() => setShowPassword(!showPassword)}
                   style={{ cursor: "pointer" }}
-                  title={showPassword ? "Hide password" : "Show password"}
+                  title={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
                 ></i>
                 {loginErrors.password && (
                   <span className="login-error-msg">
@@ -143,14 +196,14 @@ function Login({ onLoginSuccess, onBack }: LoginProps) {
                 <label className="login-remember" htmlFor="remember-me">
                   <input type="checkbox" id="remember-me" />
                   <span className="checkmark"></span>
-                  Remember me
+                  Ghi nhớ đăng nhập
                 </label>
                 <a
                   href="#"
                   className="login-forgot-link"
                   id="forgot-password-link"
                 >
-                  Forgot Password?
+                  Quên mật khẩu?
                 </a>
               </div>
 
@@ -164,14 +217,14 @@ function Login({ onLoginSuccess, onBack }: LoginProps) {
                   <span className="login-spinner"></span>
                 ) : (
                   <>
-                    Login
+                    <span>Đăng nhập</span>
                     <i className="bx bx-log-in-circle"></i>
                   </>
                 )}
               </button>
 
               <div className="login-divider">
-                <span>or login with</span>
+                <span>hoặc đăng nhập với</span>
               </div>
 
               <div className="login-social-icons">
@@ -179,33 +232,11 @@ function Login({ onLoginSuccess, onBack }: LoginProps) {
                   href="#"
                   className="login-social-btn"
                   id="login-google"
-                  title="Login with Google"
+                  title="Đăng nhập bằng Google"
+                  onClick={(e) => { e.preventDefault(); loginWithGoogle(); }}
                 >
                   <i className="bx bxl-google"></i>
-                </a>
-                <a
-                  href="#"
-                  className="login-social-btn"
-                  id="login-facebook"
-                  title="Login with Facebook"
-                >
-                  <i className="bx bxl-facebook"></i>
-                </a>
-                <a
-                  href="#"
-                  className="login-social-btn"
-                  id="login-tiktok"
-                  title="Login with TikTok"
-                >
-                  <i className="bx bxl-tiktok"></i>
-                </a>
-                <a
-                  href="#"
-                  className="login-social-btn"
-                  id="login-github"
-                  title="Login with GitHub"
-                >
-                  <i className="bx bxl-github"></i>
+                  <span>Đăng nhập bằng Google</span>
                 </a>
               </div>
             </form>
@@ -217,6 +248,7 @@ function Login({ onLoginSuccess, onBack }: LoginProps) {
           <Register
             isLoading={isLoading && isSignUp}
             onSubmit={handleRegisterSubmit}
+            onLoginSuccess={onLoginSuccess}
           />
         </div>
 
@@ -226,26 +258,26 @@ function Login({ onLoginSuccess, onBack }: LoginProps) {
             <div className="login-brand-icon">
               <i className="bx bx-code-alt"></i>
             </div>
-            <h2>Remind AI</h2>
-            <p className="overlay-tagline">Mental health assistant</p>
+            <h2>ReMind AI</h2>
+            <p className="overlay-tagline">Nền tảng hỗ trợ tâm lý</p>
 
             {/* Content shown when on Login page (panel is on the left) */}
             <div className="overlay-login-content">
-              <p className="overlay-question">Don't have an account?</p>
+              <p className="overlay-question">Chưa có tài khoản?</p>
               <button
                 type="button"
                 className="overlay-btn"
                 id="switch-to-signup"
                 onClick={switchToSignUp}
               >
-                Sign Up
+                <span>Đăng ký</span>
                 <i className="bx bx-right-arrow-alt"></i>
               </button>
             </div>
 
             {/* Content shown when on Register page (panel is on the right) */}
             <div className="overlay-register-content">
-              <p className="overlay-question">Already have an account?</p>
+              <p className="overlay-question">Đã có tài khoản?</p>
               <button
                 type="button"
                 className="overlay-btn"
@@ -253,7 +285,7 @@ function Login({ onLoginSuccess, onBack }: LoginProps) {
                 onClick={switchToLogin}
               >
                 <i className="bx bx-left-arrow-alt"></i>
-                Login
+                <span>Đăng nhập</span>
               </button>
             </div>
           </div>
