@@ -35,6 +35,10 @@ function Forum({ onBack, userRole, onLoginRequired }: ForumProps) {
   const [newPostTitle, setNewPostTitle] = useState("");
   const [newPostContent, setNewPostContent] = useState("");
   const [newPostTags, setNewPostTags] = useState("");
+  const [isAnonymous, setIsAnonymous] = useState(false);
+  const [isPosting, setIsPosting] = useState(false);
+  const [toastMessage, setToastMessage] = useState<{type: 'success'|'error', text: string} | null>(null);
+  const [errors, setErrors] = useState({ title: false, forum: false, content: false });
 
   const [showAuthPrompt, setShowAuthPrompt] = useState(false);
   const [fallbackPost, setFallbackPost] = useState<PostType | null>(null);
@@ -143,34 +147,49 @@ function Forum({ onBack, userRole, onLoginRequired }: ForumProps) {
     setNewPostTitle("");
     setNewPostContent("");
     setNewPostTags("");
+    setIsAnonymous(false);
+    setErrors({ title: false, forum: false, content: false });
   };
 
   const handleSubmitPost = async () => {
-    if (!newPostTitle.trim() || !newPostContent.trim()) {
-      alert("Vui lòng nhập tiêu đề và nội dung.");
+    const hasError = {
+      title: !newPostTitle.trim(),
+      forum: !selectedForumId,
+      content: !newPostContent.trim(),
+    };
+
+    if (hasError.title || hasError.forum || hasError.content) {
+      setErrors(hasError);
+      setToastMessage({ type: 'error', text: 'Vui lòng điền đầy đủ các thông tin bắt buộc (*)' });
+      setTimeout(() => setToastMessage(null), 5000);
       return;
     }
-    if (!selectedForumId) {
-      alert("Vui lòng chọn danh mục.");
-      return;
-    }
+
+    setErrors({ title: false, forum: false, content: false });
+    setIsPosting(true);
     try {
       const tagsArray = newPostTags
         .split(",")
-        .map((tag) => tag.trim())
-        .filter(Boolean);
+        .map((t) => t.trim())
+        .filter((t) => t);
+
       const newPost = await createPost(
         selectedForumId,
         newPostTitle,
         newPostContent,
         tagsArray,
-        1,
+        isAnonymous ? 1 : 0, // 1 is anonymous, 0 is real name
       );
       setPosts([newPost, ...posts]);
       handleCloseModal();
-    } catch (error) {
-      console.error("Failed to create post", error);
-      alert("Có lỗi xảy ra khi tạo bài viết.");
+      setToastMessage({ type: 'success', text: 'Bạn vừa đăng bài thành công!' });
+      setTimeout(() => setToastMessage(null), 5000);
+    } catch (err) {
+      console.error(err);
+      setToastMessage({ type: 'error', text: 'Đã có lỗi xảy ra khi đăng bài.' });
+      setTimeout(() => setToastMessage(null), 5000);
+    } finally {
+      setIsPosting(false);
     }
   };
 
@@ -186,33 +205,43 @@ function Forum({ onBack, userRole, onLoginRequired }: ForumProps) {
     }
   }, [selectedPostId, posts, searchResults]);
 
-  if (selectedPostId) {
-    const post = posts.find((p) => p._id === selectedPostId)
-      ?? searchResults.find((p) => p._id === selectedPostId)
-      ?? fallbackPost;
-    if (post) {
-      return (
-        <ForumDetail
-          post={post}
-          onBack={() => { setSelectedPostId(null); setFallbackPost(null); }}
-          userRole={userRole}
-          onLoginRequired={onLoginRequired}
-        />
-      );
-    }
-  }
+  const selectedPost = selectedPostId ? (posts.find((p) => p._id === selectedPostId)
+    ?? searchResults.find((p) => p._id === selectedPostId)
+    ?? fallbackPost) : null;
 
   const displayPosts = searchTerm.trim() ? searchResults : posts;
   const isFeedLoading = searchTerm.trim() ? isSearching : loading;
 
+  // Process forums to get distinct categories
+  const groupedForums = forums.reduce((acc, f) => {
+    let cleanTitle = f.title;
+    if (cleanTitle.includes('-')) {
+      cleanTitle = cleanTitle.split('-').pop()?.trim() || cleanTitle;
+    } else if (cleanTitle.includes('#')) {
+      cleanTitle = cleanTitle.replace(/Forum Topic #\d+/i, '').trim();
+    }
+    if (!acc[cleanTitle]) acc[cleanTitle] = f._id;
+    return acc;
+  }, {} as Record<string, string>);
+
   return (
     <div className="forum-screen">
-      <header className="forum-header">
-        <button className="rm-back-btn" onClick={onBack} title="Quay lại">
-          <i className="bx bx-arrow-back"></i>
-        </button>
-        <h1 className="forum-header-title">Góc Tâm Sự</h1>
-      </header>
+      {toastMessage && (
+        <div className={`forum-toast ${toastMessage.type}`}>
+          <div className="forum-toast-content">
+            {toastMessage.type === 'success' ? (
+              <i className="bx bx-check-circle" style={{ color: '#52c41a', fontSize: '20px' }}></i>
+            ) : (
+              <i className="bx bx-error-circle" style={{ color: '#ff4d4f', fontSize: '20px' }}></i>
+            )}
+            <span>{toastMessage.text}</span>
+          </div>
+          <button className="forum-toast-close" onClick={() => setToastMessage(null)}>
+            <i className="bx bx-x"></i>
+          </button>
+        </div>
+      )}
+
 
       <div className="forum-layout">
         <main className="forum-main-feed">
@@ -364,53 +393,78 @@ function Forum({ onBack, userRole, onLoginRequired }: ForumProps) {
 
       {isModalOpen && (
         <div className="forum-modal-overlay">
-          <div className="forum-modal-content">
-            <div className="forum-modal-header">
-              <h2>Tạo bài viết mới</h2>
+          <div className="forum-modal-content new-layout">
+            <div className="forum-modal-header new-header">
               <button className="forum-modal-close" onClick={handleCloseModal}>
-                &times;
+                <i className="bx bx-x"></i>
+              </button>
+              <h2>Tạo bài viết mới</h2>
+              <button
+                className="rm-btn rm-btn-primary header-submit-btn"
+                onClick={handleSubmitPost}
+                disabled={isPosting}
+              >
+                {isPosting ? <i className="bx bx-loader-alt bx-spin"></i> : null}
+                {isPosting ? " Đang đăng..." : "Đăng"}
               </button>
             </div>
-            <div className="forum-modal-form">
-              <input
-                className="forum-modal-input"
-                placeholder="Tiêu đề bài viết"
-                value={newPostTitle}
-                onChange={(e) => setNewPostTitle(e.target.value)}
-              />
-              <textarea
-                className="forum-modal-textarea"
-                placeholder="Nội dung bài viết..."
-                value={newPostContent}
-                onChange={(e) => setNewPostContent(e.target.value)}
-              />
-              <input
-                className="forum-modal-input"
-                placeholder="Nhãn (tags), cách nhau bởi dấu phẩy"
-                value={newPostTags}
-                onChange={(e) => setNewPostTags(e.target.value)}
-              />
-              <select
-                className="forum-modal-input"
-                value={selectedForumId}
-                onChange={(e) => setSelectedForumId(e.target.value)}
-                style={{ padding: '12px' }}
-              >
-                <option value="">-- Chọn danh mục --</option>
-                {forums.map((f) => (
-                  <option key={f._id} value={f._id}>{f.title}</option>
-                ))}
-              </select>
-              <div className="forum-modal-footer">
-                <button className="rm-btn" onClick={handleCloseModal}>
-                  Hủy
-                </button>
-                <button
-                  className="rm-btn rm-btn-primary"
-                  onClick={handleSubmitPost}
-                >
-                  Đăng bài
-                </button>
+            <div className="forum-modal-form new-body">
+              <div className="new-modal-field">
+                <label>Tiêu đề <span style={{color: '#ff4d4f'}}>*</span></label>
+                <input
+                  className={`forum-modal-input ${errors.title ? 'input-error' : ''}`}
+                  placeholder="Nhập tiêu đề bài viết..."
+                  value={newPostTitle}
+                  onChange={(e) => {
+                    setNewPostTitle(e.target.value);
+                    if (errors.title) setErrors({ ...errors, title: false });
+                  }}
+                />
+                {errors.title && <span className="forum-error-msg">Vui lòng nhập tiêu đề bài viết</span>}
+              </div>
+
+              <div className="new-modal-field">
+                <label>Chọn chuyên mục <span style={{color: '#ff4d4f'}}>*</span></label>
+                <div className={`new-modal-chips ${errors.forum ? 'chips-error' : ''}`}>
+                  {Object.entries(groupedForums).map(([category, forumId]) => (
+                    <button
+                      key={forumId}
+                      className={`new-modal-chip ${selectedForumId === forumId ? 'selected' : ''}`}
+                      onClick={() => {
+                        setSelectedForumId(forumId);
+                        if (errors.forum) setErrors({ ...errors, forum: false });
+                      }}
+                    >
+                      {category}
+                    </button>
+                  ))}
+                </div>
+                {errors.forum && <span className="forum-error-msg">Vui lòng chọn chuyên mục</span>}
+              </div>
+
+              <div className="new-modal-field">
+                <label>Nội dung <span style={{color: '#ff4d4f'}}>*</span></label>
+                <textarea
+                  className={`forum-modal-textarea ${errors.content ? 'input-error' : ''}`}
+                  placeholder="Chia sẻ suy nghĩ của bạn..."
+                  value={newPostContent}
+                  onChange={(e) => {
+                    setNewPostContent(e.target.value);
+                    if (errors.content) setErrors({ ...errors, content: false });
+                  }}
+                />
+                {errors.content && <span className="forum-error-msg">Vui lòng nhập nội dung bài viết</span>}
+              </div>
+
+              <div className="new-modal-anon-box">
+                <div className="new-modal-anon-info">
+                  <span className="anon-title">Đăng ẩn danh</span>
+                  <span className="anon-desc">Tên của bạn sẽ được ẩn đi trong cộng đồng</span>
+                </div>
+                <label className="new-modal-switch">
+                  <input type="checkbox" checked={isAnonymous} onChange={(e) => setIsAnonymous(e.target.checked)} />
+                  <span className="slider round"></span>
+                </label>
               </div>
             </div>
           </div>
@@ -446,6 +500,15 @@ function Forum({ onBack, userRole, onLoginRequired }: ForumProps) {
             </button>
           </div>
         </div>
+      )}
+      
+      {selectedPost && (
+        <ForumDetail
+          post={selectedPost}
+          onBack={() => { setSelectedPostId(null); setFallbackPost(null); }}
+          userRole={userRole}
+          onLoginRequired={onLoginRequired}
+        />
       )}
     </div>
   );

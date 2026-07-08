@@ -14,6 +14,7 @@ export interface PostType {
   publicAuthorName: string;
   content: string;
   tags: string[];
+  images?: string[];
   likeCount: number;
   commentCount: number;
   status: string;

@@ -5,11 +5,9 @@
 }
 
 .forum-detail-post {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 32px;
+  padding: 0 0 24px 0;
   margin-bottom: 24px;
+  border-bottom: 1px solid var(--border);
 }
 
 .forum-detail-header {
@@ -86,10 +84,7 @@
 
 /* Comments Section */
 .forum-comments-section {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 32px;
+  padding: 0;
 }
 
 .forum-comments-header {
@@ -187,4 +182,104 @@
 .forum-comment-submit {
   display: flex;
   justify-content: flex-end;
+}
+
+/* ========================
+   RESPONSIVE MODAL
+   ======================== */
+.forum-detail-modal {
+  display: flex;
+  flex-direction: column;
+  height: 90vh;
+  overflow-y: auto;
+  margin: 0 auto;
+}
+
+@media (max-width: 639px) {
+  .forum-detail-modal {
+    width: 100% !important;
+    max-width: calc(100% - 32px) !important;
+    margin: 16px;
+    height: calc(100vh - 32px);
+  }
+}
+
+@media (min-width: 640px) and (max-width: 1024px) {
+  .forum-detail-modal {
+    max-width: 700px !important;
+    width: 90%;
+  }
+}
+
+@media (min-width: 1025px) {
+  .forum-detail-modal {
+    max-width: 800px !important;
+    width: 90%;
+  }
+}
+
+/* ========================
+   SKELETON LOADER
+   ======================== */
+.skeleton-box {
+  background: linear-gradient(90deg, #f0f2f5 25%, #e6e8eb 50%, #f0f2f5 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite linear;
+  border-radius: 4px;
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.skeleton-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+}
+
+.skeleton-text {
+  height: 14px;
+  margin-bottom: 8px;
+  width: 100%;
+}
+
+.skeleton-title {
+  height: 24px;
+  width: 60%;
+  margin-bottom: 16px;
+}
+
+/* Images Grid */
+.forum-post-images {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.forum-post-image {
+  width: 100%;
+  height: auto;
+  border-radius: 8px;
+  object-fit: cover;
+  border: 1px solid var(--border);
+}
+
+/* Empty State */
+.forum-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  color: var(--ink-500);
+  text-align: center;
+}
+
+.forum-empty-state i {
+  font-size: 48px;
+  margin-bottom: 16px;
+  color: var(--border-strong);
 }

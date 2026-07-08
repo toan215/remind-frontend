@@ -156,6 +156,7 @@ function Register({ isLoading, onSubmit, onLoginSuccess }: RegisterProps) {
         <div className="login-social-icons">
           <a href="#" className="login-social-btn" id="signup-google" title="Đăng ký bằng Google" onClick={(e) => { e.preventDefault(); registerWithGoogle(); }}>
             <i className="bx bxl-google"></i>
+            <span>Đăng ký bằng Google</span>
           </a>
         </div>
       </form>

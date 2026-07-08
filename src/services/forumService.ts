@@ -24,7 +24,7 @@ export const getPostDetail = async (postId: string): Promise<{ post: PostType; c
   return response.data;
 };
 
-export const createPost = async (forumId: string, title: string, content: string, tags: string[], authorDisplayMode: number = 1): Promise<PostType> => {
+export const createPost = async (forumId: string, title: string, content: string, tags: string[], authorDisplayMode: number): Promise<PostType> => {
   const response = await api.post(API_ENDPOINTS.FORUMS.CREATE_POST, {
     forumId,
     title,
@@ -33,6 +33,20 @@ export const createPost = async (forumId: string, title: string, content: string
     authorDisplayMode
   });
   return response.data.post;
+};
+
+export const updatePost = async (postId: string, title: string, content: string, tags: string[], authorDisplayMode: number): Promise<PostType> => {
+  const response = await api.patch(API_ENDPOINTS.FORUMS.POST_DETAIL(postId), {
+    title,
+    content,
+    tags,
+    authorDisplayMode
+  });
+  return response.data.post;
+};
+
+export const deletePost = async (postId: string): Promise<void> => {
+  await api.delete(API_ENDPOINTS.FORUMS.POST_DETAIL(postId));
 };
 
 export const createComment = async (postId: string, content: string, authorDisplayMode: number = 1): Promise<CommentType> => {
