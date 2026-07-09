@@ -22,7 +22,7 @@ export class AuthController {
   static async login(identifier: string, password: string): Promise<AuthResponse> {
     try {
       const data = await apiHelper.post<AuthResponse>(API_ENDPOINTS.AUTH.LOGIN, {
-        identifier,
+        email: identifier,
         password,
       });
 

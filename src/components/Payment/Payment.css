@@ -1,0 +1,339 @@
+.payment-page {
+  padding: 40px 24px;
+  min-height: 100vh;
+  background-color: var(--canvas);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.payment-container {
+  max-width: 600px;
+  width: 100%;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+}
+
+.payment-header {
+  padding: 24px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.payment-back-btn {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.payment-back-btn:hover {
+  background: var(--surface-hover);
+  color: var(--text-primary);
+}
+
+.payment-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.payment-content {
+  padding: 24px;
+}
+
+.payment-section-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 16px;
+}
+
+.payment-summary-card {
+  background: var(--surface);
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 24px;
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  border: 1px solid var(--border);
+}
+
+.payment-expert-avatar {
+  font-size: 48px;
+}
+
+.payment-expert-info h4 {
+  margin: 0 0 4px 0;
+  font-size: 16px;
+  color: var(--text-primary);
+}
+
+.payment-expert-info p {
+  margin: 0 0 8px 0;
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.payment-booking-details {
+  display: flex;
+  gap: 12px;
+  font-size: 14px;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.payment-cost-breakdown {
+  margin-bottom: 32px;
+  background: var(--surface);
+  border-radius: 8px;
+  padding: 16px;
+  border: 1px solid var(--border);
+}
+
+.cost-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.cost-row.total {
+  margin-bottom: 0;
+  padding-top: 12px;
+  border-top: 1px dashed var(--border);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.cost-row.deposit {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--border);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--brand-600);
+}
+
+.payment-methods-grid {
+  display: grid;
+  grid-template-columns: repeat(1, 1fr);
+  gap: 12px;
+  margin-bottom: 32px;
+}
+
+.payment-method-card {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: white;
+}
+
+.payment-method-card:hover {
+  border-color: var(--brand-300);
+  background: var(--brand-50);
+}
+
+.payment-method-card.selected {
+  border-color: var(--brand-500);
+  background: var(--brand-100);
+  box-shadow: 0 0 0 2px var(--brand-200);
+}
+
+.payment-method-icon {
+  font-size: 24px;
+  color: var(--brand-500);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.payment-method-name {
+  font-weight: 500;
+  color: var(--text-primary);
+  flex-grow: 1;
+}
+
+.payment-method-radio {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.payment-method-card.selected .payment-method-radio {
+  border-color: var(--brand-600);
+  background-color: white;
+  color: var(--brand-600);
+}
+
+.payment-method-card.selected .payment-method-radio i {
+  font-size: 18px;
+  font-weight: 800;
+  -webkit-text-stroke: 1px var(--brand-600);
+}
+
+.payment-submit-btn {
+  width: 100%;
+  padding: 16px;
+  border-radius: 8px;
+  border: none;
+  background: var(--brand-600);
+  color: white;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: background 0.2s ease;
+}
+
+.payment-submit-btn:hover:not(:disabled) {
+  background: var(--brand-700);
+}
+
+.payment-submit-btn:disabled {
+  background: var(--brand-300);
+  cursor: not-allowed;
+}
+
+.payment-submit-btn.loading {
+  position: relative;
+  color: transparent;
+}
+
+.payment-submit-btn.loading::after {
+  content: "";
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: white;
+  animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Success State */
+.payment-success-content {
+  padding: 40px 24px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.payment-success-icon {
+  width: 80px;
+  height: 80px;
+  background: var(--green-100);
+  color: var(--green-600);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 40px;
+  margin-bottom: 24px;
+}
+
+.payment-success-content h2 {
+  margin: 0 0 12px 0;
+  color: var(--text-primary);
+  font-size: 24px;
+}
+
+.payment-success-content p {
+  color: var(--text-secondary);
+  margin: 0 0 32px 0;
+  line-height: 1.5;
+}
+
+.payment-home-btn {
+  padding: 12px 32px;
+  border-radius: 6px;
+  border: none;
+  background: var(--brand-100);
+  color: var(--brand-700);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.payment-home-btn:hover {
+  background: var(--brand-200);
+}
+
+/* Failed State */
+.payment-failed-icon {
+  width: 80px;
+  height: 80px;
+  background: var(--red-100);
+  color: var(--red-600);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 40px;
+  margin-bottom: 24px;
+}
+
+.payment-retry-btn {
+  padding: 12px 32px;
+  border-radius: 6px;
+  border: none;
+  background: var(--brand-600);
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.payment-retry-btn:hover {
+  background: var(--brand-700);
+}
+
+.payment-cancel-btn {
+  padding: 12px 32px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: white;
+  color: var(--text-secondary);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.payment-cancel-btn:hover {
+  background: var(--surface-hover);
+  color: var(--text-primary);
+}

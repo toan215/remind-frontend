@@ -13,6 +13,7 @@ const AdminRouteDispatcher = lazy(() => import("./routes/adminRoutes").then(modu
 const Forum = lazy(() => import("./components/Forum/Forum"));
 const AboutUs = lazy(() => import("./components/AboutUs/AboutUs"));
 const Header = lazy(() => import("./components/Header/Header"));
+const Payment = lazy(() => import("./components/Payment/Payment"));
 
 const LoadingFallback = () => (
   <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', background: 'var(--canvas)' }}>
@@ -24,6 +25,7 @@ function App() {
   const [userRole, setUserRole] = useState<"guest" | "user" | "admin">("guest");
   const [currentScreen, setCurrentScreen] = useState("home");
   const [adminRoute, setAdminRoute] = useState<AdminRoute>("dashboard");
+  const [pendingBooking, setPendingBooking] = useState<any>(null);
 
   const handleLoginRequired = () => {
     setCurrentScreen("login");
@@ -52,7 +54,30 @@ function App() {
     }
 
     if (currentScreen === "expert") {
-      return <ExpertDirectory onBack={() => setCurrentScreen("home")} userRole={userRole} onLoginRequired={handleLoginRequired} />;
+      return (
+        <ExpertDirectory 
+          onBack={() => setCurrentScreen("home")} 
+          userRole={userRole} 
+          onLoginRequired={handleLoginRequired} 
+          onProceedToPayment={(details) => {
+            setPendingBooking(details);
+            setCurrentScreen("payment");
+          }}
+        />
+      );
+    }
+
+    if (currentScreen === "payment" && pendingBooking) {
+      return (
+        <Payment
+          onBack={() => setCurrentScreen("expert")}
+          onPaymentComplete={() => {
+            setPendingBooking(null);
+            setCurrentScreen("home");
+          }}
+          bookingDetails={pendingBooking}
+        />
+      );
     }
 
     if (currentScreen === "forum") {
@@ -108,7 +133,7 @@ function App() {
 
   return (
     <Suspense fallback={<LoadingFallback />}>
-      {currentScreen !== "login" && currentScreen !== "register" && currentScreen !== "admin" && (
+      {currentScreen !== "login" && currentScreen !== "register" && currentScreen !== "admin" && currentScreen !== "payment" && (
         <Header 
           currentScreen={currentScreen}
           onNavigate={(screen) => setCurrentScreen(screen)}
