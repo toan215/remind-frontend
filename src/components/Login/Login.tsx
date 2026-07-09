@@ -37,12 +37,12 @@ function Login({ onLoginSuccess, onBack, initialMode = "login" }: LoginProps) {
   });
 
   // Login form state
-  const [loginData, setLoginData] = useState({ email: "", password: "" });
+  const [loginData, setLoginData] = useState({ identifier: "", password: "" });
   const [loginErrors, setLoginErrors] = useState<Record<string, string>>({});
 
   const validateLogin = () => {
     const errors: Record<string, string> = {};
-    if (!loginData.email.trim()) errors.email = "Email không được để trống";
+    if (!loginData.identifier.trim()) errors.identifier = "Email hoặc Tên không được để trống";
     if (!loginData.password.trim()) errors.password = "Mật khẩu không được để trống";
     else if (loginData.password.length < 6)
       errors.password = "Mật khẩu phải dài ít nhất 6 ký tự";
@@ -56,7 +56,7 @@ function Login({ onLoginSuccess, onBack, initialMode = "login" }: LoginProps) {
     if (Object.keys(errors).length === 0) {
       setIsLoading(true);
       try {
-        const response = await AuthController.login(loginData.email, loginData.password);
+        const response = await AuthController.login(loginData.identifier, loginData.password);
         setIsLoading(false);
         if (onLoginSuccess) {
           const role =
@@ -144,23 +144,23 @@ function Login({ onLoginSuccess, onBack, initialMode = "login" }: LoginProps) {
               )}
 
               <div
-                className={`login-input-box ${loginErrors.email ? "error" : ""}`}
+                className={`login-input-box ${loginErrors.identifier ? "error" : ""}`}
               >
                 <input
-                  type="email"
-                  id="login-email"
-                  placeholder="Email"
-                  value={loginData.email}
+                  type="text"
+                  id="login-identifier"
+                  placeholder="Email hoặc Tên hiển thị"
+                  value={loginData.identifier}
                   onChange={(e) => {
-                    setLoginData({ ...loginData, email: e.target.value });
-                    if (loginErrors.email)
-                      setLoginErrors({ ...loginErrors, email: "" });
+                    setLoginData({ ...loginData, identifier: e.target.value });
+                    if (loginErrors.identifier)
+                      setLoginErrors({ ...loginErrors, identifier: "" });
                   }}
                 />
-                <i className="bx bx-envelope"></i>
-                {loginErrors.email && (
+                <i className="bx bx-user"></i>
+                {loginErrors.identifier && (
                   <span className="login-error-msg">
-                    {loginErrors.email}
+                    {loginErrors.identifier}
                   </span>
                 )}
               </div>

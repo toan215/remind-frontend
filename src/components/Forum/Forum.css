@@ -5,11 +5,12 @@
 .forum-screen {
   background: var(--canvas);
   min-height: 100vh;
+  padding-top: 72px; /* Ensure content doesn't hide under the global taskbar */
 }
 
 .forum-header {
   position: sticky;
-  top: 0;
+  top: 72px; /* Stick below the global taskbar */
   z-index: 40;
   background: var(--surface);
   padding: 16px 24px;

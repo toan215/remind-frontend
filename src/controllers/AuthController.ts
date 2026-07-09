@@ -17,12 +17,12 @@ export interface AuthResponse {
 
 export class AuthController {
   /**
-   * Logs in a user with email and password
+   * Logs in a user with email/name and password
    */
-  static async login(email: string, password: string): Promise<AuthResponse> {
+  static async login(identifier: string, password: string): Promise<AuthResponse> {
     try {
       const data = await apiHelper.post<AuthResponse>(API_ENDPOINTS.AUTH.LOGIN, {
-        email,
+        identifier,
         password,
       });
 

@@ -12,6 +12,7 @@ const AdminLayout = lazy(() => import("./components/Admin/AdminLayout"));
 const AdminRouteDispatcher = lazy(() => import("./routes/adminRoutes").then(module => ({ default: module.AdminRouteDispatcher })));
 const Forum = lazy(() => import("./components/Forum/Forum"));
 const AboutUs = lazy(() => import("./components/AboutUs/AboutUs"));
+const Header = lazy(() => import("./components/Header/Header"));
 
 const LoadingFallback = () => (
   <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', background: 'var(--canvas)' }}>
@@ -107,6 +108,20 @@ function App() {
 
   return (
     <Suspense fallback={<LoadingFallback />}>
+      {currentScreen !== "login" && currentScreen !== "register" && currentScreen !== "admin" && (
+        <Header 
+          currentScreen={currentScreen}
+          onNavigate={(screen) => setCurrentScreen(screen)}
+          userRole={userRole}
+          onOpenLogin={handleLoginRequired}
+          onOpenRegister={() => setCurrentScreen("register")}
+          onLogout={() => setUserRole("guest")}
+          onOpenAdminPortal={() => {
+            setAdminRoute("dashboard");
+            setCurrentScreen("admin");
+          }}
+        />
+      )}
       {renderScreen()}
     </Suspense>
   );

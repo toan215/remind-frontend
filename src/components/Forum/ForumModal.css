@@ -72,6 +72,7 @@
   border-radius: 8px;
   font-size: 14px;
   font-family: inherit;
+  box-sizing: border-box;
 }
 
 .forum-modal-textarea {
@@ -153,4 +154,241 @@
   padding: 14px;
   font-size: 15px;
   font-weight: 600;
+}
+
+/* ========================
+   NEW MODAL LAYOUT
+   ======================== */
+.new-header {
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 16px;
+  margin-bottom: 16px;
+}
+
+.new-header h2 {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--brand-700);
+  flex: 1;
+  text-align: center;
+}
+
+.header-submit-btn {
+  padding: 6px 16px;
+  font-size: 14px;
+  border-radius: 8px;
+}
+
+.forum-modal-close-icon {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: var(--ink-500);
+}
+
+.new-body {
+  gap: 20px;
+}
+
+.new-modal-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.new-modal-field label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink-700);
+}
+
+.new-modal-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.new-modal-chip {
+  padding: 6px 16px;
+  border-radius: 9999px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--ink-900);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.new-modal-chip:hover {
+  border-color: var(--border-strong);
+}
+
+.new-modal-chip.selected {
+  border-color: var(--brand-700);
+  background: var(--brand-100);
+  color: var(--brand-700);
+}
+
+.new-modal-anon-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  background: var(--surface-muted);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.new-modal-anon-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.new-modal-anon-info .anon-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink-900);
+}
+
+.new-modal-anon-info .anon-desc {
+  font-size: 13px;
+  color: var(--ink-700);
+}
+
+/* Switch */
+.new-modal-switch {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+}
+
+.new-modal-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.new-modal-switch .slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--border-strong);
+  transition: .4s;
+}
+
+.new-modal-switch .slider:before {
+  position: absolute;
+  content: "";
+  height: 20px;
+  width: 20px;
+  left: 2px;
+  bottom: 2px;
+  background-color: white;
+  transition: .4s;
+}
+
+.new-modal-switch input:checked + .slider {
+  background-color: var(--brand-700);
+}
+
+.new-modal-switch input:checked + .slider:before {
+  transform: translateX(20px);
+}
+
+.new-modal-switch .slider.round {
+  border-radius: 24px;
+}
+
+.new-modal-switch .slider.round:before {
+  border-radius: 50%;
+}
+
+/* ========================
+   FORM VALIDATION ERRORS
+   ======================== */
+.input-error {
+  border-color: #ff4d4f !important;
+  background-color: #fff2f0 !important;
+}
+
+.chips-error {
+  border: 1px solid #ff4d4f;
+  padding: 8px;
+  border-radius: 8px;
+  background-color: #fff2f0;
+}
+
+.forum-error-msg {
+  display: block;
+  font-size: 12px;
+  color: #ff4d4f;
+  margin-top: 4px;
+  padding-left: 4px;
+  animation: shakeError 0.4s ease;
+}
+
+@keyframes shakeError {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
+}
+
+/* ========================
+   TOAST NOTIFICATION
+   ======================== */
+.forum-toast {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  min-width: 300px;
+  z-index: 9999;
+  animation: slideInRight 0.3s ease-out;
+}
+
+.forum-toast-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 15px;
+  color: var(--ink-900);
+  font-weight: 500;
+}
+
+.forum-toast-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--ink-500);
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.forum-toast-close:hover {
+  color: var(--ink-900);
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
 }
