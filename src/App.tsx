@@ -120,6 +120,10 @@ function App() {
             setAdminRoute("dashboard");
             setCurrentScreen("admin");
           }}
+          onOpenChat={() => {
+            if (userRole === "guest") handleLoginRequired();
+            else setCurrentScreen("chat");
+          }}
         />
       )}
       {renderScreen()}

@@ -9,6 +9,7 @@ interface HeaderProps {
   onLogout: () => void;
   userRole: string;
   onOpenAdminPortal: () => void;
+  onOpenChat: () => void;
 }
 
 export default function Header({
@@ -19,6 +20,7 @@ export default function Header({
   onLogout,
   userRole,
   onOpenAdminPortal,
+  onOpenChat,
 }: HeaderProps) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -118,6 +120,15 @@ export default function Header({
         </nav>
 
         <div className="home-auth-pills">
+          {/* Chat Pill */}
+          <div
+            className="auth-pill bell-pill"
+            onClick={onOpenChat}
+            title="Tin nhắn"
+          >
+            <i className="bx bx-message-rounded-dots"></i>
+          </div>
+
           <div className="auth-pill-dropdown-container" ref={notifRef}>
             <div
               className="auth-pill bell-pill"
