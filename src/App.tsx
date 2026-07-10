@@ -13,6 +13,7 @@ const AdminRouteDispatcher = lazy(() => import("./routes/adminRoutes").then(modu
 const Forum = lazy(() => import("./components/Forum/Forum"));
 const AboutUs = lazy(() => import("./components/AboutUs/AboutUs"));
 const Header = lazy(() => import("./components/Header/Header"));
+const ForgetPassword = lazy(() => import("./components/ForgetPassword/ForgetPassword"));
 
 const LoadingFallback = () => (
   <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', background: 'var(--canvas)' }}>
@@ -39,8 +40,13 @@ function App() {
             setCurrentScreen("home");
           }}
           onBack={() => setCurrentScreen("home")}
+          onForgotPassword={() => setCurrentScreen("forgot-password")}
         />
       );
+    }
+
+    if (currentScreen === "forgot-password") {
+      return <ForgetPassword onBack={() => setCurrentScreen("login")} />;
     }
 
     if (currentScreen === "aichat") {
@@ -108,7 +114,7 @@ function App() {
 
   return (
     <Suspense fallback={<LoadingFallback />}>
-      {currentScreen !== "login" && currentScreen !== "register" && currentScreen !== "admin" && (
+      {currentScreen !== "login" && currentScreen !== "register" && currentScreen !== "admin" && currentScreen !== "forgot-password" && (
         <Header 
           currentScreen={currentScreen}
           onNavigate={(screen) => setCurrentScreen(screen)}

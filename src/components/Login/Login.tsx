@@ -8,9 +8,10 @@ interface LoginProps {
   onLoginSuccess: (role: "user" | "admin") => void;
   onBack?: () => void;
   initialMode?: "login" | "register";
+  onForgotPassword?: () => void;
 }
 
-function Login({ onLoginSuccess, onBack, initialMode = "login" }: LoginProps) {
+function Login({ onLoginSuccess, onBack, initialMode = "login", onForgotPassword }: LoginProps) {
   const [isSignUp, setIsSignUp] = useState(initialMode === "register");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -202,6 +203,10 @@ function Login({ onLoginSuccess, onBack, initialMode = "login" }: LoginProps) {
                   href="#"
                   className="login-forgot-link"
                   id="forgot-password-link"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    if (onForgotPassword) onForgotPassword();
+                  }}
                 >
                   Quên mật khẩu?
                 </a>

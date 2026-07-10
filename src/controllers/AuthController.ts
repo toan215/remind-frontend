@@ -122,4 +122,34 @@ export class AuthController {
   static isAuthenticated(): boolean {
     return !!localStorage.getItem("accessToken");
   }
+
+  /**
+   * Yêu cầu gửi mã OTP khôi phục mật khẩu tới email
+   */
+  static async forgotPassword(email: string): Promise<any> {
+    try {
+      const data = await apiHelper.post(API_ENDPOINTS.AUTH.FORGOT_PASSWORD, { email });
+      return data;
+    } catch (error: any) {
+      const errorMsg = error.response?.data?.error || "Gửi yêu cầu thất bại. Vui lòng kiểm tra lại email.";
+      throw new Error(errorMsg);
+    }
+  }
+
+  /**
+   * Đặt lại mật khẩu mới sử dụng mã OTP đã nhận
+   */
+  static async resetPassword(email: string, otp: string, newPassword: string): Promise<any> {
+    try {
+      const data = await apiHelper.post(API_ENDPOINTS.AUTH.RESET_PASSWORD, {
+        email,
+        otp,
+        newPassword,
+      });
+      return data;
+    } catch (error: any) {
+      const errorMsg = error.response?.data?.error || "Đặt lại mật khẩu thất bại. Vui lòng thử lại.";
+      throw new Error(errorMsg);
+    }
+  }
 }
