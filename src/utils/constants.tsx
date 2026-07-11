@@ -59,4 +59,9 @@ export const API_ENDPOINTS = {
     CREATE_COMMENT: (postId: string) =>
       `${API_BASE_URL}/forums/posts/${postId}/comments`,
   },
+
+  // AI chat endpoints
+  AI: {
+    CHAT: `${API_BASE_URL}/ai/chat`,
+  },
 };

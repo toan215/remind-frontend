@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import "../Home/Home.css";
+import { AuthController } from "../../controllers/AuthController";
 
 interface HeaderProps {
   currentScreen: string;
@@ -129,64 +130,66 @@ export default function Header({
             <i className="bx bx-message-rounded-dots"></i>
           </div>
 
-          <div className="auth-pill-dropdown-container" ref={notifRef}>
-            <div
-              className="auth-pill bell-pill"
-              onClick={() => {
-                setIsNotifOpen(!isNotifOpen);
-                if (!isNotifOpen) setUnreadCount(0);
-              }}
-            >
-              <i className="bx bx-bell"></i>
-              {unreadCount > 0 && (
-                <span className="bell-badge">{unreadCount}</span>
+          {userRole !== "guest" && (
+            <div className="auth-pill-dropdown-container" ref={notifRef}>
+              <div
+                className="auth-pill bell-pill"
+                onClick={() => {
+                  setIsNotifOpen(!isNotifOpen);
+                  if (!isNotifOpen) setUnreadCount(0);
+                }}
+              >
+                <i className="bx bx-bell"></i>
+                {unreadCount > 0 && (
+                  <span className="bell-badge">{unreadCount}</span>
+                )}
+              </div>
+
+              {isNotifOpen && (
+                <div className="auth-dropdown-menu notif-dropdown">
+                  <div className="notif-header">
+                    <h4>Thông báo</h4>
+                  </div>
+                  <div className="notif-list">
+                    <div className="notif-item">
+                      <div className="notif-icon like-icon">
+                        <i className="bx bxs-heart"></i>
+                      </div>
+                      <div className="notif-content">
+                        <p>
+                          <strong>Admin</strong> đã thích bài viết của bạn
+                        </p>
+                        <span>Vừa xong</span>
+                      </div>
+                    </div>
+                    <div className="notif-item">
+                      <div className="notif-icon comment-icon">
+                        <i className="bx bxs-comment-detail"></i>
+                      </div>
+                      <div className="notif-content">
+                        <p>
+                          <strong>Chuyên gia</strong> đã trả lời bình luận của
+                          bạn
+                        </p>
+                        <span>2 giờ trước</span>
+                      </div>
+                    </div>
+                    <div className="notif-item">
+                      <div className="notif-icon check-icon">
+                        <i className="bx bx-check-circle"></i>
+                      </div>
+                      <div className="notif-content">
+                        <p>
+                          Bài viết của bạn đã được <strong>phê duyệt</strong>
+                        </p>
+                        <span>1 ngày trước</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               )}
             </div>
-
-            {isNotifOpen && (
-              <div className="auth-dropdown-menu notif-dropdown">
-                <div className="notif-header">
-                  <h4>Thông báo</h4>
-                </div>
-                <div className="notif-list">
-                  <div className="notif-item">
-                    <div className="notif-icon like-icon">
-                      <i className="bx bxs-heart"></i>
-                    </div>
-                    <div className="notif-content">
-                      <p>
-                        <strong>Admin</strong> đã thích bài viết của bạn
-                      </p>
-                      <span>Vừa xong</span>
-                    </div>
-                  </div>
-                  <div className="notif-item">
-                    <div className="notif-icon comment-icon">
-                      <i className="bx bxs-comment-detail"></i>
-                    </div>
-                    <div className="notif-content">
-                      <p>
-                        <strong>Chuyên gia</strong> đã trả lời bình luận của
-                        bạn
-                      </p>
-                      <span>2 giờ trước</span>
-                    </div>
-                  </div>
-                  <div className="notif-item">
-                    <div className="notif-icon check-icon">
-                      <i className="bx bx-check-circle"></i>
-                    </div>
-                    <div className="notif-content">
-                      <p>
-                        Bài viết của bạn đã được <strong>phê duyệt</strong>
-                      </p>
-                      <span>1 ngày trước</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
+          )}
 
           <div className="auth-pill-dropdown-container" ref={dropdownRef}>
             {userRole === "guest" ? (
@@ -210,13 +213,13 @@ export default function Header({
               >
                 <div className="user-pill-avatar">
                   <img
-                    src="https://api.dicebear.com/7.x/avataaars/svg?seed=PhucHoang"
+                    src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${AuthController.getCurrentUser()?.fullName || "User"}`}
                     alt="Avatar"
                   />
                 </div>
                 <div className="user-pill-info">
                   <span className="user-pill-name">
-                    {userRole === "admin" ? "Quản trị viên" : "Phuc Hoang"}
+                    {userRole === "admin" ? "Quản trị viên" : (AuthController.getCurrentUser()?.fullName || "Người dùng")}
                   </span>
                   <span className="user-pill-status active-status">
                     <span className="status-dot"></span> ONLINE
