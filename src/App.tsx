@@ -6,18 +6,44 @@ const Login = lazy(() => import("./components/Login/Login"));
 const Home = lazy(() => import("./components/Home/Home"));
 const AIChat = lazy(() => import("./components/AIChat/AIChat"));
 const Chat = lazy(() => import("./components/Chat/Chat"));
-const ExpertDirectory = lazy(() => import("./components/ExpertDirectory/ExpertDirectory"));
+const ExpertDirectory = lazy(
+  () => import("./components/ExpertDirectory/ExpertDirectory"),
+);
 const AdminGuard = lazy(() => import("./middleware/AdminAuthGuard"));
 const AdminLayout = lazy(() => import("./components/Admin/AdminLayout"));
-const AdminRouteDispatcher = lazy(() => import("./routes/adminRoutes").then(module => ({ default: module.AdminRouteDispatcher })));
+const AdminRouteDispatcher = lazy(() =>
+  import("./routes/adminRoutes").then((module) => ({
+    default: module.AdminRouteDispatcher,
+  })),
+);
 const Forum = lazy(() => import("./components/Forum/Forum"));
 const AboutUs = lazy(() => import("./components/AboutUs/AboutUs"));
 const Header = lazy(() => import("./components/Header/Header"));
-const ForgetPassword = lazy(() => import("./components/ForgetPassword/ForgetPassword"));
+const ForgetPassword = lazy(
+  () => import("./components/ForgetPassword/ForgetPassword"),
+);
+const Payment = lazy(() => import("./components/Payment/Payment"));
 
 const LoadingFallback = () => (
-  <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', background: 'var(--canvas)' }}>
-    <div className="login-spinner" style={{ borderColor: 'var(--brand-300)', borderTopColor: 'var(--brand-700)', width: '40px', height: '40px', borderWidth: '4px' }}></div>
+  <div
+    style={{
+      display: "flex",
+      justifyContent: "center",
+      alignItems: "center",
+      minHeight: "100vh",
+      background: "var(--canvas)",
+    }}
+  >
+    <div
+      className="login-spinner"
+      style={{
+        borderColor: "var(--brand-300)",
+        borderTopColor: "var(--brand-700)",
+        width: "40px",
+        height: "40px",
+        borderWidth: "4px",
+      }}
+    ></div>
   </div>
 );
 
@@ -25,6 +51,7 @@ function App() {
   const [userRole, setUserRole] = useState<"guest" | "user" | "admin">("guest");
   const [currentScreen, setCurrentScreen] = useState("home");
   const [adminRoute, setAdminRoute] = useState<AdminRoute>("dashboard");
+  const [pendingBooking, setPendingBooking] = useState<any>(null);
 
   const handleLoginRequired = () => {
     setCurrentScreen("login");
@@ -58,11 +85,40 @@ function App() {
     }
 
     if (currentScreen === "expert") {
-      return <ExpertDirectory onBack={() => setCurrentScreen("home")} userRole={userRole} onLoginRequired={handleLoginRequired} />;
+      return (
+        <ExpertDirectory
+          onBack={() => setCurrentScreen("home")}
+          userRole={userRole}
+          onLoginRequired={handleLoginRequired}
+          onProceedToPayment={(details) => {
+            setPendingBooking(details);
+            setCurrentScreen("payment");
+          }}
+        />
+      );
+    }
+
+    if (currentScreen === "payment" && pendingBooking) {
+      return (
+        <Payment
+          onBack={() => setCurrentScreen("expert")}
+          onPaymentComplete={() => {
+            setPendingBooking(null);
+            setCurrentScreen("home");
+          }}
+          bookingDetails={pendingBooking}
+        />
+      );
     }
 
     if (currentScreen === "forum") {
-      return <Forum onBack={() => setCurrentScreen("home")} userRole={userRole} onLoginRequired={handleLoginRequired} />;
+      return (
+        <Forum
+          onBack={() => setCurrentScreen("home")}
+          userRole={userRole}
+          onLoginRequired={handleLoginRequired}
+        />
+      );
     }
 
     if (currentScreen === "about") {
@@ -71,7 +127,10 @@ function App() {
 
     if (currentScreen === "admin") {
       return (
-        <AdminGuard userRole={userRole} onBackToHome={() => setCurrentScreen("home")}>
+        <AdminGuard
+          userRole={userRole}
+          onBackToHome={() => setCurrentScreen("home")}
+        >
           <AdminLayout
             currentRoute={adminRoute}
             onNavigate={(route) => setAdminRoute(route)}
@@ -114,20 +173,26 @@ function App() {
 
   return (
     <Suspense fallback={<LoadingFallback />}>
-      {currentScreen !== "login" && currentScreen !== "register" && currentScreen !== "admin" && currentScreen !== "forgot-password" && (
-        <Header 
-          currentScreen={currentScreen}
-          onNavigate={(screen) => setCurrentScreen(screen)}
-          userRole={userRole}
-          onOpenLogin={handleLoginRequired}
-          onOpenRegister={() => setCurrentScreen("register")}
-          onLogout={() => setUserRole("guest")}
-          onOpenAdminPortal={() => {
-            setAdminRoute("dashboard");
-            setCurrentScreen("admin");
-          }}
-        />
-      )}
+      {currentScreen !== "login" &&
+        currentScreen !== "register" &&
+        currentScreen !== "admin" && (
+          <Header
+            currentScreen={currentScreen}
+            onNavigate={(screen) => setCurrentScreen(screen)}
+            userRole={userRole}
+            onOpenLogin={handleLoginRequired}
+            onOpenRegister={() => setCurrentScreen("register")}
+            onLogout={() => setUserRole("guest")}
+            onOpenAdminPortal={() => {
+              setAdminRoute("dashboard");
+              setCurrentScreen("admin");
+            }}
+            onOpenChat={() => {
+              if (userRole === "guest") handleLoginRequired();
+              else setCurrentScreen("chat");
+            }}
+          />
+        )}
       {renderScreen()}
     </Suspense>
   );

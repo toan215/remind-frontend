@@ -61,4 +61,16 @@ export const API_ENDPOINTS = {
     CREATE_COMMENT: (postId: string) =>
       `${API_BASE_URL}/forums/posts/${postId}/comments`,
   },
+
+  // AI chat endpoints
+  AI: {
+    CHAT: `${API_BASE_URL}/ai/chat`,
+  },
+
+  // Notification endpoints
+  NOTIFICATIONS: {
+    LIST: `${API_BASE_URL}/notifications`,
+    MARK_READ: (id: string) => `${API_BASE_URL}/notifications/${id}/read`,
+    MARK_ALL_READ: `${API_BASE_URL}/notifications/read-all`,
+  },
 };
