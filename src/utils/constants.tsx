@@ -64,4 +64,11 @@ export const API_ENDPOINTS = {
   AI: {
     CHAT: `${API_BASE_URL}/ai/chat`,
   },
+
+  // Notification endpoints
+  NOTIFICATIONS: {
+    LIST: `${API_BASE_URL}/notifications`,
+    MARK_READ: (id: string) => `${API_BASE_URL}/notifications/${id}/read`,
+    MARK_ALL_READ: `${API_BASE_URL}/notifications/read-all`,
+  },
 };
