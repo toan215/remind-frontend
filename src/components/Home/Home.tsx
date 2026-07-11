@@ -11,6 +11,7 @@ interface HomeProps {
   userRole: string;
   onOpenAdminPortal: () => void;
   onOpenAbout: () => void;
+  onOpenSettings: () => void;
   onOpenChat: () => void;
 }
 
@@ -24,6 +25,7 @@ function Home({
   userRole,
   onOpenAdminPortal,
   onOpenAbout,
+  onOpenSettings,
   onOpenChat,
 }: HomeProps) {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -258,6 +260,7 @@ function Home({
                         className="auth-dropdown-item"
                         onClick={() => {
                           setIsDropdownOpen(false);
+                          onOpenSettings();
                         }}
                       >
                         <div className="dropdown-item-icon setting-icon">

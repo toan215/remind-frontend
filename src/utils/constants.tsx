@@ -37,6 +37,24 @@ export const API_ENDPOINTS = {
     REPORTS: `${API_BASE_URL}/admin/reports`,
     RESOLVE_REPORT: (reportId: string | number) =>
       `${API_BASE_URL}/admin/reports/${reportId}/resolve`,
+
+    DASHBOARD_STATS: `${API_BASE_URL}/admin/dashboard/stats`,
+    ACTIVITY_LOG: `${API_BASE_URL}/admin/dashboard/activity-log`,
+
+    // Expert Management by Admin
+    LIST_EXPERTS: `${API_BASE_URL}/admin/experts`,
+    CREATE_EXPERT: `${API_BASE_URL}/admin/experts`,
+    UPDATE_EXPERT: (id: number | string) => `${API_BASE_URL}/admin/experts/${id}`,
+    DELETE_EXPERT: (id: number | string) => `${API_BASE_URL}/admin/experts/${id}`,
+    SUSPEND_EXPERT: (expertId: string | number) =>
+      `${API_BASE_URL}/admin/experts/${expertId}/suspend`,
+  },
+
+  // Expert and public expert endpoints
+  EXPERTS: {
+    DASHBOARD: `${API_BASE_URL}/experts/me/dashboard`,
+    SETTINGS: `${API_BASE_URL}/experts/me/settings`,
+    LIST_APPROVED: `${API_BASE_URL}/experts`,
   },
 
   // Public forum and interaction endpoints
