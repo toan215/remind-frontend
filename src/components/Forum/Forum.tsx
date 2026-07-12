@@ -18,9 +18,8 @@ function Forum({ onBack, userRole, onLoginRequired }: ForumProps) {
 
   const [posts, setPosts] = useState<PostType[]>([]);
   const [loading, setLoading] = useState(true);
-  const [loadingMore, setLoadingMore] = useState(false);
-  const [nextCursor, setNextCursor] = useState<string | null>(null);
-  const [hasNext, setHasNext] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
 
   // Search states
   const [searchResults, setSearchResults] = useState<PostType[]>([]);
@@ -43,15 +42,13 @@ function Forum({ onBack, userRole, onLoginRequired }: ForumProps) {
   const [showAuthPrompt, setShowAuthPrompt] = useState(false);
   const [fallbackPost, setFallbackPost] = useState<PostType | null>(null);
 
-  const loaderRef = useRef<HTMLDivElement | null>(null);
-
-  const fetchInitialPosts = async () => {
+  const fetchPostsByPage = async (page: number) => {
     try {
       setLoading(true);
-      const res = await getPosts(undefined, 10);
+      const res = await getPosts(page, 10);
       setPosts(res.posts);
-      setNextCursor(res.nextCursor);
-      setHasNext(res.hasNext);
+      setCurrentPage(res.currentPage);
+      setTotalPages(res.totalPages);
     } catch (error) {
       console.error("Failed to fetch posts", error);
     } finally {
@@ -59,23 +56,8 @@ function Forum({ onBack, userRole, onLoginRequired }: ForumProps) {
     }
   };
 
-  const fetchMorePosts = async () => {
-    if (loadingMore || !hasNext || !nextCursor) return;
-    try {
-      setLoadingMore(true);
-      const res = await getPosts(nextCursor, 10);
-      setPosts((prev) => [...prev, ...res.posts]);
-      setNextCursor(res.nextCursor);
-      setHasNext(res.hasNext);
-    } catch (error) {
-      console.error("Failed to fetch more posts", error);
-    } finally {
-      setLoadingMore(false);
-    }
-  };
-
   useEffect(() => {
-    fetchInitialPosts();
+    fetchPostsByPage(1);
     getForums().then(setForums).catch(() => {});
   }, []);
 
@@ -100,30 +82,6 @@ function Forum({ onBack, userRole, onLoginRequired }: ForumProps) {
 
     return () => clearTimeout(delayDebounceFn);
   }, [searchTerm]);
-
-  // Intersection Observer for Infinite Scroll
-  useEffect(() => {
-    if (!hasNext || loading || loadingMore || searchTerm.trim()) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting) {
-          fetchMorePosts();
-        }
-      },
-      { threshold: 0.1 }
-    );
-
-    if (loaderRef.current) {
-      observer.observe(loaderRef.current);
-    }
-
-    return () => {
-      if (loaderRef.current) {
-        observer.unobserve(loaderRef.current);
-      }
-    };
-  }, [hasNext, loading, loadingMore, nextCursor, searchTerm]);
 
   const handleCreatePostClick = () => {
     if (userRole === "guest") {
@@ -323,9 +281,25 @@ function Forum({ onBack, userRole, onLoginRequired }: ForumProps) {
                     </div>
                   </div>
                 ))}
-                {!searchTerm.trim() && hasNext && (
-                  <div ref={loaderRef} className="forum-loading-more">
-                    {loadingMore ? "Đang tải thêm bài viết..." : "Cuộn để tải thêm"}
+                {!searchTerm.trim() && totalPages > 1 && (
+                  <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '16px', marginTop: '24px', marginBottom: '24px' }}>
+                    <button 
+                      className="rm-btn rm-btn-outline" 
+                      disabled={currentPage === 1 || loading} 
+                      onClick={() => fetchPostsByPage(currentPage - 1)}
+                    >
+                      &laquo; Trước
+                    </button>
+                    <span style={{ fontWeight: 500, color: 'var(--ink-600)' }}>
+                      Trang {currentPage} / {totalPages}
+                    </span>
+                    <button 
+                      className="rm-btn rm-btn-outline" 
+                      disabled={currentPage === totalPages || loading} 
+                      onClick={() => fetchPostsByPage(currentPage + 1)}
+                    >
+                      Sau &raquo;
+                    </button>
                   </div>
                 )}
               </>

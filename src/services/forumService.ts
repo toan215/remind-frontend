@@ -8,13 +8,10 @@ export const getForums = async (): Promise<ForumType[]> => {
 };
 
 export const getPosts = async (
-  cursor?: string,
+  page: number = 1,
   limit: number = 10
-): Promise<{ posts: PostType[]; nextCursor: string | null; hasNext: boolean }> => {
-  let url = `${API_ENDPOINTS.FORUMS.LIST_POSTS}?limit=${limit}`;
-  if (cursor) {
-    url += `&cursor=${cursor}`;
-  }
+): Promise<{ posts: PostType[]; totalPages: number; currentPage: number; totalItems: number }> => {
+  const url = `${API_ENDPOINTS.FORUMS.LIST_POSTS}?limit=${limit}&page=${page}`;
   const response = await api.get(url);
   return response.data;
 };

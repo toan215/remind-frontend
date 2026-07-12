@@ -44,18 +44,16 @@ export class ForumController {
 
   // === Posts ===
   static async getPosts(
-    limit: number = 10,
-    cursor?: string
-  ): Promise<{ posts: ForumPost[]; nextCursor: string | null; hasNext: boolean }> {
-    let url = `${API_ENDPOINTS.FORUMS.LIST_POSTS}?limit=${limit}`;
-    if (cursor) {
-      url += `&cursor=${cursor}`;
-    }
+    page: number = 1,
+    limit: number = 10
+  ): Promise<{ posts: ForumPost[]; totalPages: number; currentPage: number; totalItems: number }> {
+    const url = `${API_ENDPOINTS.FORUMS.LIST_POSTS}?limit=${limit}&page=${page}`;
     const res = await apiHelper.get(url);
     return {
       posts: (res.posts || []).map(mapBackendPostToFrontend),
-      nextCursor: res.nextCursor || null,
-      hasNext: !!res.hasNext,
+      totalPages: res.totalPages || 1,
+      currentPage: res.currentPage || 1,
+      totalItems: res.totalItems || 0,
     };
   }
 
