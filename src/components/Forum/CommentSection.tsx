@@ -16,6 +16,11 @@ function CommentSection({ postId, userRole, onLoginRequired }: CommentSectionPro
   const [replyContent, setReplyContent] = useState("");
   const [loading, setLoading] = useState(true);
 
+  // Edit Comment States
+  const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
+  const [editCommentContent, setEditCommentContent] = useState("");
+  const [isUpdating, setIsUpdating] = useState(false);
+
   const fetchComments = async () => {
     try {
       const list = await ForumController.getCommentsByPostId(postId);
@@ -67,6 +72,33 @@ function CommentSection({ postId, userRole, onLoginRequired }: CommentSectionPro
       await fetchComments();
     } catch (err) {
       console.error("Failed to post reply:", err);
+    }
+  };
+
+  const handleUpdateComment = async (commentId: string) => {
+    if (!editCommentContent.trim()) return;
+    setIsUpdating(true);
+    try {
+      await ForumController.updateComment(commentId, editCommentContent);
+      setEditingCommentId(null);
+      setEditCommentContent("");
+      await fetchComments();
+    } catch (err) {
+      console.error("Failed to update comment:", err);
+      alert("Cập nhật bình luận thất bại.");
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const handleDeleteComment = async (commentId: string) => {
+    if (!window.confirm("Bạn có chắc chắn muốn xóa bình luận này không? Hành động này không thể hoàn tác.")) return;
+    try {
+      await ForumController.deleteComment(commentId);
+      await fetchComments();
+    } catch (err) {
+      console.error("Failed to delete comment:", err);
+      alert("Xóa bình luận thất bại.");
     }
   };
 
@@ -157,7 +189,37 @@ function CommentSection({ postId, userRole, onLoginRequired }: CommentSectionPro
                       {ForumController.formatTimeAgo(comment.createdAt)}
                     </span>
                   </div>
-                  <p className="comment-item-content">{comment.content}</p>
+                  
+                  {editingCommentId === comment.id ? (
+                    <div className="reply-input-box" style={{ marginTop: "8px" }}>
+                      <textarea
+                        className="comment-textarea reply-textarea"
+                        value={editCommentContent}
+                        onChange={(e) => setEditCommentContent(e.target.value)}
+                        rows={2}
+                        autoFocus
+                      />
+                      <div className="reply-input-actions">
+                        <button
+                          className="rm-btn rm-btn-outline reply-cancel-btn"
+                          onClick={() => setEditingCommentId(null)}
+                          disabled={isUpdating}
+                        >
+                          Hủy
+                        </button>
+                        <button
+                          className="rm-btn rm-btn-primary reply-send-btn"
+                          onClick={() => handleUpdateComment(comment.id)}
+                          disabled={!editCommentContent.trim() || isUpdating}
+                        >
+                          {isUpdating ? "Đang lưu..." : "Lưu thay đổi"}
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="comment-item-content">{comment.content}</p>
+                  )}
+
                   <div className="comment-item-actions">
                     <button
                       className="comment-action-btn"
@@ -173,6 +235,27 @@ function CommentSection({ postId, userRole, onLoginRequired }: CommentSectionPro
                       <i className="bx bx-reply"></i>
                       Trả lời
                     </button>
+                    {comment.isMine && (
+                      <>
+                        <button
+                          className="comment-action-btn"
+                          onClick={() => {
+                            setEditingCommentId(comment.id);
+                            setEditCommentContent(comment.content);
+                            setReplyingTo(null);
+                          }}
+                        >
+                          <i className="bx bx-edit"></i> Sửa
+                        </button>
+                        <button
+                          className="comment-action-btn"
+                          style={{ color: "#ff4d4f" }}
+                          onClick={() => handleDeleteComment(comment.id)}
+                        >
+                          <i className="bx bx-trash"></i> Xóa
+                        </button>
+                      </>
+                    )}
                     <span className="comment-action-likes">
                       <i className="bx bx-heart"></i> {comment.likes}
                     </span>
@@ -227,8 +310,59 @@ function CommentSection({ postId, userRole, onLoginRequired }: CommentSectionPro
                         {ForumController.formatTimeAgo(reply.createdAt)}
                       </span>
                     </div>
-                    <p className="comment-item-content">{reply.content}</p>
+
+                    {editingCommentId === reply.id ? (
+                      <div className="reply-input-box" style={{ marginTop: "8px" }}>
+                        <textarea
+                          className="comment-textarea reply-textarea"
+                          value={editCommentContent}
+                          onChange={(e) => setEditCommentContent(e.target.value)}
+                          rows={2}
+                          autoFocus
+                        />
+                        <div className="reply-input-actions">
+                          <button
+                            className="rm-btn rm-btn-outline reply-cancel-btn"
+                            onClick={() => setEditingCommentId(null)}
+                            disabled={isUpdating}
+                          >
+                            Hủy
+                          </button>
+                          <button
+                            className="rm-btn rm-btn-primary reply-send-btn"
+                            onClick={() => handleUpdateComment(reply.id)}
+                            disabled={!editCommentContent.trim() || isUpdating}
+                          >
+                            {isUpdating ? "Đang lưu..." : "Lưu thay đổi"}
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="comment-item-content">{reply.content}</p>
+                    )}
+
                     <div className="comment-item-actions">
+                      {reply.isMine && (
+                        <>
+                          <button
+                            className="comment-action-btn"
+                            onClick={() => {
+                              setEditingCommentId(reply.id);
+                              setEditCommentContent(reply.content);
+                              setReplyingTo(null);
+                            }}
+                          >
+                            <i className="bx bx-edit"></i> Sửa
+                          </button>
+                          <button
+                            className="comment-action-btn"
+                            style={{ color: "#ff4d4f" }}
+                            onClick={() => handleDeleteComment(reply.id)}
+                          >
+                            <i className="bx bx-trash"></i> Xóa
+                          </button>
+                        </>
+                      )}
                       <span className="comment-action-likes">
                         <i className="bx bx-heart"></i> {reply.likes}
                       </span>

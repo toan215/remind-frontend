@@ -57,6 +57,17 @@ export const createComment = async (postId: string, content: string, authorDispl
   return response.data.comment;
 };
 
+export const updateComment = async (commentId: string, content: string): Promise<CommentType> => {
+  const response = await api.patch(API_ENDPOINTS.FORUMS.UPDATE_COMMENT(commentId), {
+    content
+  });
+  return response.data.comment;
+};
+
+export const deleteComment = async (commentId: string): Promise<void> => {
+  await api.delete(API_ENDPOINTS.FORUMS.DELETE_COMMENT(commentId));
+};
+
 export const toggleLike = async (postId: string): Promise<{ liked: boolean; likeCount: number }> => {
   const response = await api.post(`${API_ENDPOINTS.FORUMS.POST_DETAIL(postId)}/like`);
   return { liked: response.data.liked ?? false, likeCount: response.data.post?.likeCount ?? 0 };

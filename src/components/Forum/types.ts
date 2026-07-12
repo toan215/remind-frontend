@@ -18,6 +18,7 @@ export interface PostType {
   likeCount: number;
   commentCount: number;
   status: string;
+  isMine?: boolean;
   createdAt: string;
 }
 
@@ -27,5 +28,6 @@ export interface CommentType {
   publicAuthorName: string;
   content: string;
   likeCount: number;
+  isMine?: boolean;
   createdAt: string;
 }

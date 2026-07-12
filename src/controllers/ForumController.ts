@@ -11,6 +11,7 @@ const mapBackendPostToFrontend = (backendPost: any): ForumPost => ({
   likes: backendPost.likeCount !== undefined ? backendPost.likeCount : (backendPost.likes || 0),
   likedBy: (backendPost.likedBy || []).map((id: any) => typeof id === 'object' ? id.toString() : id),
   isAnonymous: backendPost.authorDisplayMode === 1 || !!backendPost.isAnonymous,
+  isMine: !!backendPost.isMine,
   createdAt: backendPost.createdAt || new Date().toISOString(),
   updatedAt: backendPost.updatedAt || new Date().toISOString(),
 });
@@ -22,6 +23,7 @@ const mapBackendCommentToFrontend = (backendComment: any): Comment => ({
   content: backendComment.content || "",
   parentId: backendComment.parentId || null,
   likes: backendComment.likeCount !== undefined ? backendComment.likeCount : (backendComment.likes || 0),
+  isMine: !!backendComment.isMine,
   createdAt: backendComment.createdAt || new Date().toISOString(),
 });
 
@@ -109,6 +111,17 @@ export class ForumController {
     return mapBackendPostToFrontend(res.post);
   }
 
+  static async updatePost(postId: string, data: Partial<CreatePostData>): Promise<ForumPost> {
+    const payload: any = {};
+    if (data.title !== undefined) payload.title = data.title.trim();
+    if (data.content !== undefined) payload.content = data.content.trim();
+    if (data.tags !== undefined) payload.tags = data.tags;
+    if (data.isAnonymous !== undefined) payload.authorDisplayMode = data.isAnonymous ? 1 : 0;
+    
+    const res = await apiHelper.patch(API_ENDPOINTS.FORUMS.UPDATE_POST(postId), payload);
+    return mapBackendPostToFrontend(res.post);
+  }
+
   static async toggleLike(postId: string): Promise<ForumPost> {
     const url = `${API_ENDPOINTS.FORUMS.POST_DETAIL(postId)}/like`;
     const res = await apiHelper.post(url);
@@ -140,6 +153,13 @@ export class ForumController {
       parentId: data.parentId || null,
     };
     const res = await apiHelper.post(API_ENDPOINTS.FORUMS.CREATE_COMMENT(postId), payload);
+    return mapBackendCommentToFrontend(res.comment);
+  }
+
+  static async updateComment(commentId: string, content: string): Promise<Comment> {
+    const res = await apiHelper.patch(API_ENDPOINTS.FORUMS.UPDATE_COMMENT(commentId), {
+      content: content.trim(),
+    });
     return mapBackendCommentToFrontend(res.comment);
   }
 
