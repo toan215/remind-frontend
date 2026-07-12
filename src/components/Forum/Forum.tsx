@@ -482,6 +482,12 @@ function Forum({ onBack, userRole, onLoginRequired }: ForumProps) {
           onBack={() => { setSelectedPostId(null); setFallbackPost(null); }}
           userRole={userRole}
           onLoginRequired={onLoginRequired}
+          onUpdatePost={(updatedPost) => {
+            setPosts(prev => prev.map(p => p._id === updatedPost._id ? updatedPost : p));
+          }}
+          onDeletePost={(postId) => {
+            setPosts(prev => prev.filter(p => p._id !== postId));
+          }}
         />
       )}
     </div>

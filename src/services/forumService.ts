@@ -62,12 +62,27 @@ export const updateComment = async (commentId: string, content: string): Promise
 };
 
 export const deleteComment = async (commentId: string): Promise<void> => {
-  await api.delete(API_ENDPOINTS.FORUMS.DELETE_COMMENT(commentId));
+  await api.delete(`${API_ENDPOINTS.FORUMS.COMMENTS}/${commentId}`);
 };
 
-export const toggleLike = async (postId: string): Promise<{ liked: boolean; likeCount: number }> => {
-  const response = await api.post(`${API_ENDPOINTS.FORUMS.POST_DETAIL(postId)}/like`);
-  return { liked: response.data.liked ?? false, likeCount: response.data.post?.likeCount ?? 0 };
+export const toggleLike = async (postId: string): Promise<{ liked: boolean; likeCount: number; post: PostType }> => {
+  const url = `${API_ENDPOINTS.FORUMS.LIST_POSTS}/${postId}/like`;
+  const response = await api.post(url);
+  return {
+    liked: response.data.liked,
+    likeCount: response.data.post.likeCount,
+    post: response.data.post
+  };
+};
+
+export const toggleCommentLike = async (commentId: string): Promise<{ liked: boolean; likeCount: number; comment: CommentType }> => {
+  const url = `${API_ENDPOINTS.FORUMS.COMMENTS}/${commentId}/like`;
+  const response = await api.post(url);
+  return {
+    liked: response.data.liked,
+    likeCount: response.data.comment.likeCount,
+    comment: response.data.comment
+  };
 };
 
 export const searchPosts = async (query: string): Promise<PostType[]> => {
