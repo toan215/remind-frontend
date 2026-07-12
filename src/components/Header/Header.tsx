@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import "../Home/Home.css";
+import { AuthController } from "../../controllers/AuthController";
+import { NotificationController, INotification } from "../../controllers/NotificationController";
 
 interface HeaderProps {
   currentScreen: string;
@@ -9,6 +11,7 @@ interface HeaderProps {
   onLogout: () => void;
   userRole: string;
   onOpenAdminPortal: () => void;
+  onOpenChat: () => void;
 }
 
 export default function Header({
@@ -19,11 +22,13 @@ export default function Header({
   onLogout,
   userRole,
   onOpenAdminPortal,
+  onOpenChat,
 }: HeaderProps) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isNotifOpen, setIsNotifOpen] = useState(false);
-  const [unreadCount, setUnreadCount] = useState(1);
+  const [notifications, setNotifications] = useState<INotification[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const notifRef = useRef<HTMLDivElement>(null);
 
@@ -38,6 +43,42 @@ export default function Header({
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  useEffect(() => {
+    if (userRole !== "guest") {
+      NotificationController.getList()
+        .then((data) => {
+          setNotifications(data);
+          setUnreadCount(data.filter((n) => !n.isRead).length);
+        })
+        .catch(console.error);
+    }
+  }, [userRole]);
+
+  const handleNotificationClick = async (notif: INotification) => {
+    if (!notif.isRead) {
+      try {
+        await NotificationController.markAsRead(notif._id);
+        setNotifications((prev) =>
+          prev.map((n) => (n._id === notif._id ? { ...n, isRead: true } : n))
+        );
+        setUnreadCount((prev) => Math.max(0, prev - 1));
+      } catch (err) {
+        console.error(err);
+      }
+    }
+    // TODO: Navigation based on referenceId if needed
+  };
+
+  const markAllAsRead = async () => {
+    try {
+      await NotificationController.markAllAsRead();
+      setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
+      setUnreadCount(0);
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -118,64 +159,90 @@ export default function Header({
         </nav>
 
         <div className="home-auth-pills">
-          <div className="auth-pill-dropdown-container" ref={notifRef}>
-            <div
-              className="auth-pill bell-pill"
-              onClick={() => {
-                setIsNotifOpen(!isNotifOpen);
-                if (!isNotifOpen) setUnreadCount(0);
-              }}
-            >
-              <i className="bx bx-bell"></i>
-              {unreadCount > 0 && (
-                <span className="bell-badge">{unreadCount}</span>
+          {/* Chat Pill */}
+          <div
+            className="auth-pill bell-pill"
+            onClick={onOpenChat}
+            title="Tin nhắn"
+          >
+            <i className="bx bx-message-rounded-dots"></i>
+          </div>
+
+          {userRole !== "guest" && (
+            <div className="auth-pill-dropdown-container" ref={notifRef}>
+              <div
+                className="auth-pill bell-pill"
+                onClick={() => {
+                  setIsNotifOpen(!isNotifOpen);
+                  if (!isNotifOpen) setUnreadCount(0);
+                }}
+              >
+                <i className="bx bx-bell"></i>
+                {unreadCount > 0 && (
+                  <span className="bell-badge">{unreadCount}</span>
+                )}
+              </div>
+
+              {isNotifOpen && (
+                <div className="auth-dropdown-menu notif-dropdown">
+                  <div className="notif-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <h4>Thông báo</h4>
+                    {unreadCount > 0 && (
+                      <span 
+                        style={{ fontSize: '0.8rem', color: 'var(--brand-600)', cursor: 'pointer' }}
+                        onClick={markAllAsRead}
+                      >
+                        Đánh dấu đã đọc tất cả
+                      </span>
+                    )}
+                  </div>
+                  <div className="notif-list">
+                    {notifications.length === 0 ? (
+                      <div className="notif-item" style={{ justifyContent: 'center', color: '#666' }}>
+                        Không có thông báo nào
+                      </div>
+                    ) : (
+                      notifications.map((notif) => {
+                        let iconClass = "bx-info-circle";
+                        let iconColorClass = "";
+                        
+                        if (notif.type === "LIKE_POST") {
+                          iconClass = "bxs-heart";
+                          iconColorClass = "like-icon";
+                        } else if (notif.type === "COMMENT_POST" || notif.type === "REPLY_COMMENT") {
+                          iconClass = "bxs-comment-detail";
+                          iconColorClass = "comment-icon";
+                        } else if (notif.type === "POST_APPROVED") {
+                          iconClass = "bx-check-circle";
+                          iconColorClass = "check-icon";
+                        }
+
+                        // Fallback text if content is empty
+                        const text = notif.content || "Bạn có một thông báo mới";
+                        
+                        return (
+                          <div 
+                            key={notif._id} 
+                            className={`notif-item ${!notif.isRead ? 'unread' : ''}`}
+                            onClick={() => handleNotificationClick(notif)}
+                            style={{ cursor: 'pointer', opacity: notif.isRead ? 0.7 : 1, backgroundColor: notif.isRead ? 'transparent' : '#f0fdf4' }}
+                          >
+                            <div className={`notif-icon ${iconColorClass}`}>
+                              <i className={`bx ${iconClass}`}></i>
+                            </div>
+                            <div className="notif-content">
+                              <p dangerouslySetInnerHTML={{ __html: text }}></p>
+                              <span>{new Date(notif.createdAt).toLocaleString('vi-VN')}</span>
+                            </div>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
               )}
             </div>
-
-            {isNotifOpen && (
-              <div className="auth-dropdown-menu notif-dropdown">
-                <div className="notif-header">
-                  <h4>Thông báo</h4>
-                </div>
-                <div className="notif-list">
-                  <div className="notif-item">
-                    <div className="notif-icon like-icon">
-                      <i className="bx bxs-heart"></i>
-                    </div>
-                    <div className="notif-content">
-                      <p>
-                        <strong>Admin</strong> đã thích bài viết của bạn
-                      </p>
-                      <span>Vừa xong</span>
-                    </div>
-                  </div>
-                  <div className="notif-item">
-                    <div className="notif-icon comment-icon">
-                      <i className="bx bxs-comment-detail"></i>
-                    </div>
-                    <div className="notif-content">
-                      <p>
-                        <strong>Chuyên gia</strong> đã trả lời bình luận của
-                        bạn
-                      </p>
-                      <span>2 giờ trước</span>
-                    </div>
-                  </div>
-                  <div className="notif-item">
-                    <div className="notif-icon check-icon">
-                      <i className="bx bx-check-circle"></i>
-                    </div>
-                    <div className="notif-content">
-                      <p>
-                        Bài viết của bạn đã được <strong>phê duyệt</strong>
-                      </p>
-                      <span>1 ngày trước</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
+          )}
 
           <div className="auth-pill-dropdown-container" ref={dropdownRef}>
             {userRole === "guest" ? (
@@ -199,13 +266,13 @@ export default function Header({
               >
                 <div className="user-pill-avatar">
                   <img
-                    src="https://api.dicebear.com/7.x/avataaars/svg?seed=PhucHoang"
+                    src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${AuthController.getCurrentUser()?.fullName || "User"}`}
                     alt="Avatar"
                   />
                 </div>
                 <div className="user-pill-info">
                   <span className="user-pill-name">
-                    {userRole === "admin" ? "Quản trị viên" : "Phuc Hoang"}
+                    {userRole === "admin" ? "Quản trị viên" : (AuthController.getCurrentUser()?.fullName || "Người dùng")}
                   </span>
                   <span className="user-pill-status active-status">
                     <span className="status-dot"></span> ONLINE

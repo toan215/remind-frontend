@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { AIController } from "../../controllers/AIController";
 import "./AIChat.css";
 
 // Demo conversation data
@@ -24,34 +25,7 @@ const SUGGESTION_CHIPS = [
   { icon: "bx-wind", text: "Bài tập thở" },
 ];
 
-// Simulated AI responses
-const AI_RESPONSES = [
-  {
-    trigger: "buồn",
-    response:
-      "Tớ hiểu cảm giác buồn đó. Cảm xúc này hoàn toàn bình thường và bạn không cần phải giấu nó đi.\n\nBạn có thể chia sẻ thêm điều gì đang làm bạn buồn không? Đôi khi nói ra cũng giúp nhẹ lòng hơn rồi.",
-  },
-  {
-    trigger: "áp lực",
-    response:
-      "Áp lực có thể rất ngột ngạt, đặc biệt khi bạn cảm thấy mọi thứ đổ dồn cùng một lúc.\n\nHãy thử bài tập đơn giản này nhé: Hít sâu 4 giây → Giữ 7 giây → Thở ra 8 giây. Lặp lại 3 lần.\n\nBạn muốn tớ hướng dẫn chi tiết hơn không?",
-    hasExercise: true,
-  },
-  {
-    trigger: "khuyên",
-    response:
-      "Tớ sẵn lòng hỗ trợ bạn! Để đưa ra lời khuyên phù hợp nhất, bạn có thể cho tớ biết tình huống cụ thể hơn không?\n\nVí dụ: học tập, mối quan hệ, công việc, hoặc bất kỳ điều gì bạn đang trăn trở.",
-  },
-  {
-    trigger: "thở",
-    response: "Đây là bài tập thở 4-7-8 giúp bạn thư giãn nhanh chóng:",
-    hasExercise: true,
-  },
-];
-
-const DEFAULT_RESPONSE =
-  "Cảm ơn bạn đã chia sẻ. Tớ nghe thấy bạn rồi. 💚\n\nBạn muốn nói thêm về điều này không? Hoặc nếu bạn cảm thấy cần hỗ trợ chuyên sâu hơn, tớ có thể giúp bạn kết nối với chuyên gia tâm lý.";
-
+// Removed Simulated AI responses
 interface AIChatProps {
   onBack: () => void;
 }
@@ -88,17 +62,7 @@ function AIChat({ onBack }: AIChatProps) {
     e.target.style.height = Math.min(e.target.scrollHeight, 120) + "px";
   };
 
-  const getAIResponse = (userMsg: string) => {
-    const lower = userMsg.toLowerCase();
-    for (const resp of AI_RESPONSES) {
-      if (lower.includes(resp.trigger)) {
-        return resp;
-      }
-    }
-    return { response: DEFAULT_RESPONSE, hasExercise: false };
-  };
-
-  const sendMessage = (text: string) => {
+  const sendMessage = async (text: string) => {
     if (!text.trim()) return;
 
     setShowWelcome(false);
@@ -112,28 +76,39 @@ function AIChat({ onBack }: AIChatProps) {
       text: text.trim(),
       time: timeStr,
     };
+    
+    // Prepare history for AI
+    const history = messages.map(m => ({ role: m.sender === 'bot' ? 'ai' : 'user', text: m.text }));
+    
     setMessages((prev) => [...prev, userMsg]);
     setInputValue("");
     if (textareaRef.current) {
       textareaRef.current.style.height = "auto";
     }
 
-    // Simulate AI typing
+    // Indicate AI is typing
     setIsTyping(true);
-    const aiResp = getAIResponse(text);
-    const delay = 1200 + Math.random() * 800;
-
-    setTimeout(() => {
+    
+    try {
+      const data = await AIController.chat(text.trim(), history);
       setIsTyping(false);
       const botMsg = {
         id: Date.now() + 1,
         sender: "bot",
-        text: aiResp.response,
+        text: data.data.response,
         time: timeStr,
-        hasExercise: aiResp.hasExercise || false,
       };
       setMessages((prev) => [...prev, botMsg]);
-    }, delay);
+    } catch (error) {
+      setIsTyping(false);
+      const botMsg = {
+        id: Date.now() + 1,
+        sender: "bot",
+        text: "Xin lỗi, tớ đang gặp chút sự cố kết nối. Bạn thử lại sau nhé.",
+        time: timeStr,
+      };
+      setMessages((prev) => [...prev, botMsg]);
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {

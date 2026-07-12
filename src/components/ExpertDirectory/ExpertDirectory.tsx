@@ -7,6 +7,7 @@ interface ExpertDirectoryProps {
   onBack: () => void;
   userRole?: string;
   onLoginRequired?: () => void;
+  onProceedToPayment?: (bookingDetails: any) => void;
 }
 
 const TIME_SLOTS = [
@@ -18,7 +19,7 @@ const TIME_SLOTS = [
   "20:30 - 21:30"
 ];
 
-function ExpertDirectory({ onBack, userRole = "guest", onLoginRequired }: ExpertDirectoryProps) {
+function ExpertDirectory({ onBack, userRole = "guest", onLoginRequired, onProceedToPayment }: ExpertDirectoryProps) {
   const [expertsData, setExpertsData] = useState<Expert[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedSpecialty, setSelectedSpecialty] = useState("Tất cả");
@@ -93,15 +94,23 @@ function ExpertDirectory({ onBack, userRole = "guest", onLoginRequired }: Expert
   };
 
   const handleConfirmBooking = () => {
-    if (!selectedSlot || !bookingDate) return;
+    if (!selectedSlot || !bookingDate || !bookingExpert) return;
 
-    setBookingSuccess(true);
-    setBookingExpert(null);
+    if (onProceedToPayment) {
+      onProceedToPayment({
+        expert: bookingExpert,
+        date: bookingDate,
+        slot: selectedSlot,
+        totalCost: bookingExpert.cost
+      });
+    } else {
+      setBookingSuccess(true);
+      setBookingExpert(null);
 
-    // Auto close toast after 3 seconds
-    setTimeout(() => {
-      setBookingSuccess(false);
-    }, 3000);
+      setTimeout(() => {
+        setBookingSuccess(false);
+      }, 3000);
+    }
   };
 
   return (
@@ -332,6 +341,22 @@ function ExpertDirectory({ onBack, userRole = "guest", onLoginRequired }: Expert
                   ))}
                 </div>
               </div>
+
+              {bookingExpert.cost > 0 ? (
+                <div className="book-cost-summary" style={{ marginTop: "16px", padding: "12px", background: "var(--brand-100)", borderRadius: "8px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <span style={{ fontWeight: 500, color: "var(--text-primary)" }}>Tổng chi phí:</span>
+                  <span style={{ fontSize: "18px", fontWeight: 700, color: "var(--brand-700)" }}>
+                    {bookingExpert.cost.toLocaleString('vi-VN')} VNĐ
+                  </span>
+                </div>
+              ) : (
+                <div className="book-cost-summary" style={{ marginTop: "16px", padding: "12px", background: "var(--green-100)", borderRadius: "8px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <span style={{ fontWeight: 500, color: "var(--text-primary)" }}>Tổng chi phí:</span>
+                  <span style={{ fontSize: "18px", fontWeight: 700, color: "var(--green-700)" }}>
+                    Miễn phí
+                  </span>
+                </div>
+              )}
             </div>
 
             <div className="rm-modal-footer">

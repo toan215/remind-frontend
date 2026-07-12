@@ -14,6 +14,8 @@ export const API_ENDPOINTS = {
     REFRESH: `${API_BASE_URL}/auth/refresh`,
     LOGOUT: `${API_BASE_URL}/auth/logout`,
     GOOGLE: `${API_BASE_URL}/auth/google`,
+    FORGOT_PASSWORD: `${API_BASE_URL}/auth/forgot-password`,
+    RESET_PASSWORD: `${API_BASE_URL}/auth/reset-password`,
   },
 
   // Admin moderation and management endpoints
@@ -76,5 +78,17 @@ export const API_ENDPOINTS = {
       `${API_BASE_URL}/forums/comments/${commentId}`,
     CREATE_COMMENT: (postId: string) =>
       `${API_BASE_URL}/forums/posts/${postId}/comments`,
+  },
+
+  // AI chat endpoints
+  AI: {
+    CHAT: `${API_BASE_URL}/ai/chat`,
+  },
+
+  // Notification endpoints
+  NOTIFICATIONS: {
+    LIST: `${API_BASE_URL}/notifications`,
+    MARK_READ: (id: string) => `${API_BASE_URL}/notifications/${id}/read`,
+    MARK_ALL_READ: `${API_BASE_URL}/notifications/read-all`,
   },
 };
