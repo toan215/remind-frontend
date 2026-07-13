@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Expert } from "../../models/Expert";
+import { ExpertController } from "../../controllers/ExpertController";
 import "./Payment.css";
 
 interface PaymentProps {
@@ -7,6 +8,8 @@ interface PaymentProps {
   onPaymentComplete: () => void;
   bookingDetails: {
     expert: Expert;
+    expertId?: string;
+    slotId?: string;
     date: string;
     slot: string;
     totalCost: number;
@@ -20,32 +23,53 @@ const PAYMENT_METHODS = [
 ];
 
 export default function Payment({ onBack, onPaymentComplete, bookingDetails }: PaymentProps) {
-  const [selectedMethod, setSelectedMethod] = useState("momo");
+  const [selectedMethod, setSelectedMethod] = useState("vnpay");
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [isFailed, setIsFailed] = useState(false);
   const [paymentError, setPaymentError] = useState("");
 
-  const { expert, date, slot, totalCost } = bookingDetails;
-  
-  // Requirement: pay 50% deposit beforehand
-  const depositAmount = totalCost > 0 ? totalCost * 0.5 : 0;
+  const { expert, expertId, slotId, date, slot, totalCost } = bookingDetails;
 
-  const handlePay = () => {
+  // Capture VNPAY return status (?status=success|failed) when redirected back
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const status = params.get("status");
+    if (status === "success") setIsSuccess(true);
+    else if (status === "failed") setIsFailed(true);
+  }, []);
+
+  const handlePay = async () => {
+    if (!expertId || !slotId) {
+      setPaymentError("Thiếu thông tin lịch hẹn. Vui lòng quay lại bước đặt lịch.");
+      setIsFailed(true);
+      return;
+    }
+
     setIsProcessing(true);
+    setPaymentError("");
 
-    // Mock API call delay
-    setTimeout(() => {
-      setIsProcessing(false);
-      
-      // Simulate random failure (30% chance) for demo purposes
-      if (Math.random() < 0.3) {
-        setPaymentError("Số dư không đủ hoặc giao dịch bị từ chối bởi ngân hàng.");
-        setIsFailed(true);
-      } else {
+    try {
+      const { appointment } = await ExpertController.bookAppointment(expertId, slotId);
+      const response = await ExpertController.createAppointmentPayment(appointment._id);
+
+      // Demo mode: instant success, no redirect
+      if (response.status === 'succeeded') {
+        setIsProcessing(false);
         setIsSuccess(true);
+        return;
       }
-    }, 2000);
+
+      // Real payment gateway: redirect to checkout
+      if (response.checkoutUrl) {
+        window.location.href = response.checkoutUrl;
+      }
+    } catch (err: any) {
+      setIsProcessing(false);
+      const msg = err?.response?.data?.error || "Không thể khởi tạo thanh toán. Vui lòng thử lại.";
+      setPaymentError(msg);
+      setIsFailed(true);
+    }
   };
 
   const handleRetry = () => {
@@ -114,7 +138,7 @@ export default function Payment({ onBack, onPaymentComplete, bookingDetails }: P
           <button className="payment-back-btn" onClick={onBack} title="Quay lại">
             <i className="bx bx-left-arrow-alt"></i>
           </button>
-          <h2 className="payment-title">Thanh toán cọc (50%)</h2>
+          <h2 className="payment-title">Thanh toán lịch hẹn</h2>
         </div>
 
         <div className="payment-content">
@@ -149,12 +173,12 @@ export default function Payment({ onBack, onPaymentComplete, bookingDetails }: P
               <span>{totalCost.toLocaleString('vi-VN')} VNĐ</span>
             </div>
             <div className="cost-row deposit">
-              <span>Cần thanh toán trước (50%)</span>
-              <span>{depositAmount.toLocaleString('vi-VN')} VNĐ</span>
+              <span>Cần thanh toán</span>
+              <span>{totalCost.toLocaleString('vi-VN')} VNĐ</span>
             </div>
           </div>
 
-          {depositAmount > 0 && (
+          {totalCost > 0 && (
             <>
               <h3 className="payment-section-title">Phương thức thanh toán</h3>
               <div className="payment-methods-grid">
@@ -182,7 +206,7 @@ export default function Payment({ onBack, onPaymentComplete, bookingDetails }: P
             disabled={isProcessing}
             onClick={handlePay}
           >
-            {isProcessing ? "" : (depositAmount > 0 ? `Thanh toán ${depositAmount.toLocaleString('vi-VN')} VNĐ` : "Xác nhận đặt lịch Miễn phí")}
+            {isProcessing ? "Đang chuyển hướng..." : (totalCost > 0 ? `Thanh toán ${totalCost.toLocaleString('vi-VN')} VNĐ` : "Xác nhận đặt lịch Miễn phí")}
           </button>
         </div>
       </div>
