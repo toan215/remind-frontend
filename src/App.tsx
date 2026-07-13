@@ -10,6 +10,9 @@ const Chat = lazy(() => import("./components/Chat/Chat"));
 const ExpertDirectory = lazy(
   () => import("./components/ExpertDirectory/ExpertDirectory"),
 );
+const ExpertCalendar = lazy(
+  () => import("./components/ExpertCalendar/ExpertCalendar"),
+);
 const AdminGuard = lazy(() => import("./middleware/AdminAuthGuard"));
 const AdminLayout = lazy(() => import("./components/Admin/AdminLayout"));
 const AdminRouteDispatcher = lazy(() =>
@@ -133,6 +136,10 @@ function App() {
       return <AboutUs onBack={() => setCurrentScreen("home")} />;
     }
 
+    if (currentScreen === "calendar") {
+      return <ExpertCalendar onBack={() => setCurrentScreen("home")} />;
+    }
+
     if (currentScreen === "admin") {
       return (
         <AdminGuard
@@ -165,6 +172,10 @@ function App() {
           else setCurrentScreen("chat");
         }}
         onOpenExpertDirectory={() => setCurrentScreen("expert")}
+        onOpenCalendar={() => {
+          if (userRole === "guest") handleLoginRequired();
+          else setCurrentScreen("calendar");
+        }}
         onOpenForum={() => setCurrentScreen("forum")}
         onOpenLogin={handleLoginRequired}
         onOpenRegister={() => setCurrentScreen("register")}

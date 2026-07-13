@@ -96,6 +96,10 @@ export const API_ENDPOINTS = {
   APPOINTMENTS: {
     BOOK: `${API_BASE_URL}/appointments/book`,
     MINE: `${API_BASE_URL}/appointments/mine`,
+    EXPERT: `${API_BASE_URL}/appointments/expert`,
+    CANCEL: (id: string) => `${API_BASE_URL}/appointments/${id}/cancel`,
+    START: (id: string) => `${API_BASE_URL}/appointments/${id}/start`,
+    END: (id: string) => `${API_BASE_URL}/appointments/${id}/end`,
   },
 
   // Payment endpoints
