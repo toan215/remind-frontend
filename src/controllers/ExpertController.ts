@@ -1,6 +1,8 @@
-import { Expert, ExpertFormData } from "../models/Expert";
+import { Expert, ExpertFormData, ExpertSlot } from "../models/Expert";
 import { apiHelper } from "../utils/apiHelper";
 import { API_ENDPOINTS } from "../utils/constants";
+
+const AVATARS = ["🧠", "🌿", "💡", "🤝", "🌟", "🪴", "🔆", "🕊️"];
 
 // Giả định interface này được định nghĩa ở một file model chung
 interface ExpertDashboardData {
@@ -57,7 +59,43 @@ export class ExpertController {
   // === Dành cho Khách (Guest) ===
   static async getApprovedExpertsForGuest(): Promise<Expert[]> {
     const data = await apiHelper.get(API_ENDPOINTS.EXPERTS.LIST_APPROVED);
-    return data.experts || [];
+    const experts: any[] = data.experts || [];
+    return experts.map((e, i) => {
+      const price = typeof e.priceFrom === "number" ? e.priceFrom : 0;
+      const specialty = Array.isArray(e.specialties) ? e.specialties.join(", ") : e.title || "";
+      return {
+        id: i + 1,
+        _id: e._id,
+        name: e.fullName || e.title || "Chuyên gia",
+        avatar: AVATARS[i % AVATARS.length],
+        specialty: specialty || "Tâm lý học",
+        experience: e.title || "Chuyên gia tư vấn",
+        rating: "4.8",
+        reviews: 0,
+        languages: Array.isArray(e.languages) ? e.languages : ["Tiếng Việt"],
+        cost: price,
+        costDisplay: price > 0 ? `${price.toLocaleString("vi-VN")} VNĐ` : "Miễn phí",
+        price,
+        status: price > 0 ? "available" : "limited",
+        statusLabel: price > 0 ? "Đang tuyển" : "Miễn phí",
+        desc: e.bio || specialty || "Chuyên gia tư vấn tại ReMind.",
+        approvalStatus: "approved",
+        createdAt: e.createdAt || "",
+      };
+    });
+  }
+
+  static async getExpertSlots(expertId: string): Promise<ExpertSlot[]> {
+    const data = await apiHelper.get(API_ENDPOINTS.EXPERTS.LIST_APPROVED + `/${expertId}/availability`);
+    return data.slots || [];
+  }
+
+  static async bookAppointment(expertId: string, slotId: string) {
+    return apiHelper.post(API_ENDPOINTS.APPOINTMENTS.BOOK, { expertId, slotId });
+  }
+
+  static async createAppointmentPayment(appointmentId: string) {
+    return apiHelper.post(API_ENDPOINTS.PAYMENTS.APPOINTMENT, { appointmentId });
   }
 
   // === Logic Validate (giữ lại ở client-side) ===

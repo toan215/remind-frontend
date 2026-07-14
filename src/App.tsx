@@ -1,5 +1,6 @@
-import { useState, Suspense, lazy } from "react";
+import { useState, useEffect, Suspense, lazy } from "react";
 import { AdminRoute } from "./routes/adminRoutes";
+import { AuthController } from "./controllers/AuthController";
 import "./App.css";
 
 const Login = lazy(() => import("./components/Login/Login"));
@@ -8,6 +9,9 @@ const AIChat = lazy(() => import("./components/AIChat/AIChat"));
 const Chat = lazy(() => import("./components/Chat/Chat"));
 const ExpertDirectory = lazy(
   () => import("./components/ExpertDirectory/ExpertDirectory"),
+);
+const ExpertCalendar = lazy(
+  () => import("./components/ExpertCalendar/ExpertCalendar"),
 );
 const AdminGuard = lazy(() => import("./middleware/AdminAuthGuard"));
 const AdminLayout = lazy(() => import("./components/Admin/AdminLayout"));
@@ -52,6 +56,13 @@ function App() {
   const [currentScreen, setCurrentScreen] = useState("home");
   const [adminRoute, setAdminRoute] = useState<AdminRoute>("dashboard");
   const [pendingBooking, setPendingBooking] = useState<any>(null);
+
+  useEffect(() => {
+    const user = AuthController.getCurrentUser();
+    if (user) {
+      setUserRole(user.role === 'admin' ? 'admin' : 'user');
+    }
+  }, []);
 
   const handleLoginRequired = () => {
     setCurrentScreen("login");
@@ -125,6 +136,10 @@ function App() {
       return <AboutUs onBack={() => setCurrentScreen("home")} />;
     }
 
+    if (currentScreen === "calendar") {
+      return <ExpertCalendar onBack={() => setCurrentScreen("home")} />;
+    }
+
     if (currentScreen === "admin") {
       return (
         <AdminGuard
@@ -157,6 +172,10 @@ function App() {
           else setCurrentScreen("chat");
         }}
         onOpenExpertDirectory={() => setCurrentScreen("expert")}
+        onOpenCalendar={() => {
+          if (userRole === "guest") handleLoginRequired();
+          else setCurrentScreen("calendar");
+        }}
         onOpenForum={() => setCurrentScreen("forum")}
         onOpenLogin={handleLoginRequired}
         onOpenRegister={() => setCurrentScreen("register")}
@@ -167,6 +186,7 @@ function App() {
           setCurrentScreen("admin");
         }}
         onOpenAbout={() => setCurrentScreen("about")}
+        onOpenSettings={() => {}}
       />
     );
   };
@@ -175,7 +195,8 @@ function App() {
     <Suspense fallback={<LoadingFallback />}>
       {currentScreen !== "login" &&
         currentScreen !== "register" &&
-        currentScreen !== "admin" && (
+        currentScreen !== "admin" &&
+        currentScreen !== "home" && (
           <Header
             currentScreen={currentScreen}
             onNavigate={(screen) => setCurrentScreen(screen)}

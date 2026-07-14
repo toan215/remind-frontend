@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { ExpertController } from "../../controllers/ExpertController";
-import { Expert } from "../../models/Expert";
+import { Expert, ExpertSlot } from "../../models/Expert";
 import "./ExpertDirectory.css";
 
 interface ExpertDirectoryProps {
@@ -9,15 +9,6 @@ interface ExpertDirectoryProps {
   onLoginRequired?: () => void;
   onProceedToPayment?: (bookingDetails: any) => void;
 }
-
-const TIME_SLOTS = [
-  "09:00 - 10:00",
-  "10:30 - 11:30",
-  "14:00 - 15:00",
-  "15:30 - 16:30",
-  "19:00 - 20:00",
-  "20:30 - 21:30"
-];
 
 function ExpertDirectory({ onBack, userRole = "guest", onLoginRequired, onProceedToPayment }: ExpertDirectoryProps) {
   const [expertsData, setExpertsData] = useState<Expert[]>([]);
@@ -29,11 +20,13 @@ function ExpertDirectory({ onBack, userRole = "guest", onLoginRequired, onProcee
   // Booking Modal State
   const [bookingExpert, setBookingExpert] = useState<Expert | null>(null);
   const [bookingDate, setBookingDate] = useState("");
-  const [selectedSlot, setSelectedSlot] = useState("");
+  const [slots, setSlots] = useState<ExpertSlot[]>([]);
+  const [slotsLoading, setSlotsLoading] = useState(false);
+  const [selectedSlotId, setSelectedSlotId] = useState("");
   const [bookingSuccess, setBookingSuccess] = useState(false);
 
   useEffect(() => {
-    setExpertsData(ExpertController.getApprovedExpertsForGuest());
+    ExpertController.getApprovedExpertsForGuest().then(setExpertsData);
   }, []);
 
   // Filter handlers
@@ -86,22 +79,41 @@ function ExpertDirectory({ onBack, userRole = "guest", onLoginRequired, onProcee
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
     setBookingDate(tomorrow.toISOString().split("T")[0]);
-    setSelectedSlot("");
+    setSelectedSlotId("");
+    setSlots([]);
+
+    if (expert._id) {
+      setSlotsLoading(true);
+      ExpertController.getExpertSlots(expert._id)
+        .then(setSlots)
+        .catch(() => setSlots([]))
+        .finally(() => setSlotsLoading(false));
+    }
   };
 
   const handleCloseBooking = () => {
     setBookingExpert(null);
   };
 
+  const selectedSlotObj = slots.find((s) => s._id === selectedSlotId);
+  const formatSlotLabel = (s: ExpertSlot) => {
+    const start = new Date(s.startAt);
+    const end = new Date(s.endAt);
+    const t = (d: Date) => d.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
+    return `${start.getDate()}/${start.getMonth() + 1} ${t(start)} - ${t(end)}`;
+  };
+
   const handleConfirmBooking = () => {
-    if (!selectedSlot || !bookingDate || !bookingExpert) return;
+    if (!selectedSlotObj || !bookingDate || !bookingExpert) return;
 
     if (onProceedToPayment) {
       onProceedToPayment({
         expert: bookingExpert,
+        expertId: bookingExpert._id,
+        slotId: selectedSlotObj._id,
         date: bookingDate,
-        slot: selectedSlot,
-        totalCost: bookingExpert.cost
+        slot: formatSlotLabel(selectedSlotObj),
+        totalCost: selectedSlotObj.price,
       });
     } else {
       setBookingSuccess(true);
@@ -328,25 +340,39 @@ function ExpertDirectory({ onBack, userRole = "guest", onLoginRequired, onProcee
 
               <div className="book-form-group">
                 <label className="book-form-label">Chọn khung giờ tư vấn</label>
-                <div className="book-slots-grid" id="book-slots-grid">
-                  {TIME_SLOTS.map((slot) => (
-                    <button
-                      key={slot}
-                      type="button"
-                      className={`book-slot-btn ${selectedSlot === slot ? "selected" : ""}`}
-                      onClick={() => setSelectedSlot(slot)}
-                    >
-                      {slot}
-                    </button>
-                  ))}
-                </div>
+                {slotsLoading ? (
+                  <p className="book-slots-loading">Đang tải lịch trống...</p>
+                ) : slots.length > 0 ? (
+                  <div className="book-slots-grid" id="book-slots-grid">
+                    {slots.map((slot) => (
+                      <button
+                        key={slot._id}
+                        type="button"
+                        className={`book-slot-btn ${selectedSlotId === slot._id ? "selected" : ""}`}
+                        onClick={() => setSelectedSlotId(slot._id)}
+                      >
+                        {formatSlotLabel(slot)}
+                        <span className="book-slot-price">{slot.price.toLocaleString("vi-VN")} VNĐ</span>
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="book-slots-empty">Chuyên gia hiện chưa có lịch trống.</p>
+                )}
               </div>
 
-              {bookingExpert.cost > 0 ? (
+              {selectedSlotObj ? (
                 <div className="book-cost-summary" style={{ marginTop: "16px", padding: "12px", background: "var(--brand-100)", borderRadius: "8px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <span style={{ fontWeight: 500, color: "var(--text-primary)" }}>Tổng chi phí:</span>
                   <span style={{ fontSize: "18px", fontWeight: 700, color: "var(--brand-700)" }}>
-                    {bookingExpert.cost.toLocaleString('vi-VN')} VNĐ
+                    {selectedSlotObj.price.toLocaleString("vi-VN")} VNĐ
+                  </span>
+                </div>
+              ) : bookingExpert.cost > 0 ? (
+                <div className="book-cost-summary" style={{ marginTop: "16px", padding: "12px", background: "var(--brand-100)", borderRadius: "8px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <span style={{ fontWeight: 500, color: "var(--text-primary)" }}>Tổng chi phí:</span>
+                  <span style={{ fontSize: "18px", fontWeight: 700, color: "var(--brand-700)" }}>
+                    {bookingExpert.cost.toLocaleString("vi-VN")} VNĐ
                   </span>
                 </div>
               ) : (
@@ -370,7 +396,7 @@ function ExpertDirectory({ onBack, userRole = "guest", onLoginRequired, onProcee
               <button
                 className="rm-btn rm-btn-primary"
                 id="book-modal-confirm"
-                disabled={!selectedSlot || !bookingDate}
+                disabled={!selectedSlotId || !bookingDate}
                 onClick={handleConfirmBooking}
               >
                 Xác nhận đặt lịch

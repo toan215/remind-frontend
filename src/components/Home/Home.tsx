@@ -1,9 +1,11 @@
 import { useState, useEffect, useRef } from "react";
 import "./Home.css";
+import { AuthController } from "../../controllers/AuthController";
 
 interface HomeProps {
   onOpenAIChat: () => void;
   onOpenExpertDirectory: () => void;
+  onOpenCalendar?: () => void;
   onOpenForum: () => void;
   onOpenLogin: () => void;
   onOpenRegister: () => void;
@@ -18,6 +20,7 @@ interface HomeProps {
 function Home({
   onOpenAIChat,
   onOpenExpertDirectory,
+  onOpenCalendar,
   onOpenForum,
   onOpenLogin,
   onOpenRegister,
@@ -32,6 +35,7 @@ function Home({
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(1);
+  const [currentUser, setCurrentUser] = useState<any>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const notifRef = useRef<HTMLDivElement>(null);
 
@@ -65,6 +69,15 @@ function Home({
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  useEffect(() => {
+    if (userRole !== "guest") {
+      const user = AuthController.getCurrentUser();
+      setCurrentUser(user);
+    } else {
+      setCurrentUser(null);
+    }
+  }, [userRole]);
 
   return (
     <div className="home-page">
@@ -210,13 +223,13 @@ function Home({
                 >
                   <div className="user-pill-avatar">
                     <img
-                      src="https://api.dicebear.com/7.x/avataaars/svg?seed=PhucHoang"
+                      src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${currentUser?.email || currentUser?.name || 'User'}`}
                       alt="Avatar"
                     />
                   </div>
                   <div className="user-pill-info">
                     <span className="user-pill-name">
-                      {userRole === "admin" ? "Quản trị viên" : "Phuc Hoang"}
+                      {userRole === "admin" ? "Quản trị viên" : (currentUser?.name || currentUser?.fullName || "User")}
                     </span>
                     <span className="user-pill-status active-status">
                       <span className="status-dot"></span> ONLINE
@@ -268,6 +281,34 @@ function Home({
                         </div>
                         <span>Cài đặt tài khoản</span>
                       </button>
+                      {currentUser?.role === "expert" && onOpenCalendar && (
+                        <button
+                          className="auth-dropdown-item"
+                          onClick={() => {
+                            setIsDropdownOpen(false);
+                            onOpenCalendar();
+                          }}
+                        >
+                          <div className="dropdown-item-icon calendar-icon">
+                            <i className="bx bx-calendar"></i>
+                          </div>
+                          <span>Lịch hẹn của tôi</span>
+                        </button>
+                      )}
+                      {userRole === "admin" && (
+                        <button
+                          className="auth-dropdown-item"
+                          onClick={() => {
+                            setIsDropdownOpen(false);
+                            onOpenAdminPortal();
+                          }}
+                        >
+                          <div className="dropdown-item-icon admin-icon">
+                            <i className="bx bx-shield"></i>
+                          </div>
+                          <span>Quản trị viên</span>
+                        </button>
+                      )}
                       <button
                         className="auth-dropdown-item"
                         onClick={() => {
