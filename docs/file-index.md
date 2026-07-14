@@ -90,8 +90,10 @@ One entry per source file. "Exports" lists the public symbols (functions, classe
 |------|----------------|---------|
 | `src/components/ExpertDirectory/ExpertDirectory.tsx` | Public expert list from `ExpertController.getApprovedExpertsForGuest()` (localStorage). | `default ExpertDirectory` |
 | `src/components/ExpertDirectory/ExpertDirectory.css` | Styles. | — |
-| `src/components/AIChat/AIChat.tsx` | **Simulated** AI chat (keyword-triggered responses, no network). | `default AIChat` |
+| `src/components/AIChat/AIChat.tsx` | AI chat assistant with real-time streaming support (SSE). | `default AIChat` |
 | `src/components/AIChat/AIChat.css` | Styles. | — |
+| `src/components/Chat/Chat.tsx` | 1:1 real-time chat between student and expert using Socket.io and REST APIs. | `default Chat` |
+| `src/components/Chat/Chat.css` | Chat component styles. | — |
 | `src/components/Admin/AdminLayout.tsx` | Admin shell (sidebar/nav) wrapping admin sub-screens. | `default AdminLayout` |
 | `src/components/Admin/AdminDashboard.tsx` | Stats dashboard via `DashboardController` + quick expert actions via `ExpertController`. | `default AdminDashboard` |
 | `src/components/Admin/AdminExpertCrud.tsx` | Expert CRUD UI over `ExpertController` (localStorage). | `default AdminExpertCrud` |

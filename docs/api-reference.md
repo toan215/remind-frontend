@@ -33,6 +33,10 @@
 | `FORUMS.POST_DETAIL(id)` | `GET|POST(like)|PUT|DELETE /api/forums/posts/{id}` | get/post/put/delete |
 | `FORUMS.CREATE_COMMENT(pid)` | `POST /api/forums/posts/{pid}/comments` | post |
 | `FORUMS.UPDATE_COMMENT(cid)` / `DELETE_COMMENT(cid)` | `/api/forums/comments/{cid}` | put/delete |
+| `AI.CHAT` | `POST /api/ai/chat` | post (fetch, stream) |
+| `CHATS.LIST` | `GET /api/chats` | get |
+| `CHATS.ROOM(id)` | `GET /api/chats/{id}` | (defined) |
+| `CHATS.MESSAGES(id)` | `GET /api/chats/{id}/messages` | get |
 | `ADMIN.*` | `/api/admin/...` (forums, experts, reports) | **defined but unused** |
 
 ## Real API callers
@@ -94,13 +98,31 @@ Helpers (no network): `formatTimeAgo(dateStr)`, `validate(data: CreatePostData)`
 | `likedBy` | `likedBy[]` | object ids stringified |
 | `isAnonymous` | `authorDisplayMode === 1` / `isAnonymous` | |
 
+### AI Chat & Expert Chat Integration
+
+#### AI Chat (`components/AIChat/AIChat.tsx`)
+- **Streaming integration:** Calls `fetch` to `${API_BASE_URL}/ai/chat` directly using `POST` method with headers `Content-Type: application/json` and `Authorization: Bearer <accessToken>`.
+- **Request payload:** `{ prompt, history }`.
+- **Context limit:** History is limited to the last 8 messages (`messages.slice(-8)`) to optimize context size and reduce Time To First Token (TTFT).
+- **Streaming response (SSE):** Reads stream using `ReadableStream` reader, decoding chunks of `data: {"text": "..."}` or `data: {"error": "..."}` and updating the bot's response message dynamically until receiving `data: [DONE]`.
+
+#### Expert Chat (`components/Chat/Chat.tsx`)
+- **REST APIs:**
+  - Loads list of rooms via `GET /api/chats` (`API_ENDPOINTS.CHATS.LIST`) where participants are populated with user details (`fullName`, `avatarUrl`, `role`).
+  - Loads past room messages via `GET /api/chats/{id}/messages` (`API_ENDPOINTS.CHATS.MESSAGES`).
+- **WebSocket connection:**
+  - Connects to backend Socket.io server upon mounting using user's `accessToken` (via `io(BASE_URL, { auth: { token } })`).
+  - Joins the current room with event `chat:join` (`{ roomId }`) and leaves the room with `chat:leave` (`{ roomId }`).
+  - Sends messages using `chat:message` event (`{ roomId, text, type: "text" }`).
+  - Listens to incoming messages on `chat:message` event to append them to the conversation thread and update the room's last message on sidebar.
+  - Listens to socket errors via `chat:error` event and displays restriction details (e.g. unpaid appointments, time not reached) via an `errorBanner` component.
+
 ## Mocked / no-network layers (gap)
 
 These controllers read/write `localStorage` and **do not call the backend**, even though `API_ENDPOINTS.ADMIN.*` exist:
 
 - **`controllers/ExpertController.ts`** — seed list of 8 experts (`Expert[]`), CRUD, activity log, approval/suspension. Used by `AdminExpertCrud.tsx`, `AdminDashboard.tsx`, `ExpertDirectory.tsx`.
 - **`controllers/DashboardController.ts`** — `getStats()` derives dashboard numbers from `ExpertController` + localStorage logs.
-- **`components/AIChat/AIChat.tsx`** — fully simulated keyword responses; no HTTP.
 
 ## Data shapes
 

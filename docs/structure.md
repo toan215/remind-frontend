@@ -12,7 +12,8 @@ remind/
 │   ├── components/          # UI screens & feature components
 │   │   ├── AboutUs/        # Static "About Us" page
 │   │   ├── Admin/          # Admin portal (dashboard + expert CRUD)
-│   │   ├── AIChat/         # Simulated AI chat (no network)
+│   │   ├── AIChat/         # AI Chat with real-time streaming support (SSE)
+│   │   ├── Chat/           # 1:1 chat between student and expert (Socket.io)
 │   │   ├── ExpertDirectory/ # Public expert directory (from localStorage)
 │   │   ├── Forum/          # Forum list, post/comment UI, modals
 │   │   ├── Home/           # Landing/home screen
