@@ -85,6 +85,13 @@ export const API_ENDPOINTS = {
     CHAT: `${API_BASE_URL}/ai/chat`,
   },
 
+  // Expert chat endpoints
+  CHATS: {
+    LIST: `${API_BASE_URL}/chats`,
+    ROOM: (roomId: string) => `${API_BASE_URL}/chats/${roomId}`,
+    MESSAGES: (roomId: string) => `${API_BASE_URL}/chats/${roomId}/messages`,
+  },
+
   // Notification endpoints
   NOTIFICATIONS: {
     LIST: `${API_BASE_URL}/notifications`,

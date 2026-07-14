@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { AIController } from "../../controllers/AIController";
+import { API_BASE_URL } from "../../utils/constants";
 import "./AIChat.css";
 
 // Demo conversation data
@@ -77,8 +78,8 @@ function AIChat({ onBack }: AIChatProps) {
       time: timeStr,
     };
     
-    // Prepare history for AI
-    const history = messages.map(m => ({ role: m.sender === 'bot' ? 'ai' : 'user', text: m.text }));
+    // Prepare history for AI: Chỉ lấy tối đa 8 tin nhắn gần nhất để giữ context nhỏ gọn, giảm độ trễ TTFT
+    const history = messages.slice(-8).map(m => ({ role: m.sender === 'bot' ? 'ai' : 'user', text: m.text }));
     
     setMessages((prev) => [...prev, userMsg]);
     setInputValue("");
@@ -90,15 +91,76 @@ function AIChat({ onBack }: AIChatProps) {
     setIsTyping(true);
     
     try {
-      const data = await AIController.chat(text.trim(), history);
+      const response = await fetch(`${API_BASE_URL}/ai/chat`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${localStorage.getItem("accessToken")}`,
+        },
+        body: JSON.stringify({ prompt: text.trim(), history }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Không thể kết nối đến máy chủ AI");
+      }
+
       setIsTyping(false);
+
+      // Tạo trước tin nhắn bot rỗng
+      const botMsgId = Date.now() + 1;
       const botMsg = {
-        id: Date.now() + 1,
+        id: botMsgId,
         sender: "bot",
-        text: data.data.response,
+        text: "",
         time: timeStr,
       };
       setMessages((prev) => [...prev, botMsg]);
+
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder("utf-8");
+      let completeText = "";
+
+      if (reader) {
+        let buffer = "";
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split("\n");
+          buffer = lines.pop() || "";
+
+          for (const line of lines) {
+            const trimmed = line.trim();
+            if (trimmed.startsWith("data:")) {
+              const dataStr = trimmed.slice(5).trim();
+              if (dataStr === "[DONE]") {
+                break;
+              }
+              try {
+                const parsed = JSON.parse(dataStr);
+                if (parsed.text) {
+                  completeText += parsed.text;
+                  setMessages((prev) =>
+                    prev.map((msg) =>
+                      msg.id === botMsgId ? { ...msg, text: completeText } : msg
+                    )
+                  );
+                } else if (parsed.error) {
+                  completeText = "Xin lỗi, tớ đang gặp lỗi xử lý thông tin.";
+                  setMessages((prev) =>
+                    prev.map((msg) =>
+                      msg.id === botMsgId ? { ...msg, text: completeText } : msg
+                    )
+                  );
+                }
+              } catch (e) {
+                // ignore
+              }
+            }
+          }
+        }
+      }
     } catch (error) {
       setIsTyping(false);
       const botMsg = {
