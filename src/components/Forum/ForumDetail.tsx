@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { PostType, CommentType } from "./types";
-import { getPostDetail, createComment, toggleLike, deletePost } from "../../services/forumService";
+import { getPostDetail, createComment, toggleLike, deletePost, toggleCommentLike } from "../../services/forumService";
 import { timeAgo } from "./utils";
 import "./ForumDetail.css";
 
@@ -9,6 +9,8 @@ interface ForumDetailProps {
   onBack: () => void;
   userRole: string;
   onLoginRequired: () => void;
+  onUpdatePost?: (updatedPost: PostType) => void;
+  onDeletePost?: (postId: string) => void;
 }
 
 const CommentItem = ({ comment, onLike, onReply, onReport }: { comment: CommentType, onLike: () => void, onReply: () => void, onReport: () => void }) => {
@@ -42,7 +44,7 @@ const CommentItem = ({ comment, onLike, onReply, onReport }: { comment: CommentT
   );
 };
 
-function ForumDetail({ post, onBack, userRole, onLoginRequired }: ForumDetailProps) {
+function ForumDetail({ post, onBack, userRole, onLoginRequired, onUpdatePost, onDeletePost }: ForumDetailProps) {
   const [commentText, setCommentText] = useState("");
   const [comments, setComments] = useState<CommentType[]>([]);
   const [isLiked, setIsLiked] = useState(false);
@@ -100,8 +102,8 @@ function ForumDetail({ post, onBack, userRole, onLoginRequired }: ForumDetailPro
       try {
         await deletePost(post._id);
         alert("Xóa bài viết thành công!");
-        onBack(); // Close modal and potentially refresh list in parent
-        window.location.reload(); // Simple way to refresh feed for now
+        if (onDeletePost) onDeletePost(post._id);
+        onBack();
       } catch (error) {
         console.error("Failed to delete post", error);
         alert("Có lỗi xảy ra khi xóa bài viết.");
@@ -195,6 +197,7 @@ function ForumDetail({ post, onBack, userRole, onLoginRequired }: ForumDetailPro
                 const result = await toggleLike(post._id);
                 setIsLiked(result.liked);
                 setLikeCount(result.likeCount);
+                if (onUpdatePost) onUpdatePost(result.post);
               }}
             >
               <i className={isLiked ? "bx bxs-heart" : "bx bx-heart"}></i>
@@ -236,7 +239,18 @@ function ForumDetail({ post, onBack, userRole, onLoginRequired }: ForumDetailPro
                 <CommentItem 
                   key={comment._id}
                   comment={comment}
-                  onLike={() => { alert('Đã thích bình luận!'); }}
+                  onLike={async () => {
+                    if (userRole === "guest") {
+                      onLoginRequired();
+                      return;
+                    }
+                    try {
+                      const result = await toggleCommentLike(comment._id);
+                      setComments(prev => prev.map(c => c._id === comment._id ? result.comment : c));
+                    } catch (error) {
+                      console.error("Failed to like comment", error);
+                    }
+                  }}
                   onReply={() => {
                     setCommentText(`@${comment.publicAuthorName} `);
                     document.querySelector('.forum-comment-textarea')?.scrollIntoView({ behavior: 'smooth' });

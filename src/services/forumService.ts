@@ -8,13 +8,10 @@ export const getForums = async (): Promise<ForumType[]> => {
 };
 
 export const getPosts = async (
-  cursor?: string,
+  page: number = 1,
   limit: number = 10
-): Promise<{ posts: PostType[]; nextCursor: string | null; hasNext: boolean }> => {
-  let url = `${API_ENDPOINTS.FORUMS.LIST_POSTS}?limit=${limit}`;
-  if (cursor) {
-    url += `&cursor=${cursor}`;
-  }
+): Promise<{ posts: PostType[]; totalPages: number; currentPage: number; totalItems: number }> => {
+  const url = `${API_ENDPOINTS.FORUMS.LIST_POSTS}?limit=${limit}&page=${page}`;
   const response = await api.get(url);
   return response.data;
 };
@@ -57,9 +54,35 @@ export const createComment = async (postId: string, content: string, authorDispl
   return response.data.comment;
 };
 
-export const toggleLike = async (postId: string): Promise<{ liked: boolean; likeCount: number }> => {
-  const response = await api.post(`${API_ENDPOINTS.FORUMS.POST_DETAIL(postId)}/like`);
-  return { liked: response.data.liked ?? false, likeCount: response.data.post?.likeCount ?? 0 };
+export const updateComment = async (commentId: string, content: string): Promise<CommentType> => {
+  const response = await api.patch(API_ENDPOINTS.FORUMS.UPDATE_COMMENT(commentId), {
+    content
+  });
+  return response.data.comment;
+};
+
+export const deleteComment = async (commentId: string): Promise<void> => {
+  await api.delete(`${API_ENDPOINTS.FORUMS.COMMENTS}/${commentId}`);
+};
+
+export const toggleLike = async (postId: string): Promise<{ liked: boolean; likeCount: number; post: PostType }> => {
+  const url = `${API_ENDPOINTS.FORUMS.LIST_POSTS}/${postId}/like`;
+  const response = await api.post(url);
+  return {
+    liked: response.data.liked,
+    likeCount: response.data.post.likeCount,
+    post: response.data.post
+  };
+};
+
+export const toggleCommentLike = async (commentId: string): Promise<{ liked: boolean; likeCount: number; comment: CommentType }> => {
+  const url = `${API_ENDPOINTS.FORUMS.COMMENTS}/${commentId}/like`;
+  const response = await api.post(url);
+  return {
+    liked: response.data.liked,
+    likeCount: response.data.comment.likeCount,
+    comment: response.data.comment
+  };
 };
 
 export const searchPosts = async (query: string): Promise<PostType[]> => {

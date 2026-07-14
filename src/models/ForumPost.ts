@@ -7,6 +7,7 @@ export interface ForumPost {
   likes: number;
   likedBy: string[];
   isAnonymous: boolean;
+  isMine?: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -18,6 +19,7 @@ export interface Comment {
   content: string;
   parentId: string | null;
   likes: number;
+  isMine?: boolean;
   createdAt: string;
 }
 

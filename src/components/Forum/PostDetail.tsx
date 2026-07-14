@@ -16,6 +16,14 @@ function PostDetail({ post: initialPost, onBack, userRole, onLoginRequired, onPo
   const [post, setPost] = useState<ForumPost>(initialPost);
   const [commentsCount, setCommentsCount] = useState(0);
 
+  // Edit Mode States
+  const [isEditing, setIsEditing] = useState(false);
+  const [editTitle, setEditTitle] = useState(initialPost.title);
+  const [editContent, setEditContent] = useState(initialPost.content);
+  const [editTags, setEditTags] = useState(initialPost.tags.join(", "));
+  const [editIsAnonymous, setEditIsAnonymous] = useState(initialPost.isAnonymous);
+  const [isUpdating, setIsUpdating] = useState(false);
+
   const fetchPostDetails = async () => {
     try {
       const details = await ForumController.getPostDetail(post.id);
@@ -43,6 +51,47 @@ function PostDetail({ post: initialPost, onBack, userRole, onLoginRequired, onPo
       onPostUpdate();
     } catch (err) {
       console.error("Failed to like post:", err);
+    }
+  };
+
+  const handleDeletePost = async () => {
+    if (!window.confirm("Bạn có chắc chắn muốn xóa bài viết này không? Hành động này không thể hoàn tác.")) return;
+    try {
+      await ForumController.deletePost(post.id);
+      onPostUpdate(); // Refresh the list
+      onBack(); // Go back to the forum list
+    } catch (err) {
+      console.error("Failed to delete post:", err);
+      alert("Xóa bài viết thất bại. Vui lòng thử lại.");
+    }
+  };
+
+  const handleUpdatePost = async () => {
+    if (!editTitle.trim() || !editContent.trim()) {
+      alert("Tiêu đề và nội dung không được để trống");
+      return;
+    }
+    setIsUpdating(true);
+    try {
+      const tagsArray = editTags
+        .split(",")
+        .map((t) => t.trim())
+        .filter((t) => t);
+      
+      const updatedPost = await ForumController.updatePost(post.id, {
+        title: editTitle,
+        content: editContent,
+        tags: tagsArray,
+        isAnonymous: editIsAnonymous,
+      });
+      setPost(updatedPost);
+      setIsEditing(false);
+      onPostUpdate();
+    } catch (err) {
+      console.error("Failed to update post:", err);
+      alert("Cập nhật bài viết thất bại.");
+    } finally {
+      setIsUpdating(false);
     }
   };
 
@@ -80,26 +129,93 @@ function PostDetail({ post: initialPost, onBack, userRole, onLoginRequired, onPo
             </span>
           </div>
 
-          {/* Title */}
-          <h2 className="post-detail-title">{post.title}</h2>
-
-          {/* Tags */}
-          {post.tags.length > 0 && (
-            <div className="post-detail-tags">
-              {post.tags.map((tag) => (
-                <span key={tag} className="forum-post-tag">
-                  #{tag}
-                </span>
-              ))}
+          {post.isMine && !isEditing && (
+            <div className="post-detail-owner-actions" style={{ marginBottom: "16px", display: "flex", gap: "8px" }}>
+              <button 
+                className="rm-btn rm-btn-outline" 
+                style={{ padding: "4px 12px", fontSize: "14px", height: "auto" }}
+                onClick={() => {
+                  setEditTitle(post.title);
+                  setEditContent(post.content);
+                  setEditTags(post.tags.join(", "));
+                  setEditIsAnonymous(post.isAnonymous);
+                  setIsEditing(true);
+                }}
+              >
+                <i className="bx bx-edit"></i> Sửa
+              </button>
+              <button 
+                className="rm-btn rm-btn-danger" 
+                style={{ padding: "4px 12px", fontSize: "14px", height: "auto" }}
+                onClick={handleDeletePost}
+              >
+                <i className="bx bx-trash"></i> Xóa
+              </button>
             </div>
           )}
 
-          {/* Body */}
-          <div className="post-detail-body">
-            {post.content.split("\n").map((paragraph, i) => (
-              <p key={i}>{paragraph}</p>
-            ))}
-          </div>
+          {isEditing ? (
+            <div className="post-edit-form" style={{ display: "flex", flexDirection: "column", gap: "12px", marginBottom: "20px", background: "var(--surface-50)", padding: "16px", borderRadius: "8px" }}>
+              <input
+                className="rm-input-field"
+                value={editTitle}
+                onChange={(e) => setEditTitle(e.target.value)}
+                placeholder="Tiêu đề bài viết"
+              />
+              <textarea
+                className="rm-input-field"
+                value={editContent}
+                onChange={(e) => setEditContent(e.target.value)}
+                placeholder="Nội dung bài viết"
+                rows={5}
+              />
+              <input
+                className="rm-input-field"
+                value={editTags}
+                onChange={(e) => setEditTags(e.target.value)}
+                placeholder="Thẻ tags (cách nhau bằng dấu phẩy)"
+              />
+              <label style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer" }}>
+                <input
+                  type="checkbox"
+                  checked={editIsAnonymous}
+                  onChange={(e) => setEditIsAnonymous(e.target.checked)}
+                />
+                Đăng ẩn danh
+              </label>
+              <div style={{ display: "flex", gap: "8px", marginTop: "8px" }}>
+                <button className="rm-btn rm-btn-primary" onClick={handleUpdatePost} disabled={isUpdating}>
+                  {isUpdating ? "Đang lưu..." : "Lưu thay đổi"}
+                </button>
+                <button className="rm-btn rm-btn-outline" onClick={() => setIsEditing(false)} disabled={isUpdating}>
+                  Hủy
+                </button>
+              </div>
+            </div>
+          ) : (
+            <>
+              {/* Title */}
+              <h2 className="post-detail-title">{post.title}</h2>
+
+              {/* Tags */}
+              {post.tags.length > 0 && (
+                <div className="post-detail-tags">
+                  {post.tags.map((tag) => (
+                    <span key={tag} className="forum-post-tag">
+                      #{tag}
+                    </span>
+                  ))}
+                </div>
+              )}
+
+              {/* Body */}
+              <div className="post-detail-body">
+                {post.content.split("\n").map((paragraph, i) => (
+                  <p key={i}>{paragraph}</p>
+                ))}
+              </div>
+            </>
+          )}
 
           {/* Actions */}
           <div className="post-detail-actions">

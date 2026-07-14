@@ -72,6 +72,7 @@ export const API_ENDPOINTS = {
     LIST_POSTS: `${API_BASE_URL}/forums/posts`,
 
     // Forum comments
+    COMMENTS: `${API_BASE_URL}/forums/comments`,
     UPDATE_COMMENT: (commentId: string) =>
       `${API_BASE_URL}/forums/comments/${commentId}`,
     DELETE_COMMENT: (commentId: string) =>
