@@ -29,6 +29,7 @@ export default function Header({
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [notifications, setNotifications] = useState<INotification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [currentUser, setCurrentUser] = useState<any>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const notifRef = useRef<HTMLDivElement>(null);
 
@@ -52,6 +53,15 @@ export default function Header({
           setUnreadCount(data.filter((n) => !n.isRead).length);
         })
         .catch(console.error);
+    }
+  }, [userRole]);
+
+  useEffect(() => {
+    if (userRole !== "guest") {
+      const user = AuthController.getCurrentUser();
+      setCurrentUser(user);
+    } else {
+      setCurrentUser(null);
     }
   }, [userRole]);
 
@@ -323,6 +333,20 @@ export default function Header({
                       </div>
                       <span>Cài đặt tài khoản</span>
                     </button>
+                    {currentUser?.role === "expert" && (
+                      <button
+                        className="auth-dropdown-item"
+                        onClick={() => {
+                          setIsDropdownOpen(false);
+                          onNavigate("calendar");
+                        }}
+                      >
+                        <div className="dropdown-item-icon calendar-icon">
+                          <i className="bx bx-calendar"></i>
+                        </div>
+                        <span>Lịch hẹn của tôi</span>
+                      </button>
+                    )}
                     <button
                       className="auth-dropdown-item"
                       onClick={() => {

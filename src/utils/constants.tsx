@@ -91,4 +91,23 @@ export const API_ENDPOINTS = {
     MARK_READ: (id: string) => `${API_BASE_URL}/notifications/${id}/read`,
     MARK_ALL_READ: `${API_BASE_URL}/notifications/read-all`,
   },
+
+  // Appointment endpoints
+  APPOINTMENTS: {
+    BOOK: `${API_BASE_URL}/appointments/book`,
+    MINE: `${API_BASE_URL}/appointments/mine`,
+    EXPERT: `${API_BASE_URL}/appointments/expert`,
+    CANCEL: (id: string) => `${API_BASE_URL}/appointments/${id}/cancel`,
+    START: (id: string) => `${API_BASE_URL}/appointments/${id}/start`,
+    END: (id: string) => `${API_BASE_URL}/appointments/${id}/end`,
+  },
+
+  // Payment endpoints
+  PAYMENTS: {
+    PRODUCTS: `${API_BASE_URL}/payments/products`,
+    CREATE: `${API_BASE_URL}/payments/payos`,
+    LIST: `${API_BASE_URL}/payments`,
+    WALLET: `${API_BASE_URL}/payments/wallet`,
+    APPOINTMENT: `${API_BASE_URL}/payments/appointment`,
+  },
 };
