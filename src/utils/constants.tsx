@@ -39,6 +39,24 @@ export const API_ENDPOINTS = {
     REPORTS: `${API_BASE_URL}/admin/reports`,
     RESOLVE_REPORT: (reportId: string | number) =>
       `${API_BASE_URL}/admin/reports/${reportId}/resolve`,
+
+    DASHBOARD_STATS: `${API_BASE_URL}/admin/dashboard/stats`,
+    ACTIVITY_LOG: `${API_BASE_URL}/admin/dashboard/activity-log`,
+
+    // Expert Management by Admin
+    LIST_EXPERTS: `${API_BASE_URL}/admin/experts`,
+    CREATE_EXPERT: `${API_BASE_URL}/admin/experts`,
+    UPDATE_EXPERT: (id: number | string) => `${API_BASE_URL}/admin/experts/${id}`,
+    DELETE_EXPERT: (id: number | string) => `${API_BASE_URL}/admin/experts/${id}`,
+    SUSPEND_EXPERT: (expertId: string | number) =>
+      `${API_BASE_URL}/admin/experts/${expertId}/suspend`,
+  },
+
+  // Expert and public expert endpoints
+  EXPERTS: {
+    DASHBOARD: `${API_BASE_URL}/experts/me/dashboard`,
+    SETTINGS: `${API_BASE_URL}/experts/me/settings`,
+    LIST_APPROVED: `${API_BASE_URL}/experts`,
   },
 
   // Public forum and interaction endpoints
@@ -73,5 +91,24 @@ export const API_ENDPOINTS = {
     LIST: `${API_BASE_URL}/notifications`,
     MARK_READ: (id: string) => `${API_BASE_URL}/notifications/${id}/read`,
     MARK_ALL_READ: `${API_BASE_URL}/notifications/read-all`,
+  },
+
+  // Appointment endpoints
+  APPOINTMENTS: {
+    BOOK: `${API_BASE_URL}/appointments/book`,
+    MINE: `${API_BASE_URL}/appointments/mine`,
+    EXPERT: `${API_BASE_URL}/appointments/expert`,
+    CANCEL: (id: string) => `${API_BASE_URL}/appointments/${id}/cancel`,
+    START: (id: string) => `${API_BASE_URL}/appointments/${id}/start`,
+    END: (id: string) => `${API_BASE_URL}/appointments/${id}/end`,
+  },
+
+  // Payment endpoints
+  PAYMENTS: {
+    PRODUCTS: `${API_BASE_URL}/payments/products`,
+    CREATE: `${API_BASE_URL}/payments/payos`,
+    LIST: `${API_BASE_URL}/payments`,
+    WALLET: `${API_BASE_URL}/payments/wallet`,
+    APPOINTMENT: `${API_BASE_URL}/payments/appointment`,
   },
 };
