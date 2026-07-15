@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import "./Home.css";
 import { AuthController } from "../../controllers/AuthController";
+import gsap from "gsap";
 
 interface HomeProps {
   onOpenAIChat: () => void;
@@ -31,326 +32,64 @@ function Home({
   onOpenSettings,
   onOpenChat,
 }: HomeProps) {
-  const [isScrolled, setIsScrolled] = useState(false);
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [isNotifOpen, setIsNotifOpen] = useState(false);
-  const [unreadCount, setUnreadCount] = useState(1);
-  const [currentUser, setCurrentUser] = useState<any>(null);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-  const notifRef = useRef<HTMLDivElement>(null);
+  // Refs for GSAP Hero Animations
+  const heroBadgeRef = useRef<HTMLDivElement>(null);
+  const heroTitleRef = useRef<HTMLHeadingElement>(null);
+  const heroDescRef = useRef<HTMLParagraphElement>(null);
+  const heroActionsRef = useRef<HTMLDivElement>(null);
+  const heroVisualRef = useRef<HTMLDivElement>(null);
+  const msg1Ref = useRef<HTMLDivElement>(null);
+  const msg2Ref = useRef<HTMLDivElement>(null);
+  const msg3Ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const handleScroll = () => {
-      if (window.scrollY > 50) {
-        setIsScrolled(true);
-      } else {
-        setIsScrolled(false);
-      }
-    };
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
+    const ctx = gsap.context(() => {
+      const tl = gsap.timeline({ defaults: { ease: "power3.out" } });
+
+      gsap.set(
+        [heroBadgeRef.current, heroTitleRef.current, heroDescRef.current, heroActionsRef.current],
+        { opacity: 0, y: 30 }
+      );
+      gsap.set(heroVisualRef.current, { opacity: 0, x: 40, rotate: 5 });
+      gsap.set([msg1Ref.current, msg2Ref.current, msg3Ref.current], { opacity: 0, y: 15 });
+
+      tl.to(heroBadgeRef.current, { opacity: 1, y: 0, duration: 0.6 })
+        .to(heroTitleRef.current, { opacity: 1, y: 0, duration: 0.8 }, "-=0.4")
+        .to(heroDescRef.current, { opacity: 1, y: 0, duration: 0.8 }, "-=0.5")
+        .to(heroActionsRef.current, { opacity: 1, y: 0, duration: 0.6 }, "-=0.5")
+        .to(heroVisualRef.current, { opacity: 1, x: 0, rotate: 2, duration: 1, ease: "back.out(1.2)" }, "-=0.8");
+
+      tl.to(msg1Ref.current, { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" }, "+=0.3")
+        .to(msg2Ref.current, { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" }, "+=1.0")
+        .to(msg3Ref.current, { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" }, "+=1.2");
+    });
+
+    return () => ctx.revert();
   }, []);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
-      ) {
-        setIsDropdownOpen(false);
-      }
-      if (
-        notifRef.current &&
-        !notifRef.current.contains(event.target as Node)
-      ) {
-        setIsNotifOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  useEffect(() => {
-    if (userRole !== "guest") {
-      const user = AuthController.getCurrentUser();
-      setCurrentUser(user);
-    } else {
-      setCurrentUser(null);
-    }
-  }, [userRole]);
 
   return (
     <div className="home-page">
-      {/* ===== 1. HEADER / NAVIGATION ===== */}
-      <header
-        className={`home-header ${isScrolled ? "scrolled" : ""}`}
-        id="home-header"
-      >
-        <div className="home-header-inner">
-          <div className="home-logo">
-            <div className="home-logo-icon">R</div>
-            <span className="home-logo-text">ReMind</span>
-          </div>
-          <nav className="home-nav" id="home-nav">
-            <a href="#about" className="home-nav-link" onClick={(e) => {
-                e.preventDefault();
-                onOpenAbout();
-              }}>
-              Về chúng tôi
-            </a>
-            <a href="#ai-companion" className="home-nav-link">
-              AI Companion
-            </a>
-            <a
-              href="#clinic"
-              className="home-nav-link"
-              onClick={(e) => {
-                e.preventDefault();
-                onOpenExpertDirectory();
-              }}
-            >
-              Phòng khám ẩn danh
-            </a>
-            <a
-              href="#forum"
-              className="home-nav-link"
-              onClick={(e) => {
-                e.preventDefault();
-                onOpenForum();
-              }}
-            >
-              Góc tâm sự
-            </a>
-            {userRole === "admin" && (
-              <a
-                href="/admin/dashboard"
-                className="home-nav-link"
-                style={{ color: "var(--brand-700)", fontWeight: "600" }}
-              >
-                Quản trị <i className="bx bx-wrench"></i>
-              </a>
-            )}
-          </nav>
-
-          <div className="home-auth-pills">
-            {/* Chat Pill */}
-            <div
-              className="auth-pill bell-pill"
-              onClick={onOpenChat}
-              title="Tin nhắn"
-            >
-              <i className="bx bx-message-rounded-dots"></i>
-            </div>
-
-            <div className="auth-pill-dropdown-container" ref={notifRef}>
-              <div
-                className="auth-pill bell-pill"
-                onClick={() => {
-                  setIsNotifOpen(!isNotifOpen);
-                  if (!isNotifOpen) setUnreadCount(0);
-                }}
-              >
-                <i className="bx bx-bell"></i>
-                {unreadCount > 0 && (
-                  <span className="bell-badge">{unreadCount}</span>
-                )}
-              </div>
-
-              {isNotifOpen && (
-                <div className="auth-dropdown-menu notif-dropdown">
-                  <div className="notif-header">
-                    <h4>Thông báo</h4>
-                  </div>
-                  <div className="notif-list">
-                    <div className="notif-item">
-                      <div className="notif-icon like-icon">
-                        <i className="bx bxs-heart"></i>
-                      </div>
-                      <div className="notif-content">
-                        <p>
-                          <strong>Admin</strong> đã thích bài viết của bạn
-                        </p>
-                        <span>Vừa xong</span>
-                      </div>
-                    </div>
-                    <div className="notif-item">
-                      <div className="notif-icon comment-icon">
-                        <i className="bx bxs-comment-detail"></i>
-                      </div>
-                      <div className="notif-content">
-                        <p>
-                          <strong>Chuyên gia</strong> đã trả lời bình luận của
-                          bạn
-                        </p>
-                        <span>2 giờ trước</span>
-                      </div>
-                    </div>
-                    <div className="notif-item">
-                      <div className="notif-icon check-icon">
-                        <i className="bx bx-check-circle"></i>
-                      </div>
-                      <div className="notif-content">
-                        <p>
-                          Bài viết của bạn đã được <strong>phê duyệt</strong>
-                        </p>
-                        <span>1 ngày trước</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <div className="auth-pill-dropdown-container" ref={dropdownRef}>
-              {userRole === "guest" ? (
-                <div
-                  className="auth-pill user-pill guest-pill"
-                  onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                >
-                  <div className="user-pill-avatar">
-                    <i className="bx bx-user"></i>
-                  </div>
-                  <div className="user-pill-info">
-                    <span className="user-pill-name">Khách</span>
-                    <span className="user-pill-status">KHÁCH</span>
-                  </div>
-                  <i className="bx bx-chevron-down"></i>
-                </div>
-              ) : (
-                <div
-                  className="auth-pill user-pill logged-pill"
-                  onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                >
-                  <div className="user-pill-avatar">
-                    <img
-                      src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${currentUser?.email || currentUser?.name || 'User'}`}
-                      alt="Avatar"
-                    />
-                  </div>
-                  <div className="user-pill-info">
-                    <span className="user-pill-name">
-                      {userRole === "admin" ? "Quản trị viên" : (currentUser?.name || currentUser?.fullName || "User")}
-                    </span>
-                    <span className="user-pill-status active-status">
-                      <span className="status-dot"></span> ONLINE
-                    </span>
-                  </div>
-                </div>
-              )}
-
-              {isDropdownOpen && (
-                <div className="auth-dropdown-menu">
-                  {userRole === "guest" ? (
-                    <>
-                      <button
-                        className="auth-dropdown-item"
-                        onClick={() => {
-                          setIsDropdownOpen(false);
-                          onOpenLogin();
-                        }}
-                      >
-                        <div className="dropdown-item-icon login-icon">
-                          <i className="bx bx-log-in"></i>
-                        </div>
-                        <span>Đăng nhập tài khoản</span>
-                      </button>
-                      <button
-                        className="auth-dropdown-item"
-                        onClick={() => {
-                          setIsDropdownOpen(false);
-                          onOpenRegister();
-                        }}
-                      >
-                        <div className="dropdown-item-icon register-icon">
-                          <i className="bx bx-user-plus"></i>
-                        </div>
-                        <span>Tạo tài khoản mới</span>
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      <button
-                        className="auth-dropdown-item"
-                        onClick={() => {
-                          setIsDropdownOpen(false);
-                          onOpenSettings();
-                        }}
-                      >
-                        <div className="dropdown-item-icon setting-icon">
-                          <i className="bx bx-cog"></i>
-                        </div>
-                        <span>Cài đặt tài khoản</span>
-                      </button>
-                      {currentUser?.role === "expert" && onOpenCalendar && (
-                        <button
-                          className="auth-dropdown-item"
-                          onClick={() => {
-                            setIsDropdownOpen(false);
-                            onOpenCalendar();
-                          }}
-                        >
-                          <div className="dropdown-item-icon calendar-icon">
-                            <i className="bx bx-calendar"></i>
-                          </div>
-                          <span>Lịch hẹn của tôi</span>
-                        </button>
-                      )}
-                      {userRole === "admin" && (
-                        <button
-                          className="auth-dropdown-item"
-                          onClick={() => {
-                            setIsDropdownOpen(false);
-                            onOpenAdminPortal();
-                          }}
-                        >
-                          <div className="dropdown-item-icon admin-icon">
-                            <i className="bx bx-shield"></i>
-                          </div>
-                          <span>Quản trị viên</span>
-                        </button>
-                      )}
-                      <button
-                        className="auth-dropdown-item"
-                        onClick={() => {
-                          setIsDropdownOpen(false);
-                          onLogout();
-                        }}
-                      >
-                        <div className="dropdown-item-icon logout-icon">
-                          <i className="bx bx-log-out"></i>
-                        </div>
-                        <span>Đăng xuất</span>
-                      </button>
-                    </>
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </header>
-
       {/* ===== 2. HERO SECTION ===== */}
       <section className="home-hero" id="hero-section">
         <div className="home-hero-inner">
           <div className="home-hero-text">
-            <div className="home-hero-badge">
+            <div className="home-hero-badge" ref={heroBadgeRef}>
               <i
                 className="bx bxs-star"
                 style={{ color: "var(--brand-500)" }}
               ></i>{" "}
               Nền tảng hỗ trợ tâm lý ẩn danh 24/7 cho Gen Z
             </div>
-            <h1 className="home-hero-title">
+            <h1 className="home-hero-title" ref={heroTitleRef}>
               Áp lực này, để <span className="home-highlight">ReMind</span> gánh
               cùng bạn.
             </h1>
-            <p className="home-hero-desc">
+            <p className="home-hero-desc" ref={heroDescRef}>
               Không gian hoàn toàn ẩn danh để bạn giải tỏa gánh nặng tinh thần.
               Sơ cứu tâm lý miễn phí với Trợ lý AI và kết nối Chuyên gia khi bạn
               cần can thiệp sâu.
             </p>
-            <div className="home-hero-actions">
+            <div className="home-hero-actions" ref={heroActionsRef}>
               <button
                 className="home-btn-primary"
                 id="chat-ai-btn"
@@ -369,7 +108,7 @@ function Home({
           </div>
 
           {/* Mock Chatbot UI */}
-          <div className="home-hero-visual">
+          <div className="home-hero-visual" ref={heroVisualRef}>
             <div className="home-chatbot-card">
               <div className="chatbot-header">
                 <div className="chatbot-avatar">
@@ -377,19 +116,22 @@ function Home({
                 </div>
                 <div className="chatbot-info">
                   <h4>AI Therapist</h4>
-                  <p>Đang hoạt động • Luôn ẩn danh</p>
+                  <p style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                    <span className="chatbot-status-dot"></span>
+                    Đang hoạt động • Luôn ẩn danh
+                  </p>
                 </div>
               </div>
               <div className="chatbot-messages">
-                <div className="chat-msg bot">
+                <div className="chat-msg bot" ref={msg1Ref}>
                   Chào bạn, tôi ở đây để lắng nghe. Hôm nay của bạn thế nào? Cứ
                   chia sẻ nhé, không ai biết bạn là ai đâu.
                 </div>
-                <div className="chat-msg user">
+                <div className="chat-msg user" ref={msg2Ref}>
                   Tôi vừa trượt bài kiểm tra, áp lực đồng lứa làm tôi ngột ngạt
                   quá...
                 </div>
-                <div className="chat-msg bot">
+                <div className="chat-msg bot" ref={msg3Ref}>
                   Tôi hiểu cảm giác đó. Thất bại một bài kiểm tra không định
                   nghĩa giá trị của bạn. Hãy cùng tôi thực hiện bài tập thở sâu
                   4-7-8 để bình tĩnh lại nhé?
@@ -584,7 +326,7 @@ function Home({
             <h4>Liên kết</h4>
             <a href="#about" onClick={(e) => { e.preventDefault(); onOpenAbout(); }}>Về chúng tôi</a>
             <a href="#ai-companion">AI Companion</a>
-            <a href="#clinic">Phòng khám</a>
+            <a href="#clinic" onClick={(e) => { e.preventDefault(); onOpenExpertDirectory(); }}>Chuyên gia</a>
             <a href="#forum">Góc tâm sự</a>
           </div>
           <div className="home-footer-links">

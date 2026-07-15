@@ -1,8 +1,16 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Register from "../Register/Register";
 import { AuthController } from "../../controllers/AuthController";
 import { useGoogleLogin } from '@react-oauth/google';
 import "./Login.css";
+
+const COMFORTING_QUOTES = [
+  "Hãy nhẹ nhàng với chính mình, bạn đang làm rất tốt rồi.",
+  "Mọi cảm xúc đều có giá trị, hãy cho phép bản thân được lắng nghe.",
+  "Hít vào bình yên, thở ra những muộn phiền.",
+  "Một bước đi nhỏ hôm nay cũng là sự khởi đầu tuyệt vời.",
+  "Bạn không đơn độc, ReMind luôn ở đây bên bạn."
+];
 
 interface LoginProps {
   onLoginSuccess: (role: "user" | "admin") => void;
@@ -15,6 +23,19 @@ function Login({ onLoginSuccess, onBack, initialMode = "login", onForgotPassword
   const [isSignUp, setIsSignUp] = useState(initialMode === "register");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [currentQuoteIndex, setCurrentQuoteIndex] = useState(0);
+  const [fadeQuote, setFadeQuote] = useState(true);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setFadeQuote(false);
+      setTimeout(() => {
+        setCurrentQuoteIndex((prev) => (prev + 1) % COMFORTING_QUOTES.length);
+        setFadeQuote(true);
+      }, 500); // Wait for fade-out to finish before changing text
+    }, 5000);
+    return () => clearInterval(interval);
+  }, []);
 
   const loginWithGoogle = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
@@ -76,11 +97,17 @@ function Login({ onLoginSuccess, onBack, initialMode = "login", onForgotPassword
   const handleRegisterSubmit = async (data: any, resetForm: () => void) => {
     setIsLoading(true);
     try {
-      await AuthController.register(data.fullname, data.email, data.password, "student");
+      const response = await AuthController.register(data.fullname, data.email, data.password, data.role || "student");
       setIsLoading(false);
       alert(`Đăng ký thành công!\nChào mừng, ${data.fullname}!`);
       resetForm();
-      setIsSignUp(false);
+      if (onLoginSuccess) {
+        const role =
+          response.user.role === "admin" || response.user.role === "system_manager"
+            ? "admin"
+            : "user";
+        onLoginSuccess(role);
+      }
     } catch (err: any) {
       setIsLoading(false);
       alert(err.message);
@@ -261,10 +288,21 @@ function Login({ onLoginSuccess, onBack, initialMode = "login", onForgotPassword
         <div className="overlay-panel">
           <div className="overlay-content">
             <div className="login-brand-icon">
-              <i className="bx bx-code-alt"></i>
+              <i className="bx bx-brain"></i>
             </div>
-            <h2>ReMind AI</h2>
+            <h2>ReMind</h2>
             <p className="overlay-tagline">Nền tảng hỗ trợ tâm lý</p>
+
+            <div className="overlay-quote-container">
+              <div className="overlay-quote-card">
+                <i className="bx bxs-quote-left quote-icon-top"></i>
+                <p className={`overlay-quote-text ${fadeQuote ? "fade-in" : "fade-out"}`}>
+                  {COMFORTING_QUOTES[currentQuoteIndex]}
+                </p>
+                <div className="quote-divider"></div>
+                <span className="quote-author">ReMind Care</span>
+              </div>
+            </div>
 
             {/* Content shown when on Login page (panel is on the left) */}
             <div className="overlay-login-content">

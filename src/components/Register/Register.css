@@ -1,2 +1,45 @@
-/* Register component uses shared styles from Login.css */
-/* Any register-specific overrides go here */
+/* Register-specific styles */
+
+.segmented-control {
+  position: relative;
+  display: flex;
+  background: var(--brand-050, rgba(23, 107, 104, 0.05));
+  border: 1.5px solid var(--border, #e5e7eb);
+  border-radius: 10px;
+  padding: 4px;
+  margin-bottom: 16px;
+  width: 100%;
+  box-sizing: border-box;
+  z-index: 1;
+}
+
+.segmented-indicator {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  left: 4px;
+  background: var(--brand-700, #176b68);
+  border-radius: 8px;
+  z-index: 0;
+}
+
+.segmented-btn {
+  flex: 1;
+  background: none;
+  border: none;
+  padding: 8px 0;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink-700, #374151);
+  cursor: pointer;
+  z-index: 1;
+  position: relative;
+  transition: color 0.3s ease;
+  font-family: "Inter", system-ui, sans-serif;
+  text-align: center;
+}
+
+.segmented-btn.active {
+  color: #fff;
+  font-weight: 600;
+}

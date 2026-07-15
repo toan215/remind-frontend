@@ -87,7 +87,7 @@
   position: relative;
   width: 900px;
   max-width: 95vw;
-  height: 600px;
+  height: 640px;
   border-radius: 8px;
   overflow: hidden;
   box-shadow: 0 20px 50px rgba(23, 107, 104, 0.1),
@@ -120,6 +120,12 @@
   padding: 30px 36px;
   box-sizing: border-box;
   transition: all 0.7s cubic-bezier(0.68, -0.15, 0.27, 1.15);
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
+}
+
+.form-panel::-webkit-scrollbar {
+  display: none; /* Chrome/Safari */
 }
 
 /* Login form panel — right side by default */
@@ -795,3 +801,70 @@
   margin-left: 6px;
 }
 
+/* ========================
+   OVERLAY QUOTES
+   ======================== */
+.overlay-quote-container {
+  margin: 25px auto;
+  max-width: 340px;
+  width: 90%;
+  perspective: 1000px;
+}
+
+.overlay-quote-card {
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 16px;
+  padding: 24px 20px;
+  position: relative;
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1),
+    inset 0 1px 1px rgba(255, 255, 255, 0.2);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: all 0.3s ease;
+}
+
+.quote-icon-top {
+  font-size: 24px;
+  color: rgba(255, 255, 255, 0.4);
+  margin-bottom: 12px;
+}
+
+.overlay-quote-text {
+  font-size: 14.5px;
+  line-height: 1.6;
+  font-weight: 400;
+  color: #ffffff;
+  margin: 0;
+  text-align: center;
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+.overlay-quote-text.fade-in {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.overlay-quote-text.fade-out {
+  opacity: 0;
+  transform: translateY(-6px);
+}
+
+.quote-divider {
+  width: 40px;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.25);
+  margin: 14px 0 10px;
+  border-radius: 2px;
+}
+
+.quote-author {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.6);
+}

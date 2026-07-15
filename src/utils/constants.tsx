@@ -18,6 +18,13 @@ export const API_ENDPOINTS = {
     RESET_PASSWORD: `${API_BASE_URL}/auth/reset-password`,
   },
 
+  // User profile and settings endpoints
+  USERS: {
+    PROFILE: `${API_BASE_URL}/users/profile`,
+    CHANGE_PASSWORD: `${API_BASE_URL}/users/change-password`,
+    AVATAR: `${API_BASE_URL}/users/avatar`,
+  },
+
   // Admin moderation and management endpoints
   ADMIN: {
     // Forums management
