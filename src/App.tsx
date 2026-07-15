@@ -64,6 +64,11 @@ function App() {
     }
   }, []);
 
+  const handleLogout = async () => {
+    await AuthController.logout();
+    setUserRole("guest");
+  };
+
   const handleLoginRequired = () => {
     setCurrentScreen("login");
   };
@@ -179,7 +184,7 @@ function App() {
         onOpenForum={() => setCurrentScreen("forum")}
         onOpenLogin={handleLoginRequired}
         onOpenRegister={() => setCurrentScreen("register")}
-        onLogout={() => setUserRole("guest")}
+        onLogout={handleLogout}
         userRole={userRole}
         onOpenAdminPortal={() => {
           setAdminRoute("dashboard");
@@ -203,7 +208,7 @@ function App() {
             userRole={userRole}
             onOpenLogin={handleLoginRequired}
             onOpenRegister={() => setCurrentScreen("register")}
-            onLogout={() => setUserRole("guest")}
+            onLogout={handleLogout}
             onOpenAdminPortal={() => {
               setAdminRoute("dashboard");
               setCurrentScreen("admin");
