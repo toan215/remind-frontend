@@ -1,0 +1,99 @@
+/* Styles for guest warning login modal popup */
+
+.login-prompt-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(15, 23, 23, 0.4);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 99999;
+  opacity: 0;
+}
+
+.login-prompt-modal {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  border-radius: 20px;
+  width: 90%;
+  max-width: 400px;
+  padding: 30px;
+  text-align: center;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.12),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.2);
+  transform: scale(0.9);
+  opacity: 0;
+}
+
+.login-prompt-icon {
+  width: 60px;
+  height: 60px;
+  background: rgba(23, 107, 104, 0.1);
+  color: var(--brand-700, #176b68);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 30px;
+  margin: 0 auto 20px;
+}
+
+.login-prompt-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 10px 0;
+  font-family: 'Outfit', sans-serif;
+}
+
+.login-prompt-message {
+  font-size: 14.5px;
+  color: #4b5563;
+  line-height: 1.5;
+  margin: 0 0 24px 0;
+  font-family: 'Inter', sans-serif;
+}
+
+.login-prompt-buttons {
+  display: flex;
+  gap: 12px;
+}
+
+.login-prompt-btn {
+  flex: 1;
+  padding: 12px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: 'Inter', sans-serif;
+}
+
+.login-prompt-btn-primary {
+  background: var(--brand-700, #176b68);
+  color: #fff;
+  border: none;
+}
+
+.login-prompt-btn-primary:hover {
+  background: var(--brand-800, #125552);
+  transform: translateY(-1px);
+}
+
+.login-prompt-btn-secondary {
+  background: transparent;
+  color: #4b5563;
+  border: 1px solid #d1d5db;
+}
+
+.login-prompt-btn-secondary:hover {
+  background: rgba(0, 0, 0, 0.05);
+}

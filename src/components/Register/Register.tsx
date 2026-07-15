@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useGoogleLogin } from '@react-oauth/google';
 import { AuthController } from '../../controllers/AuthController';
+import gsap from 'gsap';
 import './Register.css';
 
 interface RegisterProps {
@@ -11,6 +12,7 @@ interface RegisterProps {
 
 function Register({ isLoading, onSubmit, onLoginSuccess }: RegisterProps) {
   const [showPassword, setShowPassword] = useState(false);
+  const [role, setRole] = useState<'student' | 'expert'>('student');
   const [registerData, setRegisterData] = useState({
     fullname: '',
     email: '',
@@ -18,6 +20,28 @@ function Register({ isLoading, onSubmit, onLoginSuccess }: RegisterProps) {
     confirmPassword: '',
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const containerRef = useRef<HTMLDivElement>(null);
+  const studentRef = useRef<HTMLButtonElement>(null);
+  const expertRef = useRef<HTMLButtonElement>(null);
+  const indicatorRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const activeEl = role === 'student' ? studentRef.current : expertRef.current;
+    if (activeEl && indicatorRef.current && containerRef.current) {
+      const containerRect = containerRef.current.getBoundingClientRect();
+      const activeRect = activeEl.getBoundingClientRect();
+      const left = activeRect.left - containerRect.left;
+      const width = activeRect.width;
+
+      gsap.to(indicatorRef.current, {
+        left: left,
+        width: width,
+        duration: 0.3,
+        ease: "power2.out"
+      });
+    }
+  }, [role]);
 
   const registerWithGoogle = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
@@ -59,7 +83,7 @@ function Register({ isLoading, onSubmit, onLoginSuccess }: RegisterProps) {
     const validationErrors = validate();
     setErrors(validationErrors);
     if (Object.keys(validationErrors).length === 0) {
-      onSubmit(registerData, () => {
+      onSubmit({ ...registerData, role }, () => {
         setRegisterData({ fullname: '', email: '', password: '', confirmPassword: '' });
         setErrors({});
       });
@@ -76,6 +100,26 @@ function Register({ isLoading, onSubmit, onLoginSuccess }: RegisterProps) {
       <form onSubmit={handleSubmit} id="register-form">
         <h1>Tạo tài khoản</h1>
         <p className="login-subtitle">Tham gia cùng chúng tôi ngay hôm nay</p>
+
+        <div className="segmented-control" ref={containerRef}>
+          <div className="segmented-indicator" ref={indicatorRef}></div>
+          <button
+            type="button"
+            ref={studentRef}
+            className={`segmented-btn ${role === 'student' ? 'active' : ''}`}
+            onClick={() => setRole('student')}
+          >
+            Sinh viên
+          </button>
+          <button
+            type="button"
+            ref={expertRef}
+            className={`segmented-btn ${role === 'expert' ? 'active' : ''}`}
+            onClick={() => setRole('expert')}
+          >
+            Chuyên gia
+          </button>
+        </div>
 
         <div className={`login-input-box ${errors.fullname ? 'error' : ''}`}>
           <input

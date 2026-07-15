@@ -1,7 +1,10 @@
-import { useState, useEffect, Suspense, lazy } from "react";
+import { useState, useEffect, useRef, Suspense, lazy } from "react";
 import { AdminRoute } from "./routes/adminRoutes";
-import { AuthController } from "./controllers/AuthController";
+import { AuthController, UserDto } from "./controllers/AuthController";
 import "./App.css";
+import "./components/Home/Home.css";
+import "./components/Login/LoginPrompt.css";
+import gsap from "gsap";
 
 const Login = lazy(() => import("./components/Login/Login"));
 const Home = lazy(() => import("./components/Home/Home"));
@@ -23,6 +26,7 @@ const AdminRouteDispatcher = lazy(() =>
 const Forum = lazy(() => import("./components/Forum/Forum"));
 const AboutUs = lazy(() => import("./components/AboutUs/AboutUs"));
 const Header = lazy(() => import("./components/Header/Header"));
+const Profile = lazy(() => import("./components/Profile/Profile"));
 const ForgetPassword = lazy(
   () => import("./components/ForgetPassword/ForgetPassword"),
 );
@@ -56,21 +60,127 @@ function App() {
   const [currentScreen, setCurrentScreen] = useState("home");
   const [adminRoute, setAdminRoute] = useState<AdminRoute>("dashboard");
   const [pendingBooking, setPendingBooking] = useState<any>(null);
+  const [showLoginPrompt, setShowLoginPrompt] = useState(false);
+
+  const [currentUser, setCurrentUser] = useState<UserDto | null>(null);
+  const [expertKey, setExpertKey] = useState(0);
+
+  const overlayRef = useRef<HTMLDivElement>(null);
+  const modalRef = useRef<HTMLDivElement>(null);
+
+  // Sync currentScreen with URL hash routing
+  useEffect(() => {
+    const handleHashChange = () => {
+      const hash = window.location.hash.replace(/^#\/?/, "");
+      const validScreens = [
+        "home",
+        "expert",
+        "forum",
+        "aichat",
+        "chat",
+        "about",
+        "calendar",
+        "settings",
+        "admin",
+        "login",
+        "register",
+        "forgot-password",
+        "payment",
+      ];
+
+      if (hash && validScreens.includes(hash)) {
+        setCurrentScreen(hash);
+      } else if (!hash) {
+        setCurrentScreen("home");
+      }
+    };
+
+    window.addEventListener("hashchange", handleHashChange);
+    handleHashChange(); // Handle initial URL hash on load
+
+    return () => {
+      window.removeEventListener("hashchange", handleHashChange);
+    };
+  }, []);
+
+  useEffect(() => {
+    const currentHash = window.location.hash.replace(/^#\/?/, "");
+    if (currentScreen === "home") {
+      if (currentHash !== "" && currentHash !== "/") {
+        window.location.hash = "#/";
+      }
+    } else {
+      if (currentHash !== currentScreen) {
+        window.location.hash = `#/${currentScreen}`;
+      }
+    }
+  }, [currentScreen]);
 
   useEffect(() => {
     const user = AuthController.getCurrentUser();
     if (user) {
-      setUserRole(user.role === 'admin' ? 'admin' : 'user');
+      setCurrentUser(user);
+      setUserRole(user.role === "admin" ? "admin" : "user");
     }
   }, []);
 
-  const handleLogout = async () => {
-    await AuthController.logout();
-    setUserRole("guest");
+  useEffect(() => {
+    if (showLoginPrompt && overlayRef.current && modalRef.current) {
+      gsap.set(overlayRef.current, { opacity: 0 });
+      gsap.set(modalRef.current, { scale: 0.92, opacity: 0, y: 15 });
+
+      gsap.to(overlayRef.current, {
+        opacity: 1,
+        duration: 0.35,
+        ease: "power2.out",
+      });
+      gsap.to(modalRef.current, {
+        scale: 1,
+        opacity: 1,
+        y: 0,
+        duration: 0.45,
+        ease: "back.out(1.6)",
+      });
+    }
+  }, [showLoginPrompt]);
+
+  const closeLoginPrompt = (callback?: () => void) => {
+    if (overlayRef.current && modalRef.current) {
+      gsap.to(modalRef.current, {
+        scale: 0.92,
+        opacity: 0,
+        y: 15,
+        duration: 0.25,
+        ease: "power2.in",
+      });
+      gsap.to(overlayRef.current, {
+        opacity: 0,
+        duration: 0.25,
+        ease: "power2.in",
+        onComplete: () => {
+          setShowLoginPrompt(false);
+          if (callback) callback();
+        },
+      });
+    } else {
+      setShowLoginPrompt(false);
+      if (callback) callback();
+    }
   };
 
   const handleLoginRequired = () => {
-    setCurrentScreen("login");
+    setShowLoginPrompt(true);
+  };
+
+  const handleLogout = async () => {
+    try {
+      await AuthController.logout();
+    } catch (error) {
+      console.error("Lỗi khi đăng xuất:", error);
+    }
+    setUserRole("guest");
+    setCurrentUser(null);
+    setCurrentScreen("home");
   };
 
   const renderScreen = () => {
@@ -80,6 +190,7 @@ function App() {
           initialMode={currentScreen === "register" ? "register" : "login"}
           onLoginSuccess={(role) => {
             setUserRole(role);
+            setCurrentUser(AuthController.getCurrentUser());
             setCurrentScreen("home");
           }}
           onBack={() => setCurrentScreen("home")}
@@ -93,16 +204,31 @@ function App() {
     }
 
     if (currentScreen === "aichat") {
+      if (userRole === "guest") {
+        setTimeout(() => {
+          setCurrentScreen("home");
+          handleLoginRequired();
+        }, 0);
+        return <LoadingFallback />;
+      }
       return <AIChat onBack={() => setCurrentScreen("home")} />;
     }
 
     if (currentScreen === "chat") {
+      if (userRole === "guest") {
+        setTimeout(() => {
+          setCurrentScreen("home");
+          handleLoginRequired();
+        }, 0);
+        return <LoadingFallback />;
+      }
       return <Chat onBack={() => setCurrentScreen("home")} />;
     }
 
     if (currentScreen === "expert") {
       return (
         <ExpertDirectory
+          key={expertKey}
           onBack={() => setCurrentScreen("home")}
           userRole={userRole}
           onLoginRequired={handleLoginRequired}
@@ -142,7 +268,31 @@ function App() {
     }
 
     if (currentScreen === "calendar") {
+      if (userRole === "guest") {
+        setTimeout(() => {
+          setCurrentScreen("home");
+          handleLoginRequired();
+        }, 0);
+        return <LoadingFallback />;
+      }
       return <ExpertCalendar onBack={() => setCurrentScreen("home")} />;
+    }
+
+    if (currentScreen === "settings") {
+      if (userRole === "guest") {
+        setTimeout(() => {
+          setCurrentScreen("home");
+          handleLoginRequired();
+        }, 0);
+        return <LoadingFallback />;
+      }
+      return (
+        <Profile
+          onBack={() => setCurrentScreen("home")}
+          onLogout={handleLogout}
+          onProfileUpdate={(updatedUser) => setCurrentUser(updatedUser)}
+        />
+      );
     }
 
     if (currentScreen === "admin") {
@@ -191,7 +341,7 @@ function App() {
           setCurrentScreen("admin");
         }}
         onOpenAbout={() => setCurrentScreen("about")}
-        onOpenSettings={() => {}}
+        onOpenSettings={() => setCurrentScreen("settings")}
       />
     );
   };
@@ -200,11 +350,15 @@ function App() {
     <Suspense fallback={<LoadingFallback />}>
       {currentScreen !== "login" &&
         currentScreen !== "register" &&
-        currentScreen !== "admin" &&
-        currentScreen !== "home" && (
+        currentScreen !== "admin" && (
           <Header
             currentScreen={currentScreen}
-            onNavigate={(screen) => setCurrentScreen(screen)}
+            onNavigate={(screen) => {
+              if (screen === "expert" && currentScreen === "expert") {
+                setExpertKey((prev) => prev + 1);
+              }
+              setCurrentScreen(screen);
+            }}
             userRole={userRole}
             onOpenLogin={handleLoginRequired}
             onOpenRegister={() => setCurrentScreen("register")}
@@ -217,9 +371,49 @@ function App() {
               if (userRole === "guest") handleLoginRequired();
               else setCurrentScreen("chat");
             }}
+            currentUser={currentUser}
           />
         )}
       {renderScreen()}
+      {showLoginPrompt && (
+        <div
+          className="login-prompt-overlay"
+          ref={overlayRef}
+          onClick={() => closeLoginPrompt()}
+        >
+          <div
+            className="login-prompt-modal"
+            ref={modalRef}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="login-prompt-icon">
+              <i className="bx bx-lock-alt"></i>
+            </div>
+            <h3 className="login-prompt-title">Yêu cầu đăng nhập</h3>
+            <p className="login-prompt-message">
+              Vui lòng đăng nhập để sử dụng tính năng này của ReMind.
+            </p>
+            <div className="login-prompt-buttons">
+              <button
+                type="button"
+                className="login-prompt-btn login-prompt-btn-secondary"
+                onClick={() => closeLoginPrompt()}
+              >
+                Để sau
+              </button>
+              <button
+                type="button"
+                className="login-prompt-btn login-prompt-btn-primary"
+                onClick={() => {
+                  closeLoginPrompt(() => setCurrentScreen("login"));
+                }}
+              >
+                Đăng nhập ngay
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </Suspense>
   );
 }

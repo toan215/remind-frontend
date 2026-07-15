@@ -191,44 +191,7 @@ function AIChat({ onBack }: AIChatProps) {
 
   return (
     <div className="aichat-screen" id="aichat-screen">
-      {/* ===== HEADER ===== */}
-      <header className="aichat-header" id="aichat-header">
-        <button
-          className="rm-back-btn"
-          id="aichat-back-btn"
-          onClick={onBack}
-          title="Quay lại"
-        >
-          <i className="bx bx-arrow-back"></i>
-        </button>
 
-        <div className="aichat-header-avatar">🤖</div>
-
-        <div className="aichat-header-info">
-          <h1 className="aichat-header-name">ReMind AI</h1>
-          <p className="aichat-header-status">
-            <span className="aichat-status-dot"></span>
-            Đang hoạt động • Ẩn danh
-          </p>
-        </div>
-
-        <div className="aichat-header-actions">
-          <button
-            className="rm-action-btn"
-            id="aichat-new-chat"
-            title="Cuộc trò chuyện mới"
-          >
-            <i className="bx bx-edit"></i>
-          </button>
-          <button
-            className="rm-action-btn"
-            id="aichat-more"
-            title="Thêm tùy chọn"
-          >
-            <i className="bx bx-dots-vertical-rounded"></i>
-          </button>
-        </div>
-      </header>
 
       {/* ===== SAFETY BANNER ===== */}
       {showBanner && (
@@ -251,36 +214,46 @@ function AIChat({ onBack }: AIChatProps) {
       {/* ===== MESSAGES OR WELCOME ===== */}
       {showWelcome ? (
         <div className="aichat-welcome" id="aichat-welcome">
-          <div className="aichat-welcome-icon">🧠</div>
+          <div className="aichat-welcome-icon">
+            <i className="bx bx-brain" style={{ fontSize: "36px", color: "var(--brand-700)" }}></i>
+          </div>
           <h2>Chào mừng đến với ReMind AI</h2>
           <p>
             Trợ lý sức khỏe tinh thần hoạt động 24/7. Mọi cuộc trò chuyện đều ẩn danh và không được lưu trữ vĩnh viễn.
           </p>
-
+ 
           <div className="aichat-welcome-features">
             <div className="aichat-feature-card">
-              <span className="aichat-feature-icon">💬</span>
+              <span className="aichat-feature-icon">
+                <i className="bx bx-message-rounded-detail" style={{ fontSize: "20px", color: "var(--brand-700)" }}></i>
+              </span>
               <div>
                 <h4>Trò chuyện an toàn</h4>
                 <p>Chia sẻ thoải mái, hoàn toàn ẩn danh</p>
               </div>
             </div>
             <div className="aichat-feature-card">
-              <span className="aichat-feature-icon">🧘</span>
+              <span className="aichat-feature-icon">
+                <i className="bx bx-spa" style={{ fontSize: "20px", color: "var(--brand-700)" }}></i>
+              </span>
               <div>
                 <h4>Bài tập thư giãn</h4>
                 <p>Hướng dẫn hít thở, mindfulness</p>
               </div>
             </div>
             <div className="aichat-feature-card">
-              <span className="aichat-feature-icon">📋</span>
+              <span className="aichat-feature-icon">
+                <i className="bx bx-clipboard" style={{ fontSize: "20px", color: "var(--brand-700)" }}></i>
+              </span>
               <div>
                 <h4>Đánh giá cảm xúc</h4>
                 <p>Hiểu hơn về tâm trạng bản thân</p>
               </div>
             </div>
             <div className="aichat-feature-card">
-              <span className="aichat-feature-icon">🩺</span>
+              <span className="aichat-feature-icon">
+                <i className="bx bx-pulse" style={{ fontSize: "20px", color: "var(--brand-700)" }}></i>
+              </span>
               <div>
                 <h4>Kết nối chuyên gia</h4>
                 <p>Giới thiệu bác sĩ khi cần thiết</p>
@@ -293,14 +266,14 @@ function AIChat({ onBack }: AIChatProps) {
           <div className="aichat-date-sep">
             <span>Hôm nay</span>
           </div>
-
+ 
           {messages.map((msg) => (
             <div
               key={msg.id}
               className={`aichat-msg-row ${msg.sender}`}
             >
               <div className="aichat-msg-avatar">
-                {msg.sender === "bot" ? "🤖" : "👤"}
+                {msg.sender === "bot" ? <i className="bx bx-bot"></i> : <i className="bx bx-user"></i>}
               </div>
               <div className="aichat-msg-content">
                 <div className="aichat-msg-bubble">

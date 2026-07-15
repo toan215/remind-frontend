@@ -7,6 +7,8 @@ export interface UserDto {
   fullName?: string;
   role: "student" | "expert" | "admin" | "system_manager";
   status: "active" | "pending" | "rejected" | "banned";
+  avatar?: string;
+  isAnonymous?: boolean;
 }
 
 export interface AuthResponse {

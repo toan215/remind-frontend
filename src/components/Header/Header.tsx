@@ -1,7 +1,12 @@
 import { useState, useEffect, useRef } from "react";
 import "../Home/Home.css";
-import { AuthController } from "../../controllers/AuthController";
+import { AuthController, UserDto } from "../../controllers/AuthController";
 import NotificationBell from "./NotificationBell";
+import gsap from "gsap";
+import {
+  NotificationController,
+  INotification,
+} from "../../controllers/NotificationController";
 
 interface HeaderProps {
   currentScreen: string;
@@ -12,6 +17,7 @@ interface HeaderProps {
   userRole: string;
   onOpenAdminPortal: () => void;
   onOpenChat: () => void;
+  currentUser?: UserDto | null;
 }
 
 export default function Header({
@@ -26,8 +32,9 @@ export default function Header({
 }: HeaderProps) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [currentUser, setCurrentUser] = useState<any>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const headerRef = useRef<HTMLElement>(null);
+  const [currentUser, setCurrentUser] = useState<any>(null);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -40,6 +47,31 @@ export default function Header({
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  useEffect(() => {
+    if (!headerRef.current) return;
+    if (isScrolled) {
+      gsap.to(headerRef.current, {
+        backgroundColor: "rgba(255, 255, 255, 0.95)",
+        backdropFilter: "blur(12px)",
+        webkitBackdropFilter: "blur(12px)",
+        borderBottomColor: "var(--border)",
+        boxShadow: "0px 1px 8px rgba(23, 107, 104, 0.06)",
+        duration: 0.3,
+        ease: "power2.out",
+      });
+    } else {
+      gsap.to(headerRef.current, {
+        backgroundColor: "rgba(255, 255, 255, 0)",
+        backdropFilter: "blur(0px)",
+        webkitBackdropFilter: "blur(0px)",
+        borderBottomColor: "rgba(0, 0, 0, 0)",
+        boxShadow: "0px 0px 0px rgba(0, 0, 0, 0)",
+        duration: 0.3,
+        ease: "power2.out",
+      });
+    }
+  }, [isScrolled]);
 
   useEffect(() => {
     if (userRole !== "guest") {
@@ -65,41 +97,54 @@ export default function Header({
 
   return (
     <header
-      className={`home-header ${isScrolled || currentScreen !== 'home' ? "scrolled" : ""}`}
+      className={`home-header ${isScrolled ? "scrolled" : ""}`}
       id="home-header"
+      ref={headerRef}
     >
       <div className="home-header-inner">
-        <div className="home-logo" onClick={() => onNavigate("home")} style={{cursor: 'pointer'}}>
+        <div
+          className="home-logo"
+          onClick={() => onNavigate("home")}
+          style={{ cursor: "pointer" }}
+        >
           <div className="home-logo-icon">R</div>
           <span className="home-logo-text">ReMind</span>
         </div>
         <nav className="home-nav" id="home-nav">
-          <a href="#about" className={`home-nav-link ${currentScreen === 'about' ? 'active' : ''}`} onClick={(e) => {
+          <a
+            href="#about"
+            className={`home-nav-link ${currentScreen === "about" ? "active" : ""}`}
+            onClick={(e) => {
               e.preventDefault();
               onNavigate("about");
-            }}>
+            }}
+          >
             Về chúng tôi
           </a>
-          <a href="#ai-companion" className={`home-nav-link ${currentScreen === 'aichat' ? 'active' : ''}`} onClick={(e) => {
+          <a
+            href="#ai-companion"
+            className={`home-nav-link ${currentScreen === "aichat" ? "active" : ""}`}
+            onClick={(e) => {
               e.preventDefault();
               if (userRole === "guest") onOpenLogin();
               else onNavigate("aichat");
-            }}>
+            }}
+          >
             AI Companion
           </a>
           <a
             href="#clinic"
-            className={`home-nav-link ${currentScreen === 'expert' ? 'active' : ''}`}
+            className={`home-nav-link ${currentScreen === "expert" ? "active" : ""}`}
             onClick={(e) => {
               e.preventDefault();
               onNavigate("expert");
             }}
           >
-            Phòng khám ẩn danh
+            Chuyên gia
           </a>
           <a
             href="#forum"
-            className={`home-nav-link ${currentScreen === 'forum' ? 'active' : ''}`}
+            className={`home-nav-link ${currentScreen === "forum" ? "active" : ""}`}
             onClick={(e) => {
               e.preventDefault();
               onNavigate("forum");
@@ -155,14 +200,32 @@ export default function Header({
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
               >
                 <div className="user-pill-avatar">
-                  <img
-                    src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${AuthController.getCurrentUser()?.fullName || "User"}`}
-                    alt="Avatar"
-                  />
+                  {currentUser?.avatar ? (
+                    <img src={currentUser.avatar} alt="Avatar" />
+                  ) : (
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="#a0aec0"
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        display: "block",
+                        background: "#edf2f7",
+                        borderRadius: "50%",
+                      }}
+                    >
+                      <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+                    </svg>
+                  )}
                 </div>
                 <div className="user-pill-info">
                   <span className="user-pill-name">
-                    {userRole === "admin" ? "Quản trị viên" : (AuthController.getCurrentUser()?.fullName || "Người dùng")}
+                    {userRole === "admin"
+                      ? "Quản trị viên"
+                      : currentUser?.fullName ||
+                        AuthController.getCurrentUser()?.fullName ||
+                        "Người dùng"}
                   </span>
                   <span className="user-pill-status active-status">
                     <span className="status-dot"></span> ONLINE
@@ -206,6 +269,7 @@ export default function Header({
                       className="auth-dropdown-item"
                       onClick={() => {
                         setIsDropdownOpen(false);
+                        onNavigate("settings");
                       }}
                     >
                       <div className="dropdown-item-icon setting-icon">
