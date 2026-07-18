@@ -6,9 +6,10 @@ import "./Chat.css";
 
 interface ChatProps {
   onBack: () => void;
+  initialAppointmentId?: string;
 }
 
-function Chat({ onBack }: ChatProps) {
+function Chat({ onBack, initialAppointmentId }: ChatProps) {
   const [rooms, setRooms] = useState<any[]>([]);
   const [activeRoomId, setActiveRoomId] = useState<string | null>(null);
   const [messages, setMessages] = useState<any[]>([]);
@@ -47,7 +48,11 @@ function Chat({ onBack }: ChatProps) {
   }, [activeRoomId]);
 
   // 1. Lấy thông tin user hiện tại và danh sách phòng chat khi mount
+  const lastFetchedApptRef = useRef<string | undefined>(undefined);
   useEffect(() => {
+    if (lastFetchedApptRef.current === initialAppointmentId) return;
+    lastFetchedApptRef.current = initialAppointmentId;
+
     const userStr = localStorage.getItem("user");
     if (userStr) {
       try {
@@ -58,11 +63,23 @@ function Chat({ onBack }: ChatProps) {
       }
     }
 
-    const fetchRooms = async () => {
+    const fetchRooms = async (retryCount = 0) => {
       try {
         const res = await apiHelper.get(API_ENDPOINTS.CHATS.LIST);
-        if (res.data && res.data.rooms) {
-          setRooms(res.data.rooms);
+        if (res && res.rooms) {
+          setRooms(res.rooms);
+
+          if (initialAppointmentId) {
+            const targetRoom = res.rooms.find(
+              (r: any) => String(r.appointmentId) === String(initialAppointmentId)
+            );
+            if (targetRoom) {
+              setActiveRoomId(targetRoom._id);
+            } else if (retryCount === 0) {
+              // ponytail: room might not be in the list immediately after payment, retry once
+              setTimeout(() => fetchRooms(1), 800);
+            }
+          }
         }
       } catch (err) {
         console.error("Lỗi khi tải danh sách phòng chat:", err);
@@ -70,13 +87,14 @@ function Chat({ onBack }: ChatProps) {
     };
 
     fetchRooms();
-  }, []);
+  }, [initialAppointmentId]);
 
   // 2. Khởi tạo kết nối Socket.io duy nhất cho component
   useEffect(() => {
     const token = localStorage.getItem("accessToken");
     if (!token) return;
 
+    let disconnected = false;
     const socket = io(BASE_URL, {
       auth: { token },
       transports: ["websocket"],
@@ -86,6 +104,10 @@ function Chat({ onBack }: ChatProps) {
 
     socket.on("connect", () => {
       console.log("[Socket] Connected successfully to server");
+    });
+
+    socket.on("connect_error", () => {
+      // ponytail: ignore transient errors during StrictMode remount; socket auto-retries
     });
 
     socket.on("chat:message", (msg: any) => {
@@ -134,8 +156,13 @@ function Chat({ onBack }: ChatProps) {
     });
 
     return () => {
-      if (socket) {
+      disconnected = true;
+      if (socket && socket.connected) {
         socket.disconnect();
+      } else if (socket) {
+        // ponytail: socket still connecting during StrictMode remount; let it close naturally
+        socket.once("connect", () => socket.disconnect());
+        socket.close();
       }
     };
   }, []);
@@ -158,11 +185,11 @@ function Chat({ onBack }: ChatProps) {
     const fetchMessages = async () => {
       try {
         const res = await apiHelper.get(`${API_ENDPOINTS.CHATS.MESSAGES(activeRoomId)}?limit=20`);
-        if (res.data && res.data.messages) {
+        if (res && res.messages) {
           // Tin nhắn từ backend trả về từ mới đến cũ, ta đảo ngược để hiển thị từ cũ đến mới
-          const sorted = [...res.data.messages].reverse();
+          const sorted = [...res.messages].reverse();
           setMessages(sorted);
-          setHasMoreMessages(res.data.hasNext || false);
+          setHasMoreMessages(res.hasNext || false);
           
           // Đánh dấu tin nhắn là đã đọc
           socket.emit("chat:read", { roomId: activeRoomId });
@@ -241,11 +268,11 @@ function Chat({ onBack }: ChatProps) {
         `${API_ENDPOINTS.CHATS.MESSAGES(activeRoomId)}?limit=20&cursor=${oldestMessageId}`
       );
       
-      if (res.data && res.data.messages) {
-        const sorted = [...res.data.messages].reverse();
+      if (res && res.messages) {
+        const sorted = [...res.messages].reverse();
         isPrependingRef.current = true;
         setMessages(prev => [...sorted, ...prev]);
-        setHasMoreMessages(res.data.hasNext || false);
+        setHasMoreMessages(res.hasNext || false);
         
         // Maintain scroll position after prepending
         setTimeout(() => {
