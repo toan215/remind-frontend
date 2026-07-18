@@ -15,26 +15,31 @@ export function AdminDashboard({ onNavigate }: AdminDashboardProps) {
   const [pendingExperts, setPendingExperts] = useState<Expert[]>([]);
 
   // Load stats and pending requests
-  const loadDashboardData = () => {
-    const computedStats = DashboardController.getStats();
-    setStats(computedStats);
-
-    const experts = ExpertController.getExperts();
-    const pending = experts.filter((e) => e.approvalStatus === "pending");
-    setPendingExperts(pending);
+  const loadDashboardData = async () => {
+    try {
+      const backendStats = await DashboardController.getAdminStats();
+      const pending = await ExpertController.getPendingExperts();
+      setPendingExperts(pending);
+      setStats({
+        ...backendStats,
+        pendingApprovals: pending.length,
+      });
+    } catch (err) {
+      console.error("Failed to load dashboard data:", err);
+    }
   };
 
   useEffect(() => {
     loadDashboardData();
   }, []);
 
-  const handleApprove = (id: number, name: string) => {
-    ExpertController.approveExpert(id);
+  const handleApprove = async (id: number, name: string) => {
+    await ExpertController.approveExpert(id);
     loadDashboardData();
   };
 
-  const handleSuspend = (id: number, name: string) => {
-    ExpertController.suspendExpert(id);
+  const handleSuspend = async (id: number, name: string) => {
+    await ExpertController.suspendExpert(id);
     loadDashboardData();
   };
 
@@ -106,7 +111,7 @@ export function AdminDashboard({ onNavigate }: AdminDashboardProps) {
           <h3 className="admin-dashboard-section-title">
             <span>Yêu cầu phê duyệt mới ({pendingExperts.length})</span>
             <button
-              onClick={() => onNavigate("expert-crud")}
+              onClick={() => onNavigate("expert-review")}
               style={{ background: "none", border: "none", color: "var(--brand-700)", fontWeight: 6, cursor: "pointer", fontSize: "13px" }}
             >
               Xem tất cả
@@ -115,14 +120,14 @@ export function AdminDashboard({ onNavigate }: AdminDashboardProps) {
 
           {pendingExperts.length > 0 ? (
             <div className="admin-pending-list">
-              {pendingExperts.slice(0, 5).map((expert) => (
-                <div key={expert.id} className="admin-pending-item">
+              {pendingExperts.slice(0, 5).map((expert: any) => (
+                <div key={expert._id} className="admin-pending-item">
                   <div className="admin-pending-item-left">
-                    <div className="admin-pending-avatar">{expert.avatar}</div>
+                    <div className="admin-pending-avatar">{(expert.fullName || expert.email || "?").charAt(0)}</div>
                     <div className="admin-pending-info">
-                      <h4>{expert.name}</h4>
+                      <h4>{expert.fullName || expert.email}</h4>
                       <p>
-                        {expert.specialty} • {expert.experience}
+                        {expert.expert?.profile?.professionalTitle || "Chưa cập nhật"}
                       </p>
                     </div>
                   </div>
@@ -130,14 +135,14 @@ export function AdminDashboard({ onNavigate }: AdminDashboardProps) {
                   <div className="admin-pending-actions">
                     <button
                       className="admin-action-btn-sm approve"
-                      onClick={() => handleApprove(expert.id, expert.name)}
+                      onClick={() => handleApprove(expert._id, expert.fullName || expert.email)}
                       title="Duyệt hồ sơ"
                     >
                       Duyệt
                     </button>
                     <button
                       className="admin-action-btn-sm reject"
-                      onClick={() => handleSuspend(expert.id, expert.name)}
+                      onClick={() => handleSuspend(expert._id, expert.fullName || expert.email)}
                       title="Từ chối/Đình chỉ"
                     >
                       Đình chỉ

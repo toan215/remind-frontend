@@ -11,10 +11,12 @@ remind/
 ├── src/
 │   ├── components/          # UI screens & feature components
 │   │   ├── AboutUs/        # Static "About Us" page
-│   │   ├── Admin/          # Admin portal (dashboard + expert CRUD)
+│   │   ├── Admin/          # Admin portal (dashboard + expert CRUD + review)
 │   │   ├── AIChat/         # AI Chat with real-time streaming support (SSE)
 │   │   ├── Chat/           # 1:1 chat between student and expert (Socket.io)
 │   │   ├── ExpertDirectory/ # Public expert directory (from localStorage)
+│   │   ├── AdminExpertReview/ # Pending expert review + credential downloads
+│   │   ├── Profile/        # Expert profile + credential documents tab
 │   │   ├── Forum/          # Forum list, post/comment UI, modals
 │   │   ├── Home/           # Landing/home screen
 │   │   ├── Login/          # Login + register (shared) screen
@@ -46,16 +48,17 @@ remind/
 | Folder | Responsibility |
 |--------|----------------|
 | `components/` | Presentational + container React components, one subfolder per screen/feature, each with its own `.css`. |
-| `controllers/` | Encapsulate API calls, response mapping, validation, and (for admin) localStorage-backed mock state. |
+| `controllers/` | Encapsulate API calls, response mapping, validation, and mixed backend/localStorage admin state. |
 | `middleware/` | Guards access to privileged screens (e.g. admin) based on `userRole`. |
 | `models/` | Pure TypeScript interfaces describing domain objects and DTOs. |
 | `routes/` | Admin route table and dispatcher (which admin sub-screen to render). |
 | `services/` | Low-level forum API functions calling the axios client directly. |
-| `utils/` | `apiHelper` (axios instance + interceptors + token refresh), `constants` (base URL + endpoint registry), env bindings. |
+| `utils/` | `apiHelper` (axios instance + interceptors + token refresh), `constants` (base URL + endpoint registry), env bindings, `userSocket` (expert status sync). |
 | `public/` | Static assets served as-is. |
 
 ## Notes
 
 - **Routing is state-based**, not react-router: `App.tsx` switches the active screen via `currentScreen` / `adminRoute` state. All screens are `React.lazy` loaded.
 - **Two parallel forum API layers** exist (`services/forumService.ts` and `controllers/ForumController.ts`) hitting the same backend — see `docs/api-reference.md`.
-- **Admin data is mocked**: `ExpertController` and `DashboardController` read/write `localStorage`; the `API_ENDPOINTS.ADMIN.*` endpoints are defined but currently unused.
+- **Admin review is backend-backed**: pending expert review, credential downloads, and review notifications use the API; legacy dashboard/CRUD slices still use `localStorage`.
+- **Expert onboarding is Settings-based**: pending experts complete onboarding in `settings`; `aichat`, `chat`, and `calendar` stay gated until `status` stops being `pending`.

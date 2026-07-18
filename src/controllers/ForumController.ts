@@ -143,11 +143,11 @@ export class ForumController {
 
   static async createComment(
     postId: string,
-    data: { content: string; parentId: string | null }
+    data: { content: string; parentId: string | null; isAnonymous?: boolean }
   ): Promise<Comment> {
     const payload = {
       content: data.content.trim(),
-      authorDisplayMode: 1, // Default to Anonymous for student safety
+      authorDisplayMode: data.isAnonymous ? 1 : 0,
       parentId: data.parentId || null,
     };
     const res = await apiHelper.post(API_ENDPOINTS.FORUMS.CREATE_COMMENT(postId), payload);

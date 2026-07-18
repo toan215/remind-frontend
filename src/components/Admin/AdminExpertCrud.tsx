@@ -15,8 +15,8 @@ export function AdminExpertCrud() {
   // Modal State
   const [showFormModal, setShowFormModal] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
-  const [editingExpertId, setEditingExpertId] = useState<number | null>(null);
-  const [targetDeleteId, setTargetDeleteId] = useState<number | null>(null);
+  const [editingExpertId, setEditingExpertId] = useState<string | number | null>(null);
+  const [targetDeleteId, setTargetDeleteId] = useState<string | number | null>(null);
 
   // Form State
   const [formData, setFormData] = useState<ExpertFormData>({
@@ -34,8 +34,33 @@ export function AdminExpertCrud() {
   // Notification Toast State
   const [toastMessage, setToastMessage] = useState("");
 
-  const loadExperts = () => {
-    setExperts(ExpertController.getExperts());
+  // ponytail: map backend expert shape to the CRUD model fields the UI expects
+  const mapExpert = (e: any): Expert => ({
+    id: Number(e._id) || 0,
+    _id: e._id,
+    name: e.fullName || e.email || "Chuyên gia",
+    avatar: "👩‍⚕️",
+    specialty: e.expert?.profile?.professionalTitle || "Chưa cập nhật",
+    experience: e.expert?.profile?.experience || "",
+    rating: e.expert?.rating?.toString() || "0",
+    reviews: e.expert?.reviews || 0,
+    languages: e.expert?.profile?.languages || ["Tiếng Việt"],
+    cost: e.expert?.profile?.cost || 0,
+    costDisplay: e.expert?.profile?.cost ? `${e.expert.profile.cost} VNĐ` : "—",
+    status: e.status === "active" ? "available" : e.status === "suspended" ? "unavailable" : "limited",
+    statusLabel: e.status || "limited",
+    desc: e.expert?.profile?.bio || "",
+    approvalStatus: e.approvalStatus || "approved",
+    createdAt: e.createdAt || "",
+  });
+
+  const loadExperts = async () => {
+    try {
+      const data = await ExpertController.getExpertsForAdmin();
+      setExperts(data.map(mapExpert));
+    } catch (err) {
+      console.error("Failed to load experts:", err);
+    }
   };
 
   useEffect(() => {
@@ -89,7 +114,7 @@ export function AdminExpertCrud() {
   };
 
   const handleOpenEditModal = (expert: Expert) => {
-    setEditingExpertId(expert.id);
+    setEditingExpertId(expert._id);
     setFormData({
       name: expert.name,
       avatar: expert.avatar,
@@ -134,20 +159,20 @@ export function AdminExpertCrud() {
   };
 
   // Verification Actions
-  const handleApprove = (id: number) => {
+  const handleApprove = (id: string | number) => {
     ExpertController.approveExpert(id);
     triggerToast("Đã phê duyệt hồ sơ chuyên gia!");
     loadExperts();
   };
 
-  const handleSuspend = (id: number) => {
+  const handleSuspend = (id: string | number) => {
     ExpertController.suspendExpert(id);
     triggerToast("Đã tạm đình chỉ chuyên gia!");
     loadExperts();
   };
 
   // Delete Actions
-  const handleOpenDeleteConfirm = (id: number) => {
+  const handleOpenDeleteConfirm = (id: string | number) => {
     setTargetDeleteId(id);
     setShowConfirmModal(true);
   };
@@ -282,7 +307,7 @@ export function AdminExpertCrud() {
                         {expert.approvalStatus !== "approved" && (
                           <button
                             className="admin-action-btn-sm approve"
-                            onClick={() => handleApprove(expert.id)}
+                            onClick={() => handleApprove(expert._id)}
                             title="Phê duyệt hoạt động"
                           >
                             Duyệt
@@ -291,7 +316,7 @@ export function AdminExpertCrud() {
                         {expert.approvalStatus === "approved" && (
                           <button
                             className="admin-action-btn-sm reject"
-                            onClick={() => handleSuspend(expert.id)}
+                            onClick={() => handleSuspend(expert._id)}
                             title="Tạm đình chỉ hoạt động"
                           >
                             Đình chỉ
@@ -307,7 +332,7 @@ export function AdminExpertCrud() {
                         </button>
                         <button
                           className="rm-btn rm-btn-outline"
-                          onClick={() => handleOpenDeleteConfirm(expert.id)}
+                          onClick={() => handleOpenDeleteConfirm(expert._id)}
                           style={{ borderColor: "var(--error-bg)", color: "var(--error)" }}
                           title="Xóa chuyên gia"
                         >

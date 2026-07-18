@@ -37,6 +37,8 @@ export const API_ENDPOINTS = {
 
     // Expert profile approvals
     PENDING_EXPERTS: `${API_BASE_URL}/admin/experts/pending`,
+    EXPERT_CREDENTIAL: (id: string | number, fileId: string | number) =>
+      `${API_BASE_URL}/admin/experts/${id}/credential/${fileId}`,
     APPROVE_EXPERT: (expertId: string | number) =>
       `${API_BASE_URL}/admin/experts/${expertId}/approve`,
     REJECT_EXPERT: (expertId: string | number) =>
@@ -64,6 +66,7 @@ export const API_ENDPOINTS = {
     DASHBOARD: `${API_BASE_URL}/experts/me/dashboard`,
     SETTINGS: `${API_BASE_URL}/experts/me/settings`,
     LIST_APPROVED: `${API_BASE_URL}/experts`,
+    CREDENTIALS: `${API_BASE_URL}/experts/me/credentials`,
   },
 
   // Public forum and interaction endpoints

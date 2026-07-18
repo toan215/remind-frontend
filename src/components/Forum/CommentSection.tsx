@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Comment as CommentType } from "../../models/ForumPost";
 import { ForumController } from "../../controllers/ForumController";
+import { AuthController } from "../../controllers/AuthController";
 import "./CommentSection.css";
 
 interface CommentSectionProps {
@@ -20,6 +21,8 @@ function CommentSection({ postId, userRole, onLoginRequired }: CommentSectionPro
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
   const [editCommentContent, setEditCommentContent] = useState("");
   const [isUpdating, setIsUpdating] = useState(false);
+
+  const isAnonymous = !!AuthController.getCurrentUser()?.isAnonymous;
 
   const fetchComments = async () => {
     try {
@@ -47,6 +50,7 @@ function CommentSection({ postId, userRole, onLoginRequired }: CommentSectionPro
       await ForumController.createComment(postId, {
         content: newComment,
         parentId: null,
+        isAnonymous,
       });
       setNewComment("");
       await fetchComments();
@@ -66,6 +70,7 @@ function CommentSection({ postId, userRole, onLoginRequired }: CommentSectionPro
       await ForumController.createComment(postId, {
         content: replyContent,
         parentId,
+        isAnonymous,
       });
       setReplyContent("");
       setReplyingTo(null);

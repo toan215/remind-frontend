@@ -1,8 +1,9 @@
 import { lazy } from "react";
 const AdminDashboard = lazy(() => import("../components/Admin/AdminDashboard"));
 const AdminExpertCrud = lazy(() => import("../components/Admin/AdminExpertCrud"));
+const AdminExpertReview = lazy(() => import("../components/Admin/AdminExpertReview").then(m => ({ default: m.AdminExpertReview })));
 
-export type AdminRoute = "dashboard" | "expert-crud";
+export type AdminRoute = "dashboard" | "expert-crud" | "expert-review";
 
 interface AdminRouteConfig {
   path: AdminRoute;
@@ -23,6 +24,12 @@ export const ADMIN_ROUTES: AdminRouteConfig[] = [
     label: "Quản lý Chuyên gia",
     icon: "bx-user-voice",
     component: AdminExpertCrud
+  },
+  {
+    path: "expert-review",
+    label: "Xét duyệt Chuyên gia",
+    icon: "bx-user-check",
+    component: AdminExpertReview
   }
 ];
 

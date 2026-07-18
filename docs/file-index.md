@@ -7,7 +7,7 @@ One entry per source file. "Exports" lists the public symbols (functions, classe
 | File | Responsibility | Exports |
 |------|----------------|---------|
 | `src/main.tsx` | React entry point; mounts `<App/>` into `#root`. | — |
-| `src/App.tsx` | Root component. Holds app state (`userRole`, `currentScreen`, `adminRoute`) and renders the active screen via `lazy`/`Suspense`. | `default App` |
+| `src/App.tsx` | Root component. Holds app state (`userRole`, `currentScreen`, `adminRoute`) and renders the active screen via `lazy`/`Suspense`; gates pending experts into Settings. | `default App` |
 | `src/App.css` | App-level layout and shared styles. | — |
 | `src/index.css` | Global reset, design tokens (CSS variables), base typography. | — |
 | `src/vite-env.d.ts` | Vite client type references. | — |
@@ -18,6 +18,7 @@ One entry per source file. "Exports" lists the public symbols (functions, classe
 |------|----------------|---------|
 | `src/utils/apiHelper.tsx` | **The real HTTP client.** Axios instance (`api`) with `Bearer` token injection and 401 auto-refresh via `/auth/refresh`. Wraps requests in `apiHelper.{get,post,put,patch,delete}`. | `api` (default), `apiHelper`, `clearAuthData` |
 | `src/utils/constants.tsx` | Base URLs and the endpoint registry. | `BASE_URL`, `API_BASE_URL`, `API_ENDPOINTS` |
+| `src/utils/userSocket.ts` | User Socket.io client for expert status updates. | — |
 
 ## Models (interfaces only)
 
@@ -33,7 +34,7 @@ One entry per source file. "Exports" lists the public symbols (functions, classe
 |------|----------------|---------|
 | `src/controllers/AuthController.ts` | Real auth API: login, register, Google login, logout; reads/writes tokens & user in `localStorage`. | `AuthController` (class), `UserDto`, `AuthResponse` |
 | `src/controllers/ForumController.ts` | **Real forum API** via `apiHelper` + backend↔frontend mappers; also holds validation & `formatTimeAgo` helpers. | `ForumController` (class) |
-| `src/controllers/ExpertController.ts` | **Mocked** expert CRUD over `localStorage` (seed list, activity log). No network. | `ExpertController` (class) |
+| `src/controllers/ExpertController.ts` | Expert profile, credential upload/listing, and admin review API orchestration. | `ExpertController` (class) |
 | `src/controllers/DashboardController.ts` | **Mocked** dashboard stats computed from `ExpertController` + localStorage logs. | `DashboardController` (class) |
 
 ## Services
@@ -90,10 +91,12 @@ One entry per source file. "Exports" lists the public symbols (functions, classe
 |------|----------------|---------|
 | `src/components/ExpertDirectory/ExpertDirectory.tsx` | Public expert list from `ExpertController.getApprovedExpertsForGuest()` (localStorage). | `default ExpertDirectory` |
 | `src/components/ExpertDirectory/ExpertDirectory.css` | Styles. | — |
+| `src/components/Profile/Profile.tsx` | Expert profile screen with credential documents tab and upload form. | `default Profile` |
 | `src/components/AIChat/AIChat.tsx` | AI chat assistant with real-time streaming support (SSE). | `default AIChat` |
 | `src/components/AIChat/AIChat.css` | Styles. | — |
 | `src/components/Chat/Chat.tsx` | 1:1 real-time chat between student and expert using Socket.io and REST APIs. | `default Chat` |
 | `src/components/Chat/Chat.css` | Chat component styles. | — |
+| `src/components/Admin/AdminExpertReview.tsx` | Pending expert review screen with credential downloads and approve/reject actions. | `default AdminExpertReview` |
 | `src/components/Admin/AdminLayout.tsx` | Admin shell (sidebar/nav) wrapping admin sub-screens. | `default AdminLayout` |
 | `src/components/Admin/AdminDashboard.tsx` | Stats dashboard via `DashboardController` + quick expert actions via `ExpertController`. | `default AdminDashboard` |
 | `src/components/Admin/AdminExpertCrud.tsx` | Expert CRUD UI over `ExpertController` (localStorage). | `default AdminExpertCrud` |

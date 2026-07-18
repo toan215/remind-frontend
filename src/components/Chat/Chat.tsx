@@ -15,20 +15,36 @@ function Chat({ onBack }: ChatProps) {
   const [inputValue, setInputValue] = useState("");
   const [currentUserId, setCurrentUserId] = useState<string>("");
   const [errorBanner, setErrorBanner] = useState<string | null>(null);
+  const [hasMoreMessages, setHasMoreMessages] = useState(false);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
 
   const socketRef = useRef<Socket | null>(null);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const activeRoomIdRef = useRef<string | null>(null);
+  const messagesContainerRef = useRef<HTMLDivElement | null>(null);
 
   // Responsive state for mobile viewing
   const [showListOnMobile, setShowListOnMobile] = useState(true);
+
+  const isPrependingRef = useRef(false);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
   useEffect(() => {
+    // Bỏ qua auto-scroll khi đang prepend tin nhắn cũ (scroll lên)
+    if (isPrependingRef.current) {
+      isPrependingRef.current = false;
+      return;
+    }
     scrollToBottom();
   }, [messages]);
+
+  // Sync activeRoomId ref for socket handlers
+  useEffect(() => {
+    activeRoomIdRef.current = activeRoomId;
+  }, [activeRoomId]);
 
   // 1. Lấy thông tin user hiện tại và danh sách phòng chat khi mount
   useEffect(() => {
@@ -73,17 +89,24 @@ function Chat({ onBack }: ChatProps) {
     });
 
     socket.on("chat:message", (msg: any) => {
-      // Đẩy tin nhắn vào state messages
+      // Đẩy tin nhắn vào state messages nếu đang xem phòng này
       setMessages((prev) => {
         if (prev.some((m) => m._id === msg._id)) return prev;
         return [...prev, msg];
       });
 
-      // Cập nhật tin nhắn cuối cùng (lastMessage) của phòng chat tương ứng ở sidebar
+      // Cập nhật tin nhắn cuối cùng (lastMessage) và unreadCount của phòng chat ở sidebar
       setRooms((prevRooms) => {
         return prevRooms
           .map((r) => {
             if (r._id === msg.chatRoomId) {
+              const senderIdStr = typeof msg.senderId === "object" ? msg.senderId?._id : msg.senderId;
+              const isMyMessage = senderIdStr === currentUserId;
+              const isActiveRoom = r._id === activeRoomIdRef.current;
+              
+              // Tăng unreadCount nếu: (1) không phải tin nhắn của mình, (2) không đang xem phòng này
+              const incrementUnread = !isMyMessage && !isActiveRoom;
+              
               return {
                 ...r,
                 lastMessage: {
@@ -92,6 +115,7 @@ function Chat({ onBack }: ChatProps) {
                   sentAt: msg.createdAt,
                 },
                 updatedAt: msg.createdAt,
+                unreadCount: incrementUnread ? (r.unreadCount || 0) + 1 : (r.unreadCount || 0),
               };
             }
             return r;
@@ -123,14 +147,25 @@ function Chat({ onBack }: ChatProps) {
 
     socket.emit("chat:join", { roomId: activeRoomId });
 
+    // Xóa unreadCount cho phòng đang mở
+    setRooms((prevRooms) =>
+      prevRooms.map((r) =>
+        r._id === activeRoomId ? { ...r, unreadCount: 0 } : r
+      )
+    );
+
     // Fetch tin nhắn cũ của phòng chat này
     const fetchMessages = async () => {
       try {
-        const res = await apiHelper.get(API_ENDPOINTS.CHATS.MESSAGES(activeRoomId));
+        const res = await apiHelper.get(`${API_ENDPOINTS.CHATS.MESSAGES(activeRoomId)}?limit=20`);
         if (res.data && res.data.messages) {
           // Tin nhắn từ backend trả về từ mới đến cũ, ta đảo ngược để hiển thị từ cũ đến mới
           const sorted = [...res.data.messages].reverse();
           setMessages(sorted);
+          setHasMoreMessages(res.data.hasNext || false);
+          
+          // Đánh dấu tin nhắn là đã đọc
+          socket.emit("chat:read", { roomId: activeRoomId });
         }
       } catch (err) {
         console.error("Lỗi khi tải lịch sử tin nhắn:", err);
@@ -145,6 +180,22 @@ function Chat({ onBack }: ChatProps) {
       socket.emit("chat:leave", { roomId: activeRoomId });
     };
   }, [activeRoomId]);
+
+  // 4. Scroll listener để load tin nhắn cũ hơn khi scroll lên đầu
+  useEffect(() => {
+    const container = messagesContainerRef.current;
+    if (!container) return;
+
+    const handleScroll = () => {
+      // Khi scroll gần đến đầu (trong vòng 100px), load thêm tin nhắn cũ
+      if (container.scrollTop < 100 && hasMoreMessages && !isLoadingMore) {
+        loadOlderMessages();
+      }
+    };
+
+    container.addEventListener('scroll', handleScroll);
+    return () => container.removeEventListener('scroll', handleScroll);
+  }, [hasMoreMessages, isLoadingMore, activeRoomId, messages]);
 
   // Helper tìm đối phương trong phòng chat
   const getRoomPartner = (room: any) => {
@@ -173,6 +224,40 @@ function Chat({ onBack }: ChatProps) {
   const handleBackToList = () => {
     setShowListOnMobile(true);
     setActiveRoomId(null);
+  };
+
+  const loadOlderMessages = async () => {
+    const container = messagesContainerRef.current;
+    if (!container || !activeRoomId || !hasMoreMessages || isLoadingMore) return;
+    
+    const oldestMessageId = messages[0]?._id;
+    if (!oldestMessageId) return;
+    
+    const oldScrollHeight = container.scrollHeight;
+    setIsLoadingMore(true);
+    
+    try {
+      const res = await apiHelper.get(
+        `${API_ENDPOINTS.CHATS.MESSAGES(activeRoomId)}?limit=20&cursor=${oldestMessageId}`
+      );
+      
+      if (res.data && res.data.messages) {
+        const sorted = [...res.data.messages].reverse();
+        isPrependingRef.current = true;
+        setMessages(prev => [...sorted, ...prev]);
+        setHasMoreMessages(res.data.hasNext || false);
+        
+        // Maintain scroll position after prepending
+        setTimeout(() => {
+          const newScrollHeight = container.scrollHeight;
+          container.scrollTop = newScrollHeight - oldScrollHeight;
+        }, 0);
+      }
+    } catch (err) {
+      console.error("Error loading older messages:", err);
+    } finally {
+      setIsLoadingMore(false);
+    }
   };
 
   const activeRoom = rooms.find((r) => r._id === activeRoomId);
@@ -218,6 +303,7 @@ function Chat({ onBack }: ChatProps) {
             const role = partner ? partner.role : "";
             const lastMsgText = room.lastMessage?.text || "Chưa có tin nhắn";
             const lastMsgTime = room.lastMessage?.sentAt ? formatTime(room.lastMessage.sentAt) : "";
+            const unreadCount = room.unreadCount || 0;
 
             return (
               <div
@@ -237,7 +323,12 @@ function Chat({ onBack }: ChatProps) {
                 <div className="chatbox-user-info">
                   <div className="chatbox-user-name-row">
                     <h4>{name}</h4>
-                    <span className="chatbox-user-time">{lastMsgTime}</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span className="chatbox-user-time">{lastMsgTime}</span>
+                      {unreadCount > 0 && (
+                        <span className="chatbox-unread-badge">{unreadCount}</span>
+                      )}
+                    </div>
                   </div>
                   <p className="chatbox-user-lastmsg">{lastMsgText}</p>
                 </div>
@@ -290,7 +381,17 @@ function Chat({ onBack }: ChatProps) {
             </div>
 
             {/* Chat Messages */}
-            <div className="chatbox-messages">
+            <div className="chatbox-messages" ref={messagesContainerRef}>
+              {isLoadingMore && (
+                <div style={{ 
+                  textAlign: "center", 
+                  padding: "12px", 
+                  color: "#65676b",
+                  fontSize: "0.85rem"
+                }}>
+                  Đang tải tin nhắn cũ hơn...
+                </div>
+              )}
               {messages.map((msg) => {
                 const senderIdStr = typeof msg.senderId === "object" ? msg.senderId?._id : msg.senderId;
                 const isMe = senderIdStr === currentUserId;

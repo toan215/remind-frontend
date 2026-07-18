@@ -34,8 +34,17 @@ export class ExpertController {
     await apiHelper.delete(API_ENDPOINTS.ADMIN.DELETE_EXPERT(id));
   }
 
-  static async approveExpert(id: number): Promise<void> {
+  static async approveExpert(id: number | string): Promise<void> {
     await apiHelper.post(API_ENDPOINTS.ADMIN.APPROVE_EXPERT(id), {});
+  }
+
+  static async rejectExpert(id: number | string, reason: string): Promise<void> {
+    await apiHelper.post(API_ENDPOINTS.ADMIN.REJECT_EXPERT(id), { reason });
+  }
+
+  static async getPendingExperts(): Promise<any[]> {
+    const data = await apiHelper.get(API_ENDPOINTS.ADMIN.PENDING_EXPERTS);
+    return data.experts || [];
   }
 
   static async suspendExpert(id: number): Promise<void> {
@@ -54,6 +63,17 @@ export class ExpertController {
 
   static async updateSettings(settingsData: any): Promise<any> {
     return await apiHelper.put(API_ENDPOINTS.EXPERTS.SETTINGS, settingsData);
+  }
+
+  static async submitCredential(formData: FormData): Promise<any> {
+    return apiHelper.post(API_ENDPOINTS.EXPERTS.CREDENTIALS, formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+  }
+
+  static async getCredentials(): Promise<any[]> {
+    const data = await apiHelper.get(API_ENDPOINTS.EXPERTS.CREDENTIALS);
+    return data.credentials || [];
   }
 
   // === Dành cho Khách (Guest) ===

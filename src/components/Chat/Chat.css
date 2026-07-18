@@ -158,6 +158,21 @@
   color: #65676b;
 }
 
+.chatbox-unread-badge {
+  background-color: var(--brand-600, #0084ff);
+  color: white;
+  border-radius: 12px;
+  min-width: 20px;
+  height: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0 6px;
+  line-height: 1;
+}
+
 .chatbox-user-lastmsg {
   margin: 0;
   font-size: 0.9rem;

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { UserController } from "../../controllers/UserController";
+import { ExpertController } from "../../controllers/ExpertController";
 import { AuthController, UserDto } from "../../controllers/AuthController";
 import gsap from "gsap";
 import "./Profile.css";
@@ -12,7 +13,7 @@ interface ProfileProps {
 
 export default function Profile({ onBack, onLogout, onProfileUpdate }: ProfileProps) {
   const [currentUser, setCurrentUser] = useState<UserDto | null>(null);
-  const [activeTab, setActiveTab] = useState<"info" | "password">("info");
+  const [activeTab, setActiveTab] = useState<"info" | "password" | "documents">("info");
   
   // Profile fields state
   const [fullName, setFullName] = useState("");
@@ -176,6 +177,48 @@ export default function Profile({ onBack, onLogout, onProfileUpdate }: ProfilePr
     }
   };
 
+  // --- Expert credential documents ---
+  const isExpert = currentUser?.role === "expert";
+  const [credentials, setCredentials] = useState<any[]>([]);
+  const [credFile, setCredFile] = useState<File | null>(null);
+  const [isUploadingCred, setIsUploadingCred] = useState(false);
+  const [credMessage, setCredMessage] = useState("");
+  const credFileInputRef = useRef<HTMLInputElement>(null);
+
+  const loadCredentials = async () => {
+    if (!isExpert) return;
+    try {
+      const docs = await ExpertController.getCredentials();
+      setCredentials(docs);
+    } catch (err) {
+      console.error("Lỗi khi tải tài liệu:", err);
+    }
+  };
+
+  useEffect(() => {
+    if (isExpert && activeTab === "documents") loadCredentials();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isExpert, activeTab]);
+
+  const handleUploadCredential = async () => {
+    if (!credFile) return;
+    setIsUploadingCred(true);
+    setCredMessage("");
+    try {
+      const formData = new FormData();
+      formData.append("file", credFile);
+      const res = await ExpertController.submitCredential(formData);
+      setCredentials(res.credentials || []);
+      setCredFile(null);
+      if (credFileInputRef.current) credFileInputRef.current.value = "";
+      setCredMessage("Tải lên tài liệu thành công!");
+    } catch (err: any) {
+      setCredMessage(err?.message || "Tải lên thất bại.");
+    } finally {
+      setIsUploadingCred(false);
+    }
+  };
+
   const getRoleLabel = (role?: string) => {
     switch (role) {
       case "student":
@@ -229,7 +272,13 @@ export default function Profile({ onBack, onLogout, onProfileUpdate }: ProfilePr
                   {getRoleLabel(currentUser?.role)}
                 </span>
                 <span className={`profile-badge status-${currentUser?.status || "active"}`}>
-                  Active
+                  {currentUser?.role === "expert"
+                    ? currentUser?.status === "pending"
+                      ? "Chưa xác minh"
+                      : "Đã xác minh"
+                    : currentUser?.status === "pending"
+                      ? "Chưa xác minh"
+                      : "Active"}
                 </span>
               </div>
             </div>
@@ -250,6 +299,15 @@ export default function Profile({ onBack, onLogout, onProfileUpdate }: ProfilePr
                 <i className="bx bx-key"></i>
                 Bảo mật & Mật khẩu
               </button>
+              {isExpert && (
+                <button
+                  className={`profile-tab-btn ${activeTab === "documents" ? "active" : ""}`}
+                  onClick={() => setActiveTab("documents")}
+                >
+                  <i className="bx bx-file-blank"></i>
+                  Tài liệu chuyên gia
+                </button>
+              )}
             </div>
           </div>
 
@@ -408,9 +466,66 @@ export default function Profile({ onBack, onLogout, onProfileUpdate }: ProfilePr
                 </form>
               </div>
             )}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+
+            {activeTab === "documents" && (
+              <div className="profile-card">
+                <h3 className="profile-card-title">Tài liệu chuyên gia</h3>
+                <p className="profile-input-hint">
+                  Tải lên chứng chỉ, bằng cấp hoặc tài liệu xác thực. Admin sẽ xem xét các tài liệu này.
+                </p>
+
+                {credMessage && (
+                  <div className={`profile-alert ${credMessage.includes("thành công") ? "alert-success" : "alert-error"}`}>
+                    <i className="bx bx-info-circle"></i>
+                    <span>{credMessage}</span>
+                  </div>
+                )}
+
+                <div className="profile-doc-list">
+                  {credentials.length === 0 && (
+                    <p className="profile-input-hint">Chưa có tài liệu nào được tải lên.</p>
+                  )}
+                  {credentials.map((doc, idx) => (
+                    <div className="profile-doc-item" key={doc.fileId || idx}>
+                      <i className="bx bx-file"></i>
+                      <span className="profile-doc-name">{doc.fileName}</span>
+                      <span className="profile-doc-date">
+                        {doc.uploadedAt ? new Date(doc.uploadedAt).toLocaleDateString("vi-VN") : ""}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="profile-doc-upload">
+                  <input
+                    type="file"
+                    ref={credFileInputRef}
+                    style={{ display: "none" }}
+                    accept=".pdf,.png,.jpg,.jpeg"
+                    onChange={(e) => setCredFile(e.target.files?.[0] || null)}
+                  />
+                  <button
+                    type="button"
+                    className="profile-submit-btn profile-submit-btn-outline"
+                    onClick={() => credFileInputRef.current?.click()}
+                  >
+                    <i className="bx bx-upload"></i>
+                    <span>{credFile ? credFile.name : "Chọn tài liệu"}</span>
+                  </button>
+                  <button
+                    type="button"
+                    className="profile-submit-btn"
+                    disabled={!credFile || isUploadingCred}
+                    onClick={handleUploadCredential}
+                  >
+                    {isUploadingCred ? <span className="profile-spinner"></span> : <><span>Tải lên</span><i className="bx bx-check-circle"></i></>}
+                  </button>
+                </div>
+               </div>
+             )}
+           </div>
+         </div>
+       </div>
+     </div>
+   );
 }

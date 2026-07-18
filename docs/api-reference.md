@@ -37,7 +37,7 @@
 | `CHATS.LIST` | `GET /api/chats` | get |
 | `CHATS.ROOM(id)` | `GET /api/chats/{id}` | (defined) |
 | `CHATS.MESSAGES(id)` | `GET /api/chats/{id}/messages` | get |
-| `ADMIN.*` | `/api/admin/...` (forums, experts, reports) | **defined but unused** |
+| `ADMIN.*` | `/api/admin/...` (forums, experts, reports) | partially used |
 
 ## Real API callers
 
@@ -106,7 +106,7 @@ Helpers (no network): `formatTimeAgo(dateStr)`, `validate(data: CreatePostData)`
 - **Context limit:** History is limited to the last 8 messages (`messages.slice(-8)`) to optimize context size and reduce Time To First Token (TTFT).
 - **Streaming response (SSE):** Reads stream using `ReadableStream` reader, decoding chunks of `data: {"text": "..."}` or `data: {"error": "..."}` and updating the bot's response message dynamically until receiving `data: [DONE]`.
 
-#### Expert Chat (`components/Chat/Chat.tsx`)
+#### Expert Chat (`components/Chat/Chat.tsx`) 
 - **REST APIs:**
   - Loads list of rooms via `GET /api/chats` (`API_ENDPOINTS.CHATS.LIST`) where participants are populated with user details (`fullName`, `avatarUrl`, `role`).
   - Loads past room messages via `GET /api/chats/{id}/messages` (`API_ENDPOINTS.CHATS.MESSAGES`).
@@ -117,11 +117,20 @@ Helpers (no network): `formatTimeAgo(dateStr)`, `validate(data: CreatePostData)`
   - Listens to incoming messages on `chat:message` event to append them to the conversation thread and update the room's last message on sidebar.
   - Listens to socket errors via `chat:error` event and displays restriction details (e.g. unpaid appointments, time not reached) via an `errorBanner` component.
 
-## Mocked / no-network layers (gap)
+### Expert onboarding, profile, and status sync
 
-These controllers read/write `localStorage` and **do not call the backend**, even though `API_ENDPOINTS.ADMIN.*` exist:
+- `App.tsx` treats `role === 'expert' && status === 'pending'` as a gated state.
+- Pending experts are blocked from `aichat`, `chat`, and `calendar`; `settings` stays available as the completion screen.
+- When a pending expert opens a gated screen, the onboarding prompt (`"Hoàn tất hồ sơ chuyên gia"`) is shown from `useEffect`, not during render.
+- `src/utils/userSocket.ts` connects a user Socket.io client with the access token and listens for `expert:status-updated`.
+- When `expertId` matches the logged-in user, the frontend updates `currentUser.status` in React state and `localStorage` so the gate clears immediately.
+- `src/components/Profile/Profile.tsx` adds a `Tài liệu chuyên gia` tab for experts to list uploaded credentials and submit more files.
 
-- **`controllers/ExpertController.ts`** — seed list of 8 experts (`Expert[]`), CRUD, activity log, approval/suspension. Used by `AdminExpertCrud.tsx`, `AdminDashboard.tsx`, `ExpertDirectory.tsx`.
+## Mixed / legacy no-network layers
+
+Some controllers still read/write `localStorage`, while the expert review flows now call the backend:
+
+- **`controllers/ExpertController.ts`** — legacy expert directory CRUD/activity log remain localStorage-backed; credential upload/listing and admin review helpers call the backend. Used by `AdminExpertCrud.tsx`, `AdminDashboard.tsx`, `AdminExpertReview.tsx`, `ExpertDirectory.tsx`, `Profile.tsx`.
 - **`controllers/DashboardController.ts`** — `getStats()` derives dashboard numbers from `ExpertController` + localStorage logs.
 
 ## Data shapes

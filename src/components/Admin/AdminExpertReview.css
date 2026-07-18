@@ -1,0 +1,96 @@
+.admin-expert-review-container {
+  padding: 24px;
+}
+
+.admin-expert-review-container h2 {
+  margin-top: 0;
+  margin-bottom: 24px;
+  color: var(--ink-900);
+}
+
+.admin-expert-review-loading {
+  padding: 24px;
+  color: var(--ink-700);
+}
+
+.empty-state {
+  color: var(--ink-700);
+  font-style: italic;
+}
+
+.expert-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.expert-card {
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.expert-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.expert-card-header h3 {
+  margin: 0;
+  font-size: 18px;
+  color: var(--ink-900);
+}
+
+.expert-card-body p {
+  margin: 0 0 8px 0;
+  color: var(--ink-700);
+  font-size: 14px;
+}
+
+.expert-card-body strong {
+  color: var(--ink-900);
+}
+
+.expert-bio {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.credential-section {
+  margin-top: 12px;
+  margin-bottom: 16px;
+}
+
+.btn-small {
+  padding: 6px 12px;
+  font-size: 13px;
+}
+
+.expert-card-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 16px;
+  border-top: 1px solid var(--border);
+  padding-top: 16px;
+}
+
+.reject-form {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.reject-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}

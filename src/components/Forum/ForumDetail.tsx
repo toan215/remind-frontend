@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { PostType, CommentType } from "./types";
-import { getPostDetail, createComment, toggleLike, deletePost, toggleCommentLike } from "../../services/forumService";
+import { getPostDetail, createComment, toggleLike, deletePost, toggleCommentLike, updatePost } from "../../services/forumService";
 import { timeAgo } from "./utils";
 import "./ForumDetail.css";
 
@@ -53,6 +53,16 @@ function ForumDetail({ post, onBack, userRole, onLoginRequired, onUpdatePost, on
   const [showMenu, setShowMenu] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
+  // Edit mode states
+  const [isEditing, setIsEditing] = useState(false);
+  const [editTitle, setEditTitle] = useState(post.title);
+  const [editContent, setEditContent] = useState(post.content);
+  const [editTags, setEditTags] = useState((post.tags || []).join(", "));
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [editError, setEditError] = useState(false);
+  const [toast, setToast] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
@@ -62,6 +72,12 @@ function ForumDetail({ post, onBack, userRole, onLoginRequired, onUpdatePost, on
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  useEffect(() => {
+    if (!toast) return;
+    const t = setTimeout(() => setToast(null), 5000);
+    return () => clearTimeout(t);
+  }, [toast]);
 
   useEffect(() => {
     const fetchDetail = async () => {
@@ -98,16 +114,57 @@ function ForumDetail({ post, onBack, userRole, onLoginRequired, onUpdatePost, on
   };
 
   const handleDeletePost = async () => {
-    if (window.confirm("Bạn có chắc chắn muốn xóa bài viết này không? Hành động này không thể hoàn tác.")) {
-      try {
-        await deletePost(post._id);
-        alert("Xóa bài viết thành công!");
-        if (onDeletePost) onDeletePost(post._id);
-        onBack();
-      } catch (error) {
-        console.error("Failed to delete post", error);
-        alert("Có lỗi xảy ra khi xóa bài viết.");
-      }
+    try {
+      await deletePost(post._id);
+      if (onDeletePost) onDeletePost(post._id);
+      onBack();
+    } catch (error) {
+      console.error("Failed to delete post", error);
+      setShowDeleteConfirm(false);
+      setToast({ type: 'error', text: 'Có lỗi xảy ra khi xóa bài viết.' });
+    }
+  };
+
+  const handleStartEdit = () => {
+    setShowMenu(false);
+    setEditTitle(post.title);
+    setEditContent(post.content);
+    setEditTags((post.tags || []).join(", "));
+    setEditError(false);
+    setIsEditing(true);
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditing(false);
+    setEditError(false);
+  };
+
+  const handleUpdatePost = async () => {
+    if (!editTitle.trim() || !editContent.trim()) {
+      setEditError(true);
+      return;
+    }
+    setIsUpdating(true);
+    try {
+      const tagsArray = editTags
+        .split(",")
+        .map((t) => t.trim())
+        .filter((t) => t);
+      const updatedPost = await updatePost(
+        post._id,
+        editTitle.trim(),
+        editContent.trim(),
+        tagsArray,
+        post.isAnonymous ? 1 : 0,
+      );
+      if (onUpdatePost) onUpdatePost(updatedPost);
+      setIsEditing(false);
+      setToast({ type: 'success', text: 'Cập nhật bài viết thành công!' });
+    } catch (error) {
+      console.error("Failed to update post", error);
+      setToast({ type: 'error', text: 'Có lỗi xảy ra khi cập nhật bài viết.' });
+    } finally {
+      setIsUpdating(false);
     }
   };
 
@@ -124,6 +181,39 @@ function ForumDetail({ post, onBack, userRole, onLoginRequired, onUpdatePost, on
 
   return (
     <div className="forum-modal-overlay">
+      {toast && (
+        <div className={`forum-toast ${toast.type}`}>
+          <div className="forum-toast-content">
+            {toast.type === 'success' ? (
+              <i className="bx bx-check-circle" style={{ color: '#52c41a', fontSize: '20px' }}></i>
+            ) : (
+              <i className="bx bx-error-circle" style={{ color: '#ff4d4f', fontSize: '20px' }}></i>
+            )}
+            <span>{toast.text}</span>
+          </div>
+          <button className="forum-toast-close" onClick={() => setToast(null)}>
+            <i className="bx bx-x"></i>
+          </button>
+        </div>
+      )}
+      {showDeleteConfirm && (
+        <div className="forum-modal-overlay" style={{ zIndex: 1100, background: 'rgba(0,0,0,0.45)' }}>
+          <div style={{ background: 'white', borderRadius: '12px', padding: '24px', maxWidth: '360px', width: '90%', boxShadow: '0 8px 24px rgba(0,0,0,0.2)' }}>
+            <h3 style={{ margin: '0 0 8px', fontSize: '18px' }}>Xóa bài viết</h3>
+            <p style={{ margin: '0 0 20px', color: 'var(--ink-500)', fontSize: '14px' }}>Bạn có chắc chắn muốn xóa bài viết này không? Hành động này không thể hoàn tác.</p>
+            <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+              <button className="rm-btn rm-btn-outline" onClick={() => setShowDeleteConfirm(false)}>Hủy</button>
+              <button
+                className="rm-btn"
+                style={{ background: '#ff4d4f', borderColor: '#ff4d4f', color: 'white' }}
+                onClick={handleDeletePost}
+              >
+                Xóa bài viết
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <div className="forum-modal-content new-layout forum-detail-modal">
         <div className="forum-modal-header new-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 24px', borderBottom: '1px solid var(--border)' }}>
           <h2 style={{ fontSize: '18px', margin: 0 }}>Bài viết của {post.publicAuthorName}</h2>
@@ -142,12 +232,12 @@ function ForumDetail({ post, onBack, userRole, onLoginRequired, onUpdatePost, on
               >
                 <i className="bx bx-dots-vertical-rounded"></i>
               </button>
-              {showMenu && (
+              {showMenu && post.isMine && (
                 <div style={{ position: 'absolute', top: '30px', right: 0, background: 'white', border: '1px solid var(--border)', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', zIndex: 100, minWidth: '150px', overflow: 'hidden' }}>
-                  <button style={{ width: '100%', padding: '10px 16px', textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer', fontSize: '14px', borderBottom: '1px solid var(--border)' }} onClick={() => { setShowMenu(false); alert("Chức năng chỉnh sửa đang được phát triển!"); }}>
+                  <button style={{ width: '100%', padding: '10px 16px', textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer', fontSize: '14px', borderBottom: '1px solid var(--border)' }} onClick={handleStartEdit}>
                     <i className="bx bx-edit" style={{ marginRight: '8px' }}></i> Chỉnh sửa
                   </button>
-                  <button style={{ width: '100%', padding: '10px 16px', textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer', fontSize: '14px', color: '#ff4d4f' }} onClick={() => { setShowMenu(false); handleDeletePost(); }}>
+                  <button style={{ width: '100%', padding: '10px 16px', textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer', fontSize: '14px', color: '#ff4d4f' }} onClick={() => { setShowMenu(false); setShowDeleteConfirm(true); }}>
                     <i className="bx bx-trash" style={{ marginRight: '8px' }}></i> Xóa bài viết
                   </button>
                 </div>
@@ -168,8 +258,50 @@ function ForumDetail({ post, onBack, userRole, onLoginRequired, onUpdatePost, on
             </div>
           </div>
 
-          <div className="forum-detail-content">
-            {post.content}
+           <div className="forum-detail-content">
+            {isEditing ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '13px', color: 'var(--ink-500)', marginBottom: '4px' }}>Tiêu đề <span style={{ color: '#ff4d4f' }}>*</span></label>
+                  <input
+                    className={`forum-modal-input ${editError && !editTitle.trim() ? 'input-error' : ''}`}
+                    placeholder="Nhập tiêu đề bài viết..."
+                    value={editTitle}
+                    onChange={(e) => setEditTitle(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '13px', color: 'var(--ink-500)', marginBottom: '4px' }}>Nội dung <span style={{ color: '#ff4d4f' }}>*</span></label>
+                  <textarea
+                    className={`forum-modal-textarea ${editError && !editContent.trim() ? 'input-error' : ''}`}
+                    placeholder="Chia sẻ suy nghĩ của bạn..."
+                    rows={6}
+                    value={editContent}
+                    onChange={(e) => setEditContent(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '13px', color: 'var(--ink-500)', marginBottom: '4px' }}>Thẻ tags (cách nhau bằng dấu phẩy)</label>
+                  <input
+                    className="forum-modal-input"
+                    placeholder="vd: lo âu, học đường"
+                    value={editTags}
+                    onChange={(e) => setEditTags(e.target.value)}
+                  />
+                </div>
+                {editError && <span className="forum-error-msg">Vui lòng điền tiêu đề và nội dung.</span>}
+                <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
+                  <button className="rm-btn rm-btn-primary" onClick={handleUpdatePost} disabled={isUpdating}>
+                    {isUpdating ? <><i className="bx bx-loader-alt bx-spin"></i> Đang lưu...</> : "Lưu thay đổi"}
+                  </button>
+                  <button className="rm-btn rm-btn-outline" onClick={handleCancelEdit} disabled={isUpdating}>
+                    Hủy
+                  </button>
+                </div>
+              </div>
+            ) : (
+              post.content
+            )}
           </div>
 
           {post.images && post.images.length > 0 && (
@@ -181,7 +313,7 @@ function ForumDetail({ post, onBack, userRole, onLoginRequired, onUpdatePost, on
           )}
 
           <div className="forum-detail-tags">
-            {post.tags && post.tags.map(tag => (
+            {!isEditing && post.tags && post.tags.map(tag => (
               <span key={tag} className="forum-post-tag">#{tag}</span>
             ))}
           </div>

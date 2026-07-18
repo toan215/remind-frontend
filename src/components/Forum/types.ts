@@ -19,6 +19,7 @@ export interface PostType {
   commentCount: number;
   status: string;
   isMine?: boolean;
+  isAnonymous?: boolean;
   createdAt: string;
 }
 

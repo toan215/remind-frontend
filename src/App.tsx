@@ -5,6 +5,7 @@ import "./App.css";
 import "./components/Home/Home.css";
 import "./components/Login/LoginPrompt.css";
 import gsap from "gsap";
+import { getUserSocket, disconnectUserSocket } from "./utils/userSocket";
 
 const Login = lazy(() => import("./components/Login/Login"));
 const Home = lazy(() => import("./components/Home/Home"));
@@ -64,9 +65,13 @@ function App() {
 
   const [currentUser, setCurrentUser] = useState<UserDto | null>(null);
   const [expertKey, setExpertKey] = useState(0);
+  // ponytail: pending experts must finish onboarding before using expert features
+  const [showOnboardingPrompt, setShowOnboardingPrompt] = useState(false);
 
   const overlayRef = useRef<HTMLDivElement>(null);
   const modalRef = useRef<HTMLDivElement>(null);
+  const onboardingOverlayRef = useRef<HTMLDivElement>(null);
+  const onboardingModalRef = useRef<HTMLDivElement>(null);
 
   // Sync currentScreen with URL hash routing
   useEffect(() => {
@@ -144,6 +149,57 @@ function App() {
     }
   }, [showLoginPrompt]);
 
+  useEffect(() => {
+    if (showOnboardingPrompt && onboardingOverlayRef.current && onboardingModalRef.current) {
+      gsap.set(onboardingOverlayRef.current, { opacity: 0 });
+      gsap.set(onboardingModalRef.current, { scale: 0.92, opacity: 0, y: 15 });
+      gsap.to(onboardingOverlayRef.current, {
+        opacity: 1,
+        duration: 0.35,
+        ease: "power2.out",
+      });
+      gsap.to(onboardingModalRef.current, {
+        scale: 1,
+        opacity: 1,
+        y: 0,
+        duration: 0.45,
+        ease: "back.out(1.6)",
+      });
+    }
+  }, [showOnboardingPrompt]);
+
+  // ponytail: show the completion popup when a pending expert hits a gated screen (side effect, not during render)
+  useEffect(() => {
+    if (
+      isExpertPending() &&
+      !showOnboardingPrompt &&
+      ["aichat", "chat", "calendar"].includes(currentScreen)
+    ) {
+      setShowOnboardingPrompt(true);
+    }
+  }, [currentScreen, currentUser, showOnboardingPrompt]);
+
+  // ponytail: realtime expert status updates from admin review (no reload needed)
+  useEffect(() => {
+    if (userRole === "guest") return;
+    const token = localStorage.getItem("accessToken");
+    if (!token || !currentUser) return;
+
+    const socket = getUserSocket(token);
+    const handleStatusUpdated = (data: { expertId: string; status: string }) => {
+      if (data.expertId !== currentUser.id) return;
+      const updated: UserDto = { ...currentUser, status: data.status as UserDto["status"] };
+      localStorage.setItem("user", JSON.stringify(updated));
+      setCurrentUser(updated);
+      if (data.status !== "pending") setShowOnboardingPrompt(false);
+    };
+
+    socket.on("expert:status-updated", handleStatusUpdated);
+    return () => {
+      socket.off("expert:status-updated", handleStatusUpdated);
+    };
+  }, [userRole, currentUser]);
+
   const closeLoginPrompt = (callback?: () => void) => {
     if (overlayRef.current && modalRef.current) {
       gsap.to(modalRef.current, {
@@ -183,6 +239,15 @@ function App() {
     setCurrentScreen("home");
   };
 
+  // Gate expert-only screens until the expert finishes onboarding (status pending)
+  const isExpertPending = (): boolean =>
+    currentUser?.role === "expert" && currentUser?.status === "pending";
+
+  // ponytail: show the completion popup; navigation to settings happens on button click
+  const requireExpertOnboarding = (): void => {
+    setShowOnboardingPrompt(true);
+  };
+
   const renderScreen = () => {
     if (currentScreen === "login" || currentScreen === "register") {
       return (
@@ -190,8 +255,14 @@ function App() {
           initialMode={currentScreen === "register" ? "register" : "login"}
           onLoginSuccess={(role) => {
             setUserRole(role);
-            setCurrentUser(AuthController.getCurrentUser());
-            setCurrentScreen("home");
+            const user = AuthController.getCurrentUser();
+            setCurrentUser(user);
+            if (user?.role === "expert" && user?.status === "pending") {
+              setCurrentScreen("home");
+              setShowOnboardingPrompt(true);
+            } else {
+              setCurrentScreen("home");
+            }
           }}
           onBack={() => setCurrentScreen("home")}
           onForgotPassword={() => setCurrentScreen("forgot-password")}
@@ -201,6 +272,11 @@ function App() {
 
     if (currentScreen === "forgot-password") {
       return <ForgetPassword onBack={() => setCurrentScreen("login")} />;
+    }
+
+    // ponytail: block expert-only actions until onboarding complete; settings is the completion screen so it stays allowed
+    if (isExpertPending() && ["aichat", "chat", "calendar"].includes(currentScreen)) {
+      return <LoadingFallback />;
     }
 
     if (currentScreen === "aichat") {
@@ -320,15 +396,18 @@ function App() {
       <Home
         onOpenAIChat={() => {
           if (userRole === "guest") handleLoginRequired();
+          else if (isExpertPending()) requireExpertOnboarding();
           else setCurrentScreen("aichat");
         }}
         onOpenChat={() => {
           if (userRole === "guest") handleLoginRequired();
+          else if (isExpertPending()) requireExpertOnboarding();
           else setCurrentScreen("chat");
         }}
         onOpenExpertDirectory={() => setCurrentScreen("expert")}
         onOpenCalendar={() => {
           if (userRole === "guest") handleLoginRequired();
+          else if (isExpertPending()) requireExpertOnboarding();
           else setCurrentScreen("calendar");
         }}
         onOpenForum={() => setCurrentScreen("forum")}
@@ -341,7 +420,10 @@ function App() {
           setCurrentScreen("admin");
         }}
         onOpenAbout={() => setCurrentScreen("about")}
-        onOpenSettings={() => setCurrentScreen("settings")}
+        onOpenSettings={() => {
+          if (isExpertPending()) requireExpertOnboarding();
+          else setCurrentScreen("settings");
+        }}
       />
     );
   };
@@ -369,6 +451,7 @@ function App() {
             }}
             onOpenChat={() => {
               if (userRole === "guest") handleLoginRequired();
+              else if (isExpertPending()) requireExpertOnboarding();
               else setCurrentScreen("chat");
             }}
             currentUser={currentUser}
@@ -411,6 +494,39 @@ function App() {
                 Đăng nhập ngay
               </button>
             </div>
+          </div>
+        </div>
+      )}
+      {showOnboardingPrompt && (
+        <div
+          className="login-prompt-overlay"
+          ref={onboardingOverlayRef}
+          onClick={() => setShowOnboardingPrompt(false)}
+        >
+          <div
+            className="login-prompt-modal"
+            ref={onboardingModalRef}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="login-prompt-icon">
+              <i className="bx bx-id-card"></i>
+            </div>
+             <h3 className="login-prompt-title">Hoàn tất hồ sơ chuyên gia</h3>
+             <p className="login-prompt-message">
+               Bạn cần tải lên tài liệu và hoàn tất hồ sơ chuyên gia trong mục Cài đặt trước khi sử dụng các tính năng dành cho chuyên gia.
+             </p>
+             <div className="login-prompt-buttons">
+               <button
+                 type="button"
+                 className="login-prompt-btn login-prompt-btn-primary"
+                 onClick={() => {
+                   setShowOnboardingPrompt(false);
+                   setCurrentScreen("settings");
+                 }}
+               >
+                 Đi tới Cài đặt
+               </button>
+             </div>
           </div>
         </div>
       )}

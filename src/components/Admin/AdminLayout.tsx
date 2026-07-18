@@ -1,6 +1,8 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import "./Admin.css";
 import { ADMIN_ROUTES, AdminRoute } from "../../routes/adminRoutes";
+import { getAdminSocket } from "../../utils/adminSocket";
+import { ExpertController } from "../../controllers/ExpertController";
 
 interface AdminLayoutProps {
   currentRoute: AdminRoute;
@@ -10,6 +12,31 @@ interface AdminLayoutProps {
 }
 
 export function AdminLayout({ currentRoute, onNavigate, onBackToHome, children }: AdminLayoutProps) {
+  const [pendingCount, setPendingCount] = useState(0);
+
+  useEffect(() => {
+    const token = localStorage.getItem("accessToken");
+    if (!token) return;
+
+    // Fetch initial count
+    ExpertController.getPendingExperts().then((experts) => {
+      setPendingCount(experts.length);
+    }).catch(() => {});
+
+    // Connect socket
+    const socket = getAdminSocket(token);
+    
+    const handleNewExpert = () => {
+      setPendingCount((prev) => prev + 1);
+    };
+
+    socket.on("admin:new-expert", handleNewExpert);
+
+    return () => {
+      socket.off("admin:new-expert", handleNewExpert);
+    };
+  }, []);
+
   return (
     <div className="admin-layout-container">
       {/* ===== SIDEBAR ===== */}
@@ -68,9 +95,22 @@ export function AdminLayout({ currentRoute, onNavigate, onBackToHome, children }
         {/* Top Header */}
         <header className="admin-top-bar">
           <h1 className="admin-page-title">
-            {currentRoute === "dashboard" ? "Bảng điều khiển quản trị" : "Quản lý danh sách chuyên gia"}
+            {ADMIN_ROUTES.find(r => r.path === currentRoute)?.label || "Bảng điều khiển quản trị"}
           </h1>
           <div className="admin-top-actions">
+            <button
+              className="admin-bell-btn"
+              onClick={() => onNavigate("expert-review" as AdminRoute)}
+              title="Xét duyệt chuyên gia"
+              style={{ position: "relative", background: "none", border: "none", cursor: "pointer", fontSize: "24px", color: "var(--ink-700)", marginRight: "16px" }}
+            >
+              <i className="bx bx-bell"></i>
+              {pendingCount > 0 && (
+                <span style={{ position: "absolute", top: "-4px", right: "-4px", background: "var(--error)", color: "white", fontSize: "10px", padding: "2px 6px", borderRadius: "10px", fontWeight: "bold" }}>
+                  {pendingCount}
+                </span>
+              )}
+            </button>
             <button
               onClick={onBackToHome}
               className="rm-btn rm-btn-outline"
