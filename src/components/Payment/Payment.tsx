@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import gsap from "gsap";
 import { Expert } from "../../models/Expert";
 import { ExpertController } from "../../controllers/ExpertController";
 import "./Payment.css";
@@ -30,8 +31,35 @@ export default function Payment({ onBack, onPaymentComplete, onOpenChat, booking
   const [isFailed, setIsFailed] = useState(false);
   const [paymentError, setPaymentError] = useState("");
   const [bookedAppointmentId, setBookedAppointmentId] = useState<string | null>(null);
+  const [demoQr, setDemoQr] = useState<{ orderCode: number; amount: number; qrCode?: string; checkoutUrl?: string; note: string } | null>(null);
+  const [qrImgError, setQrImgError] = useState(false);
+  const successIconRef = useRef<HTMLDivElement>(null);
+  const successContentRef = useRef<HTMLDivElement>(null);
 
   const { expert, expertId, slotId, date, slot, totalCost } = bookingDetails;
+
+  useEffect(() => {
+    if (!isSuccess) return;
+    if (successIconRef.current) {
+      gsap.fromTo(
+        successIconRef.current,
+        { scale: 0, rotate: -45 },
+        { scale: 1, rotate: 0, duration: 0.5, ease: "back.out(2)" }
+      );
+      gsap.fromTo(
+        successIconRef.current,
+        { boxShadow: "0 0 0 0 rgba(76,175,80,0.5)" },
+        { boxShadow: "0 0 0 28px rgba(76,175,80,0)", duration: 0.7, ease: "power2.out", delay: 0.25 }
+      );
+    }
+    if (successContentRef.current) {
+      gsap.fromTo(
+        successContentRef.current.children,
+        { y: 16, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.4, stagger: 0.08, ease: "power2.out", delay: 0.2 }
+      );
+    }
+  }, [isSuccess]);
 
   // Capture VNPAY return status (?status=success|failed) when redirected back
   useEffect(() => {
@@ -56,7 +84,15 @@ export default function Payment({ onBack, onPaymentComplete, onOpenChat, booking
       setBookedAppointmentId(appointment._id);
       const response = await ExpertController.createAppointmentPayment(appointment._id);
 
-      // Demo mode: instant success, no redirect
+      // Demo mode: show demo QR, then confirm
+      if (response.demoQr) {
+        setIsProcessing(false);
+        setQrImgError(false);
+        setDemoQr(response.demoQr);
+        return;
+      }
+
+      // Demo mode (no QR): instant success
       if (response.status === 'succeeded') {
         setIsProcessing(false);
         setIsSuccess(true);
@@ -116,8 +152,8 @@ export default function Payment({ onBack, onPaymentComplete, onOpenChat, booking
     return (
       <div className="payment-page">
         <div className="payment-container" style={{ maxWidth: "480px" }}>
-          <div className="payment-success-content">
-            <div className="payment-success-icon">
+          <div className="payment-success-content" ref={successContentRef}>
+            <div className="payment-success-icon" ref={successIconRef}>
               <i className="bx bx-check"></i>
             </div>
             <h2>Thanh toán thành công!</h2>
@@ -138,6 +174,52 @@ export default function Payment({ onBack, onPaymentComplete, onOpenChat, booking
                 Quay về Trang chủ
               </button>
             </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (demoQr) {
+    return (
+      <div className="payment-page">
+        <div className="payment-container" style={{ maxWidth: "480px" }}>
+          <div className="payment-success-content">
+            <h2>Quét mã QR (Demo)</h2>
+            <p>{demoQr.note}</p>
+            <div className="payment-demo-qr">
+              {demoQr.qrCode && !qrImgError ? (
+                <img
+                  className="payment-demo-qr-img"
+                  src={`https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(demoQr.qrCode)}`}
+                  alt="PayOS QR"
+                  onError={() => setQrImgError(true)}
+                />
+              ) : (
+                <div className="payment-demo-qr-box"><i className="bx bx-qr-scan"></i></div>
+              )}
+              <div className="payment-demo-qr-info">
+                <div><strong>Mã đơn:</strong> {demoQr.orderCode}</div>
+                <div><strong>Số tiền:</strong> {demoQr.amount.toLocaleString('vi-VN')} VNĐ</div>
+              </div>
+            </div>
+            <button
+              className="payment-submit-btn"
+              onClick={() => {
+                setDemoQr(null);
+                setIsSuccess(true);
+              }}
+            >
+              Tôi đã quét — Xác nhận thanh toán
+            </button>
+            {demoQr.checkoutUrl && (
+              <a className="payment-cancel-btn" href={demoQr.checkoutUrl} target="_blank" rel="noreferrer">
+                Mở trang thanh toán PayOS
+              </a>
+            )}
+            <button className="payment-cancel-btn" onClick={onBack}>
+              Quay lại
+            </button>
           </div>
         </div>
       </div>
