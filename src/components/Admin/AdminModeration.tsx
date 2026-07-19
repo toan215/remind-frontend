@@ -2,11 +2,12 @@ import React, { useEffect, useState } from "react";
 import { apiHelper } from "../../utils/apiHelper";
 import { API_ENDPOINTS } from "../../utils/constants";
 import { AdminRoute } from "../../routes/adminRoutes";
+import { getAdminSocket } from "../../utils/adminSocket";
 import "./Admin.css";
 
 export interface ContentReport {
   _id: string;
-  type: "post" | "comment";
+  type: "post" | "comment" | "user" | "expert" | "message" | "bug";
   targetId: string;
   reason: string;
   details?: string;
@@ -76,8 +77,27 @@ export const AdminModeration: React.FC<AdminModerationProps> = () => {
   const loadReports = async () => {
     setLoading(true);
     try {
-      const res = await apiHelper.get<{ reports: ContentReport[] }>(API_ENDPOINTS.ADMIN.REPORTS);
-      const list = (res.reports || []).map((r) => ({ ...r, status: r.status || "open" }));
+      const res = await apiHelper.get<{ reports: any[] }>(API_ENDPOINTS.ADMIN.REPORTS);
+      const list = (res.reports || []).map((r) => {
+        const reportedByStr = r.reporterId
+          ? typeof r.reporterId === "object"
+            ? (r.reporterId.fullName || r.reporterId.email || "Không rõ")
+            : r.reporterId
+          : "Không rõ";
+
+        return {
+          _id: r._id,
+          type: r.targetType === "expert" ? "expert" : r.targetType,
+          targetId: r.targetId,
+          reason: r.reason,
+          details: r.description,
+          reportedBy: reportedByStr,
+          reportedUser: "",
+          contentPreview: r.description || "(Không có nội dung chi tiết)",
+          status: r.status || "open",
+          createdAt: r.createdAt,
+        };
+      });
       setReports(list);
       setUsingMock(false);
     } catch (err) {
@@ -90,6 +110,43 @@ export const AdminModeration: React.FC<AdminModerationProps> = () => {
 
   useEffect(() => {
     loadReports();
+
+    const token = localStorage.getItem("accessToken");
+    if (!token) return;
+
+    const socket = getAdminSocket(token);
+
+    const handleNewReport = (newReport: any) => {
+      const reportedByStr = newReport.reporterId
+        ? typeof newReport.reporterId === "object"
+          ? (newReport.reporterId.fullName || newReport.reporterId.email || "Không rõ")
+          : newReport.reporterId
+        : "Không rõ";
+
+      const mapped: ContentReport = {
+        _id: newReport._id,
+        type: newReport.targetType === "expert" ? "expert" : newReport.targetType,
+        targetId: newReport.targetId,
+        reason: newReport.reason,
+        details: newReport.description,
+        reportedBy: reportedByStr,
+        reportedUser: "",
+        contentPreview: newReport.description || "(Không có nội dung chi tiết)",
+        status: newReport.status || "open",
+        createdAt: newReport.createdAt,
+      };
+
+      setReports((prev) => {
+        if (prev.some((r) => r._id === mapped._id)) return prev;
+        return [mapped, ...prev];
+      });
+    };
+
+    socket.on("admin:new-report", handleNewReport);
+
+    return () => {
+      socket.off("admin:new-report", handleNewReport);
+    };
   }, []);
 
   const handleResolve = async (report: ContentReport) => {
@@ -99,7 +156,7 @@ export const AdminModeration: React.FC<AdminModerationProps> = () => {
       prev.map((r) => (r._id === report._id ? { ...r, status: "resolved" } : r))
     );
     try {
-      await apiHelper.post(API_ENDPOINTS.ADMIN.RESOLVE_REPORT(report._id), {});
+      await apiHelper.post(API_ENDPOINTS.ADMIN.RESOLVE_REPORT(report._id), { action: "Đã xem xét và xử lý bởi quản trị viên." });
       showToast("Đã xử lý báo cáo.");
     } catch (err) {
       setReports(previous);
@@ -165,8 +222,16 @@ export const AdminModeration: React.FC<AdminModerationProps> = () => {
           <div key={r._id} className={`admin-report-card ${r.status}`}>
             <div className="admin-report-head">
               <span className={`admin-report-type ${r.type}`}>
-                <i className={`bx ${r.type === "post" ? "bx-file" : "bx-comment"}`}></i>
-                {r.type === "post" ? "Bài viết" : "Bình luận"}
+                <i className={`bx ${
+                  r.type === "post" ? "bx-file" :
+                  r.type === "comment" ? "bx-comment" :
+                  r.type === "expert" ? "bx-certification" : "bx-user"
+                }`}></i>
+                {
+                  r.type === "post" ? "Bài viết" :
+                  r.type === "comment" ? "Bình luận" :
+                  r.type === "expert" ? "Chuyên gia" : "Người dùng"
+                }
               </span>
               <span className="admin-report-reason">{r.reason}</span>
               <span className="admin-report-time">{formatTime(r.createdAt)}</span>

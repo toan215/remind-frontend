@@ -2,6 +2,8 @@ import { useState, useEffect, useRef } from "react";
 import { ExpertController } from "../../controllers/ExpertController";
 import { Expert, ExpertSlot } from "../../models/Expert";
 import { AppointmentController } from "../../controllers/AppointmentController";
+import { apiHelper } from "../../utils/apiHelper";
+import { API_ENDPOINTS } from "../../utils/constants";
 import "./ExpertDirectory.css";
 import gsap from "gsap";
 
@@ -152,6 +154,69 @@ function ExpertDirectory({ onBack, userRole = "guest", onLoginRequired, onProcee
   const [reviewLimit, setReviewLimit] = useState(3);
   const [activeTab, setActiveTab] = useState<"info" | "reviews">("info");
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const profileViewRef = useRef<HTMLDivElement>(null);
+  const tabContentRef = useRef<HTMLDivElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Report Modal States
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [reportReason, setReportReason] = useState("Spam / Quảng cáo");
+  const [reportDescription, setReportDescription] = useState("");
+  const [isSubmittingReport, setIsSubmittingReport] = useState(false);
+  const [isReasonDropdownOpen, setIsReasonDropdownOpen] = useState(false);
+
+  const REPORT_REASONS = [
+    { value: "Spam / Quảng cáo", icon: "bx-spam", color: "#f59e0b" },
+    { value: "Ngôn từ gây thù ghét / Quấy rối", icon: "bx-angry", color: "#ef4444" },
+    { value: "Thông tin sai lệch", icon: "bx-info-circle", color: "#3b82f6" },
+    { value: "Lừa đảo / Giả mạo", icon: "bx-shield-x", color: "#dc2626" },
+    { value: "Nội dung không phù hợp", icon: "bx-block", color: "#7c3aed" },
+    { value: "Lý do khác", icon: "bx-dots-horizontal-rounded", color: "#6b7280" },
+  ];
+
+  // GSAP: animate profile view when an expert is selected
+  useEffect(() => {
+    if (selectedExpert && profileViewRef.current) {
+      gsap.fromTo(
+        profileViewRef.current,
+        { opacity: 0, y: 28 },
+        { opacity: 1, y: 0, duration: 0.45, ease: "power3.out" }
+      );
+    }
+  }, [selectedExpert]);
+
+  // Close reason dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setIsReasonDropdownOpen(false);
+      }
+    };
+    if (isReasonDropdownOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [isReasonDropdownOpen]);
+
+  // GSAP: animate tab content when switching tabs
+  const handleTabChange = (tab: "info" | "reviews") => {
+    if (tab === activeTab) return;
+    if (tabContentRef.current) {
+      gsap.to(tabContentRef.current, {
+        opacity: 0, y: 10, duration: 0.18, ease: "power2.in",
+        onComplete: () => {
+          setActiveTab(tab);
+          gsap.fromTo(
+            tabContentRef.current!,
+            { opacity: 0, y: 14 },
+            { opacity: 1, y: 0, duration: 0.32, ease: "power3.out" }
+          );
+        },
+      });
+    } else {
+      setActiveTab(tab);
+    }
+  };
 
   useEffect(() => {
     if (selectedExpert && userRole !== "guest") {
@@ -383,6 +448,49 @@ function ExpertDirectory({ onBack, userRole = "guest", onLoginRequired, onProcee
     }
   };
 
+  const handleSubmitReport = async () => {
+    if (userRole === "guest") {
+      alert("Vui lòng đăng nhập để gửi báo cáo.");
+      return;
+    }
+
+    if (!selectedExpert) return;
+
+    setIsSubmittingReport(true);
+    try {
+      await apiHelper.post(API_ENDPOINTS.USERS.REPORTS, {
+        targetType: "expert",
+        targetId: selectedExpert._id,
+        reason: reportReason,
+        description: reportDescription,
+      });
+
+      alert("Cảm ơn bạn đã báo cáo. Chúng tôi sẽ xem xét thông tin của chuyên gia.");
+      setIsReportModalOpen(false);
+      setReportDescription("");
+    } catch (err: any) {
+      const errorMsg = err.response?.data?.error || "Gửi báo cáo thất bại. Vui lòng thử lại.";
+      alert(errorMsg);
+    } finally {
+      setIsSubmittingReport(false);
+    }
+  };
+
+  const handleSelectExpert = (expert: Expert) => {
+    const listEl = document.getElementById("expert-list");
+    if (listEl) {
+      gsap.to(listEl, {
+        opacity: 0, y: -16, duration: 0.22, ease: "power2.in",
+        onComplete: () => {
+          gsap.set(listEl, { opacity: 1, y: 0 });
+          setSelectedExpert(expert);
+        },
+      });
+    } else {
+      setSelectedExpert(expert);
+    }
+  };
+
   return (
     <div className="expert-screen" id="expert-screen">
       {showHero ? (
@@ -434,7 +542,7 @@ function ExpertDirectory({ onBack, userRole = "guest", onLoginRequired, onProcee
       ) : (
         <main className="expert-container">
           {selectedExpert ? (
-            <div className="expert-profile-view">
+            <div className="expert-profile-view" ref={profileViewRef}>
               <button className="expert-back-floating-btn" onClick={() => setSelectedExpert(null)}>
                 <i className="bx bx-left-arrow-alt"></i> Quay lại
               </button>
@@ -519,7 +627,9 @@ function ExpertDirectory({ onBack, userRole = "guest", onLoginRequired, onProcee
 
                     <button
                       className="action-link-btn report-action"
-                      onClick={() => alert("Cảm ơn bạn đã báo cáo. Chúng tôi sẽ xem xét thông tin của chuyên gia.")}
+                      disabled={userRole === "guest"}
+                      onClick={() => setIsReportModalOpen(true)}
+                      title={userRole === "guest" ? "Vui lòng đăng nhập để báo cáo chuyên gia" : "Báo cáo chuyên gia"}
                     >
                       Báo cáo chuyên gia
                     </button>
@@ -529,14 +639,14 @@ function ExpertDirectory({ onBack, userRole = "guest", onLoginRequired, onProcee
                   <div className="expert-profile-tabs-nav">
                     <button 
                       className={`tab-item ${activeTab === "info" ? "active" : ""}`}
-                      onClick={() => setActiveTab("info")}
+                      onClick={() => handleTabChange("info")}
                       style={{ background: "none", border: "none", padding: "0 0 8px 0" }}
                     >
                       Thông tin chi tiết
                     </button>
                     <button 
                       className={`tab-item ${activeTab === "reviews" ? "active" : ""}`}
-                      onClick={() => setActiveTab("reviews")}
+                      onClick={() => handleTabChange("reviews")}
                       style={{ background: "none", border: "none", padding: "0 0 8px 0" }}
                     >
                       Nhận xét
@@ -544,7 +654,7 @@ function ExpertDirectory({ onBack, userRole = "guest", onLoginRequired, onProcee
                   </div>
 
                   {/* Contact / Bio Information / Reviews */}
-                  <div className="expert-profile-details-content">
+                  <div className="expert-profile-details-content" ref={tabContentRef}>
                     {activeTab === "info" && (
                       <>
                         <div className="info-block">
@@ -795,7 +905,7 @@ function ExpertDirectory({ onBack, userRole = "guest", onLoginRequired, onProcee
                               className="rm-btn rm-btn-outline"
                               id={`view-profile-${expert.id}`}
                               title="Xem chi tiết hồ sơ chuyên gia"
-                              onClick={() => setSelectedExpert(expert)}
+                              onClick={() => handleSelectExpert(expert)}
                             >
                               Hồ sơ
                             </button>
@@ -934,6 +1044,273 @@ function ExpertDirectory({ onBack, userRole = "guest", onLoginRequired, onProcee
                 onClick={handleConfirmBooking}
               >
                 Xác nhận đặt lịch
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ===== REPORT MODAL ===== */}
+      {isReportModalOpen && selectedExpert && (
+        <div
+          className="rm-modal-overlay"
+          style={{ zIndex: 1200 }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setIsReportModalOpen(false);
+          }}
+        >
+          <div
+            className="rm-modal"
+            style={{ maxWidth: 520, width: "100%" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="rm-modal-header">
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <span style={{
+                  width: 36, height: 36, borderRadius: 10,
+                  background: "linear-gradient(135deg,#fef2f2,#fee2e2)",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  fontSize: 18, color: "#dc2626", flexShrink: 0
+                }}>
+                  <i className="bx bx-flag"></i>
+                </span>
+                <div>
+                  <h3 className="rm-modal-title" style={{ marginBottom: 2 }}>Báo cáo chuyên gia</h3>
+                  <p style={{ fontSize: 12, color: "var(--ink-500)", margin: 0 }}>
+                    {selectedExpert.name}
+                  </p>
+                </div>
+              </div>
+              <button
+                className="rm-modal-close"
+                onClick={() => {
+                  setIsReportModalOpen(false);
+                  setIsReasonDropdownOpen(false);
+                }}
+              >
+                <i className="bx bx-x"></i>
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="rm-modal-body" style={{ gap: 20 }}>
+              {/* Reason Selector */}
+              <div>
+                <label style={{
+                  display: "block", marginBottom: 10,
+                  fontWeight: 700, fontSize: 13, color: "var(--ink-700)",
+                  textTransform: "uppercase", letterSpacing: "0.04em"
+                }}>
+                  Lý do báo cáo <span style={{ color: "var(--error)", fontWeight: 700 }}>*</span>
+                </label>
+
+                {/* Custom Dropdown */}
+                <div ref={dropdownRef} style={{ position: "relative" }}>
+                  {/* Trigger */}
+                  <button
+                    type="button"
+                    onClick={() => setIsReasonDropdownOpen((o) => !o)}
+                    className="report-reason-trigger"
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 12,
+                      width: "100%",
+                      padding: "11px 14px",
+                      border: isReasonDropdownOpen
+                        ? "2px solid var(--brand-600)"
+                        : "1.5px solid var(--border-strong)",
+                      borderRadius: isReasonDropdownOpen ? "10px 10px 0 0" : 10,
+                      background: "var(--surface)",
+                      cursor: "pointer",
+                      textAlign: "left",
+                      transition: "border-color 0.15s ease, border-radius 0.15s ease",
+                      boxSizing: "border-box",
+                      boxShadow: isReasonDropdownOpen
+                        ? "0 0 0 3px rgba(35,129,125,0.12)"
+                        : "none",
+                    }}
+                  >
+                    {/* Icon bubble */}
+                    <span style={{
+                      width: 32, height: 32, borderRadius: 8, flexShrink: 0,
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      fontSize: 17,
+                      background: "var(--canvas)",
+                      border: "1px solid var(--border)",
+                      color: REPORT_REASONS.find(r => r.value === reportReason)?.color ?? "#6b7280",
+                      transition: "color 0.15s ease",
+                    }}>
+                      <i className={`bx ${REPORT_REASONS.find(r => r.value === reportReason)?.icon ?? "bx-dots-horizontal-rounded"}`}></i>
+                    </span>
+                    <span style={{ flex: 1, fontSize: 14, fontWeight: 600, color: "var(--ink-900)" }}>
+                      {reportReason}
+                    </span>
+                    <i
+                      className="bx bx-chevron-down"
+                      style={{
+                        fontSize: 20, color: "var(--ink-500)",
+                        transition: "transform 0.2s ease",
+                        transform: isReasonDropdownOpen ? "rotate(180deg)" : "rotate(0deg)",
+                        flexShrink: 0,
+                      }}
+                    ></i>
+                  </button>
+
+                  {/* Dropdown Panel */}
+                  {isReasonDropdownOpen && (
+                    <div
+                      className="report-reason-panel"
+                      style={{
+                        position: "absolute",
+                        top: "100%",
+                        left: 0,
+                        right: 0,
+                        background: "var(--surface)",
+                        border: "2px solid var(--brand-600)",
+                        borderTop: "1px solid var(--border)",
+                        borderRadius: "0 0 10px 10px",
+                        boxShadow: "0 12px 32px rgba(23,42,42,0.12)",
+                        zIndex: 50,
+                        overflow: "hidden",
+                        animation: "dropdownSlideIn 0.18s cubic-bezier(0.16,1,0.3,1) forwards",
+                      }}
+                    >
+                      {REPORT_REASONS.map((r, idx) => {
+                        const isSelected = reportReason === r.value;
+                        return (
+                          <button
+                            key={r.value}
+                            type="button"
+                            onClick={() => {
+                              setReportReason(r.value);
+                              setIsReasonDropdownOpen(false);
+                            }}
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 12,
+                              width: "100%",
+                              padding: "10px 14px",
+                              background: isSelected ? "var(--brand-050)" : "var(--surface)",
+                              border: "none",
+                              borderBottom: idx < REPORT_REASONS.length - 1
+                                ? "1px solid var(--border)"
+                                : "none",
+                              cursor: "pointer",
+                              textAlign: "left",
+                              transition: "background 0.12s ease",
+                              boxSizing: "border-box",
+                            }}
+                            onMouseEnter={e => {
+                              if (!isSelected) (e.currentTarget as HTMLButtonElement).style.background = "var(--brand-050)";
+                            }}
+                            onMouseLeave={e => {
+                              if (!isSelected) (e.currentTarget as HTMLButtonElement).style.background = "var(--surface)";
+                            }}
+                          >
+                            <span style={{
+                              width: 30, height: 30, borderRadius: 7, flexShrink: 0,
+                              display: "flex", alignItems: "center", justifyContent: "center",
+                              fontSize: 16, color: r.color,
+                              background: `${r.color}15`,
+                              transition: "all 0.12s ease",
+                            }}>
+                              <i className={`bx ${r.icon}`}></i>
+                            </span>
+                            <span style={{
+                              flex: 1,
+                              fontSize: 13.5,
+                              fontWeight: isSelected ? 700 : 500,
+                              color: isSelected ? "var(--brand-700)" : "var(--ink-700)",
+                            }}>
+                              {r.value}
+                            </span>
+                            {isSelected && (
+                              <i className="bx bx-check" style={{
+                                fontSize: 18, color: "var(--brand-600)", flexShrink: 0,
+                                fontWeight: 700,
+                              }}></i>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+
+              {/* Description */}
+              <div>
+                <label style={{
+                  display: "block", marginBottom: 8,
+                  fontWeight: 700, fontSize: 13, color: "var(--ink-700)",
+                  textTransform: "uppercase", letterSpacing: "0.04em"
+                }}>
+                  Mô tả thêm  <span style={{ fontWeight: 400, color: "var(--ink-500)", textTransform: "none", letterSpacing: 0 }}>(không bắt buộc)</span>
+                </label>
+                <div className="rm-input-wrapper" style={{ borderRadius: 10 }}>
+                  <textarea
+                    placeholder="Vui lòng cung cấp thêm bằng chứng hoặc mô tả để ban quản trị xử lý nhanh hơn..."
+                    value={reportDescription}
+                    onChange={(e) => setReportDescription(e.target.value)}
+                    rows={3}
+                    className="rm-input-field"
+                    style={{
+                      padding: "10px 12px",
+                      resize: "vertical",
+                      minHeight: 80,
+                      fontFamily: "inherit",
+                      fontSize: 13.5,
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Info note */}
+              <div style={{
+                display: "flex", alignItems: "flex-start", gap: 8,
+                padding: "10px 14px", borderRadius: 8,
+                background: "var(--info-bg)", border: "1px solid var(--calm-blue-100)"
+              }}>
+                <i className="bx bx-info-circle" style={{ color: "var(--info)", fontSize: 16, marginTop: 1, flexShrink: 0 }}></i>
+                <p style={{ fontSize: 12.5, color: "var(--info)", margin: 0, lineHeight: 1.5 }}>
+                  Báo cáo sẽ được gửi đến ban quản trị và xử lý trong vòng 24h. Danh tính của bạn sẽ được bảo mật.
+                </p>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="rm-modal-footer">
+              <button
+                className="rm-btn rm-btn-outline"
+                disabled={isSubmittingReport}
+                onClick={() => {
+                  setIsReportModalOpen(false);
+                  setIsReasonDropdownOpen(false);
+                }}
+              >
+                Hủy bỏ
+              </button>
+              <button
+                className="rm-btn rm-btn-primary"
+                disabled={isSubmittingReport}
+                onClick={handleSubmitReport}
+                style={{ minWidth: 120, gap: 8 }}
+              >
+                {isSubmittingReport ? (
+                  <>
+                    <i className="bx bx-loader-alt" style={{ animation: "spin 1s linear infinite" }}></i>
+                    Đang gửi...
+                  </>
+                ) : (
+                  <>
+                    <i className="bx bx-send"></i>
+                    Gửi báo cáo
+                  </>
+                )}
               </button>
             </div>
           </div>
