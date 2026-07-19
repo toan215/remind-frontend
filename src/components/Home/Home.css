@@ -524,18 +524,30 @@
   padding: 16px 36px;
   border-radius: 12px;
   border: none;
+  outline: none;
   cursor: pointer;
   font-size: 15.5px;
   box-shadow: 0 8px 24px rgba(23, 107, 104, 0.2);
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+
   font-family: "Inter", system-ui, sans-serif;
   min-height: 52px;
+  position: relative;
+  z-index: 1;
 }
 
-.home-btn-primary:hover {
-  background: linear-gradient(135deg, var(--brand-600) 0%, var(--brand-500) 100%);
+.home-hero-actions .home-btn-primary:hover {
+  /* Keep the AI CTA on-brand on hover; prevent global button styles from turning it white. */
+  background: linear-gradient(135deg, var(--brand-600) 0%, var(--brand-500) 100%) !important;
+  color: #fff !important;
   transform: translateY(-2px);
   box-shadow: 0 12px 30px rgba(23, 107, 104, 0.3);
+}
+
+.home-btn-primary:active {
+  transform: translateY(0);
+  box-shadow: 0 4px 12px rgba(23, 107, 104, 0.2);
 }
 
 .home-btn-secondary {
@@ -545,10 +557,14 @@
   padding: 16px 36px;
   border-radius: 12px;
   border: 1px solid rgba(23, 107, 104, 0.15);
+  outline: none;
   cursor: pointer;
   font-size: 15.5px;
   backdrop-filter: blur(10px);
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+              background 0.3s ease,
+              border-color 0.3s ease;
   font-family: "Inter", system-ui, sans-serif;
   min-height: 52px;
 }
@@ -1035,7 +1051,7 @@
 .home-footer {
   background: var(--ink-900);
   color: var(--ink-500);
-  padding: 60px 24px 0;
+  padding: 48px 24px 0;
 }
 
 .home-footer-inner {
@@ -1044,7 +1060,7 @@
   display: grid;
   grid-template-columns: 2fr 1fr 1fr;
   gap: 48px;
-  padding-bottom: 48px;
+  padding-bottom: 40px;
 }
 
 .home-footer-brand {
@@ -1097,7 +1113,7 @@
 
 .home-footer-bottom {
   border-top: 1px solid var(--ink-700);
-  padding: 20px 0;
+  padding: 18px 0;
   text-align: center;
 }
 

@@ -16,12 +16,16 @@ interface ForumDetailProps {
 const CommentItem = ({ comment, onLike, onReply, onReport }: { comment: CommentType, onLike: () => void, onReply: () => void, onReport: () => void }) => {
   return (
     <div className="forum-comment-item">
-      <img 
-        src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${comment.publicAuthorName}`} 
-        alt={comment.publicAuthorName}
-        className="forum-comment-avatar"
-        style={{ padding: 0 }}
-      />
+      {comment.isAnonymous ? (
+        <div className="forum-comment-avatar forum-anonymous-avatar"><i className="bx bxs-mask"></i></div>
+      ) : (
+        <img 
+          src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${comment.publicAuthorName}`} 
+          alt={comment.publicAuthorName}
+          className="forum-comment-avatar"
+          style={{ padding: 0 }}
+        />
+      )}
       <div className="forum-comment-body">
         <div className="forum-comment-meta">
           <span className="forum-comment-author">{comment.publicAuthorName}</span>
@@ -169,7 +173,10 @@ function ForumDetail({ post, onBack, userRole, onLoginRequired, onUpdatePost, on
   };
 
   const handleShare = () => {
-    navigator.clipboard.writeText(window.location.href);
+    const postUrl = new URL(window.location.href);
+    postUrl.searchParams.set("post", post._id);
+    postUrl.hash = "#/forum";
+    navigator.clipboard.writeText(postUrl.toString());
     alert("Đã sao chép liên kết bài viết!");
   };
 
@@ -247,11 +254,15 @@ function ForumDetail({ post, onBack, userRole, onLoginRequired, onUpdatePost, on
             <h2 className="forum-detail-title" style={{ marginTop: 0, paddingRight: '40px' }}>{post.title}</h2>
             <div className="forum-detail-meta">
               <span className="forum-detail-author">
-                <img 
-                  src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${post.publicAuthorName}`} 
-                  alt={post.publicAuthorName}
-                  style={{ width: '32px', height: '32px', borderRadius: '50%' }}
-                />
+                {post.isAnonymous ? (
+                  <span className="forum-anonymous-avatar"><i className="bx bxs-mask"></i></span>
+                ) : (
+                  <img 
+                    src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${post.publicAuthorName}`} 
+                    alt={post.publicAuthorName}
+                    style={{ width: '32px', height: '32px', borderRadius: '50%' }}
+                  />
+                )}
                 {post.publicAuthorName}
               </span>
               <span>{timeAgo(post.createdAt)}</span>

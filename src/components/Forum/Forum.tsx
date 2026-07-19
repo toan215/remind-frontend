@@ -61,6 +61,11 @@ function Forum({ onBack, userRole, onLoginRequired }: ForumProps) {
     getForums().then(setForums).catch(() => {});
   }, []);
 
+  useEffect(() => {
+    const postId = new URLSearchParams(window.location.search).get("post");
+    if (postId) setSelectedPostId(postId);
+  }, []);
+
   // Debounced search logic
   useEffect(() => {
     if (!searchTerm.trim()) {
@@ -252,7 +257,7 @@ function Forum({ onBack, userRole, onLoginRequired }: ForumProps) {
                   >
                     <div className="forum-post-header">
                       <span className="forum-post-author">
-                        <i className="bx bxs-user-circle"></i>{" "}
+                        <i className={`bx ${post.isAnonymous ? "bxs-mask" : "bxs-user-circle"}`}></i>{" "}
                         {post.publicAuthorName}
                       </span>
                       <span className="forum-post-time">

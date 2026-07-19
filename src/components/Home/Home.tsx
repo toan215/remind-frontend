@@ -204,7 +204,7 @@ function Home({
               <div className="value-icon value-icon-indigo">
                 <i className="bx bx-chat"></i>
               </div>
-              <h3>AI Companion 24/7</h3>
+              <h3>AI Chat 24/7</h3>
               <p>
                 Sơ cứu tâm lý tức thời vào bất kể khung giờ nào. Hoàn toàn miễn
                 phí, đưa ra lời khuyên khoa học và bài tập thư giãn.
@@ -368,7 +368,7 @@ function Home({
             >
               Về chúng tôi
             </a>
-            <a href="#ai-companion">AI Companion</a>
+            <a href="#ai-companion">AI Chat</a>
             <a
               href="#clinic"
               onClick={(e) => {

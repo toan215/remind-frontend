@@ -6,11 +6,14 @@
 .aichat-screen {
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  /* The global navigation is rendered above this screen. */
+  height: calc(100dvh - 72px);
+  min-height: 0;
   background: var(--canvas);
   font-family: "Inter", system-ui, sans-serif;
   color: var(--ink-700);
   overflow: hidden;
+  position: relative;
 }
 
 /* ========================
@@ -88,16 +91,23 @@
    SAFETY BANNER
    ======================== */
 .aichat-safety-banner {
+  position: absolute;
+  top: 20px;
+  right: 24px;
+  z-index: 5;
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 10px 20px;
+  width: min(440px, calc(100% - 48px));
+  padding: 12px 14px;
   background: var(--info-bg);
-  border-bottom: 1px solid var(--calm-blue-100);
+  border: 1px solid var(--calm-blue-100);
+  border-radius: 14px;
+  box-shadow: 0 10px 28px rgba(71, 127, 163, 0.14);
   font-size: 12px;
   color: var(--info);
   line-height: 16px;
-  flex-shrink: 0;
+  box-sizing: border-box;
 }
 
 .aichat-safety-banner i {
@@ -306,10 +316,14 @@
    ======================== */
 .aichat-suggestions {
   display: flex;
+  order: 3;
+  justify-content: center;
   flex-wrap: wrap;
-  gap: 8px;
-  padding: 0 20px 8px;
+  gap: 10px;
+  padding: 0 20px 32px;
   flex-shrink: 0;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .aichat-chip {
@@ -333,6 +347,7 @@
 .aichat-chip:hover {
   background: var(--brand-050);
   border-color: var(--brand-100);
+  box-shadow: 0 6px 14px rgba(23, 107, 104, 0.12);
   transform: translateY(-1px);
 }
 
@@ -348,9 +363,10 @@
    INPUT AREA
    ======================== */
 .aichat-input-area {
-  padding: 12px 16px 16px;
-  background: var(--surface);
-  border-top: 1px solid var(--border);
+  order: 2;
+  padding: 12px 16px 6px;
+  background: transparent;
+  border-top: none;
   flex-shrink: 0;
 }
 
@@ -358,12 +374,17 @@
   display: flex;
   align-items: flex-end;
   gap: 10px;
-  max-width: 900px;
+  max-width: 620px;
   margin: 0 auto;
 }
 
 .aichat-input-wrapper {
   flex: 1;
+  min-height: 52px;
+  padding: 2px 6px;
+  background: var(--surface);
+  border-radius: 18px;
+  box-shadow: 0 8px 24px rgba(23, 107, 104, 0.1);
 }
 
 .aichat-textarea {
@@ -373,6 +394,13 @@
   max-height: 120px;
   line-height: 22px;
   padding: 12px 16px;
+}
+
+.aichat-send-btn {
+  width: 44px !important;
+  height: 44px !important;
+  border-radius: 14px;
+  box-shadow: 0 6px 16px rgba(23, 107, 104, 0.22);
 }
 
 .aichat-disclaimer {
@@ -392,22 +420,24 @@
   align-items: center;
   justify-content: center;
   text-align: center;
-  padding: 40px 24px;
-  gap: 16px;
+  padding: 56px 24px;
+  gap: 20px;
   flex: 1;
+  min-height: 0;
+  overflow-y: auto;
 }
 
 .aichat-welcome-icon {
   width: 72px;
   height: 72px;
-  border-radius: 8px;
+  border-radius: 20px;
   background: var(--brand-050);
   border: 1px solid var(--brand-100);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 36px;
-  margin-bottom: 8px;
+  margin-bottom: 4px;
 }
 
 .aichat-welcome h2 {
@@ -422,33 +452,36 @@
   font-size: 15px;
   color: var(--ink-700);
   line-height: 22px;
-  max-width: 420px;
+  max-width: 460px;
   margin: 0;
 }
 
 .aichat-welcome-features {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  margin-top: 12px;
-  max-width: 480px;
+  gap: 16px;
+  margin-top: 8px;
+  max-width: 600px;
   width: 100%;
 }
 
 .aichat-feature-card {
   display: flex;
   align-items: flex-start;
-  gap: 10px;
-  padding: 14px 16px;
+  gap: 12px;
+  padding: 20px;
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: 20px;
   text-align: left;
-  transition: border-color 0.15s ease;
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
 }
 
 .aichat-feature-card:hover {
+  background: var(--brand-050);
   border-color: var(--brand-100);
+  box-shadow: 0 10px 24px rgba(23, 107, 104, 0.12);
+  transform: translateY(-3px);
 }
 
 .aichat-feature-icon {
@@ -530,6 +563,21 @@
   margin-top: 12px;
 }
 
+/* Explicit CTA states prevent external button rules from replacing brand colors. */
+.aichat-screen .rm-btn-primary:not(:disabled):hover {
+  background: var(--brand-600) !important;
+  border-color: var(--brand-600) !important;
+  color: #fff !important;
+  box-shadow: 0 8px 18px rgba(23, 107, 104, 0.24);
+  transform: translateY(-1px);
+}
+
+.aichat-screen .rm-btn-primary:not(:disabled):active {
+  background: var(--brand-700) !important;
+  border-color: var(--brand-700) !important;
+  transform: translateY(0);
+}
+
 /* ========================
    RESPONSIVE — WIDE SCREEN
    ======================== */
@@ -541,7 +589,7 @@
   }
 
   .aichat-suggestions {
-    max-width: 900px;
+    max-width: 780px;
     margin: 0 auto;
   }
 
@@ -558,6 +606,16 @@
    RESPONSIVE — MOBILE
    ======================== */
 @media (max-width: 480px) {
+  .aichat-screen {
+    height: calc(100dvh - 66px);
+  }
+
+  .aichat-safety-banner {
+    top: 12px;
+    right: 12px;
+    width: calc(100% - 24px);
+  }
+
   .aichat-header {
     padding: 10px 12px;
   }
@@ -572,7 +630,7 @@
   }
 
   .aichat-suggestions {
-    padding: 0 12px 8px;
+    padding: 0 12px 18px;
   }
 
   .aichat-input-area {
@@ -581,9 +639,38 @@
 
   .aichat-welcome-features {
     grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .aichat-welcome {
+    padding: 32px 16px;
+    gap: 16px;
+  }
+
+  .aichat-feature-card {
+    padding: 16px;
   }
 
   .aichat-welcome h2 {
     font-size: 20px;
+  }
+}
+
+/* Keep all four quick actions on one line when the viewport has room. */
+@media (min-width: 700px) {
+  .aichat-suggestions {
+    flex-wrap: nowrap;
+    max-width: 780px;
+    margin: 0 auto;
+  }
+}
+
+/* On a short laptop viewport, keep the composer visible and let only the
+   welcome content scroll if it needs more room. */
+@media (max-height: 780px) and (min-width: 481px) {
+  .aichat-welcome {
+    justify-content: flex-start;
+    padding-top: 36px;
+    padding-bottom: 32px;
   }
 }

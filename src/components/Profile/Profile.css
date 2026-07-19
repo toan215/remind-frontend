@@ -502,6 +502,37 @@
   cursor: not-allowed;
 }
 
+/* Compact desktop settings: keep the account form inside the available viewport. */
+@media (min-width: 869px) and (min-height: 650px) {
+  .profile-page {
+    height: calc(100dvh - 72px);
+    min-height: 0;
+    padding: 20px 24px;
+    align-items: center;
+    overflow: auto;
+    box-sizing: border-box;
+  }
+
+  .profile-container { max-width: 1040px; gap: 0; }
+  .profile-main-layout { grid-template-columns: 280px 1fr; gap: 20px; }
+  .profile-sidebar { padding: 24px 20px; }
+  .profile-avatar-wrapper { margin-bottom: 12px; }
+  .profile-avatar-container { width: 88px; height: 88px; }
+  .profile-badge-group { margin: 12px 0 16px; }
+  .profile-tabs-nav { gap: 5px; }
+  .profile-tab-btn { padding: 10px 12px; }
+  .profile-content-area { min-height: 0; }
+  .profile-card { padding: 26px 30px; }
+  .profile-card-title { font-size: 21px; margin-bottom: 18px; padding-bottom: 8px; }
+  .profile-form { gap: 14px; }
+  .profile-form-group { gap: 5px; }
+  .profile-input-wrapper input { padding-top: 11px; padding-bottom: 11px; }
+  .profile-anonymous-box { padding: 14px 16px; margin-top: 0; }
+  .profile-anon-desc h4 { font-size: 14px; margin-bottom: 3px; }
+  .profile-anon-desc p { font-size: 12px; line-height: 1.4; }
+  .profile-submit-btn { margin-top: 0; padding: 11px 24px; }
+}
+
 .profile-spinner {
   width: 20px;
   height: 20px;

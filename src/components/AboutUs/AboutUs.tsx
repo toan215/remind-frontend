@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import "./AboutUs.css";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import AppFooter from "../AppFooter";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -225,9 +226,7 @@ function AboutUs({ onBack }: AboutUsProps) {
       </section>
 
       {/* ===== FOOTER ===== */}
-      <footer className="about-footer">
-        <p>© 2026 ReMind. Tất cả quyền được bảo lưu.</p>
-      </footer>
+      <AppFooter onNavigate={() => onBack()} />
     </div>
   );
 }

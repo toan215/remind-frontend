@@ -167,7 +167,7 @@
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  padding: 50px 40px;
+  padding: 30px 40px;
   box-sizing: border-box;
   z-index: 10;
   transition: transform 0.7s cubic-bezier(0.68, -0.15, 0.27, 1.15);
@@ -197,8 +197,8 @@
 }
 
 .login-brand-icon {
-  width: 72px;
-  height: 72px;
+  width: 64px;
+  height: 64px;
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.15);
   -webkit-backdrop-filter: blur(10px);
@@ -206,8 +206,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 0 auto 20px;
-  font-size: 36px;
+  margin: 0 auto 14px;
+  font-size: 32px;
   color: #fff;
   border: 1px solid rgba(255, 255, 255, 0.25);
   animation: pulse 4s ease-in-out infinite;
@@ -235,7 +235,7 @@
   font-size: 14px;
   opacity: 0.85;
   font-weight: 300;
-  margin: 0 0 36px;
+  margin: 0 0 20px;
 }
 
 .overlay-question {
@@ -292,25 +292,24 @@
 }
 
 .overlay-register-content {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 100%;
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.4s ease;
+  display: none;
 }
 
 .login-container.active .overlay-login-content {
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.4s ease;
+  display: none;
 }
 
 .login-container.active .overlay-register-content {
   opacity: 1;
   pointer-events: all;
   transition: opacity 0.4s ease 0.3s;
+  display: block;
 }
 
 /* ========================
@@ -666,6 +665,7 @@
 @media (max-width: 768px) {
   .login-container {
     flex-direction: column;
+    height: auto;
     min-height: 0;
     max-height: 95vh;
     overflow-y: auto;
@@ -688,7 +688,8 @@
   .overlay-panel {
     position: relative;
     width: 100%;
-    padding: 32px 24px;
+    height: auto;
+    padding: 28px 24px;
     order: -1;
   }
 
@@ -701,25 +702,36 @@
     height: 56px;
     font-size: 28px;
     border-radius: 8px;
-    margin-bottom: 14px;
+    margin-bottom: 12px;
   }
 
   .overlay-content h2 {
     font-size: 22px;
+    margin-bottom: 4px;
   }
 
   .overlay-tagline {
-    margin-bottom: 20px;
+    margin-bottom: 12px;
+  }
+
+  .overlay-quote-container {
+    margin: 12px auto;
+  }
+
+  .overlay-quote-card {
+    padding: 16px 16px;
+  }
+
+  .overlay-quote-text {
+    font-size: 13.5px;
+  }
+
+  .overlay-question {
+    margin-bottom: 12px;
   }
 
   .login-form-box h1 {
     font-size: 22px;
-  }
-
-  .overlay-register-content {
-    position: relative;
-    left: auto;
-    transform: none;
   }
 }
 

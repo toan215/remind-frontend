@@ -18,6 +18,7 @@ interface HeaderProps {
   onOpenAdminPortal: () => void;
   onOpenChat: () => void;
   currentUser?: UserDto | null;
+  onGoToLogin?: () => void;
 }
 
 export default function Header({
@@ -29,6 +30,7 @@ export default function Header({
   userRole,
   onOpenAdminPortal,
   onOpenChat,
+  onGoToLogin,
 }: HeaderProps) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -130,7 +132,7 @@ export default function Header({
               else onNavigate("aichat");
             }}
           >
-            AI Companion
+            AI Chat
           </a>
           <a
             href="#clinic"
@@ -242,7 +244,8 @@ export default function Header({
                       className="auth-dropdown-item"
                       onClick={() => {
                         setIsDropdownOpen(false);
-                        onOpenLogin();
+                        if (onGoToLogin) onGoToLogin();
+                        else onNavigate("login");
                       }}
                     >
                       <div className="dropdown-item-icon login-icon">

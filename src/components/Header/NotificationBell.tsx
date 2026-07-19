@@ -70,8 +70,12 @@ export default function NotificationBell({ userRole, onOpenLogin }: Notification
       <div
         className="auth-pill bell-pill"
         onClick={() => {
+          if (userRole === "guest") {
+            onOpenLogin();
+            return;
+          }
           setIsNotifOpen(!isNotifOpen);
-          if (!isNotifOpen && userRole !== "guest") setUnreadCount(0);
+          if (!isNotifOpen) setUnreadCount(0);
         }}
       >
         <i className="bx bx-bell"></i>

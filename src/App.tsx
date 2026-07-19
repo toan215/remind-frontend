@@ -455,6 +455,7 @@ function App() {
               else setCurrentScreen("chat");
             }}
             currentUser={currentUser}
+            onGoToLogin={() => setCurrentScreen("login")}
           />
         )}
       {renderScreen()}

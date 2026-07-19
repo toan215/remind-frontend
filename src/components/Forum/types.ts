@@ -30,5 +30,6 @@ export interface CommentType {
   content: string;
   likeCount: number;
   isMine?: boolean;
+  isAnonymous?: boolean;
   createdAt: string;
 }

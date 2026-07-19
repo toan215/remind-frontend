@@ -369,6 +369,7 @@ function AIChat({ onBack }: AIChatProps) {
               type="button"
               className="rm-action-btn aichat-attach-btn"
               id="aichat-attach"
+              hidden
               title="Đính kèm"
               style={{ width: "32px", height: "32px" }}
             >
