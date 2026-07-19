@@ -40,6 +40,19 @@ export class AppointmentController {
   }
 
   /**
+   * Fetch appointments for the logged-in student
+   */
+  static async getStudentAppointments(): Promise<Appointment[]> {
+    try {
+      const data = await apiHelper.get<AppointmentsResponse>(API_ENDPOINTS.APPOINTMENTS.MINE);
+      return data.appointments || [];
+    } catch (error) {
+      console.error('getStudentAppointments error:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Cancel an appointment
    */
   static async cancelAppointment(appointmentId: string): Promise<void> {

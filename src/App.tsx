@@ -324,6 +324,10 @@ function App() {
             setPendingBooking(details);
             setCurrentScreen("payment");
           }}
+          onOpenChat={() => {
+            setOpenChatAppointmentId(null);
+            setCurrentScreen("chat");
+          }}
         />
       );
     }
