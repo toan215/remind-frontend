@@ -256,8 +256,8 @@
 .payment-success-icon {
   width: 80px;
   height: 80px;
-  background: var(--green-100);
-  color: var(--green-600);
+  background: #4caf50;
+  color: #fff;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -336,4 +336,55 @@
 .payment-cancel-btn:hover {
   background: var(--surface-hover);
   color: var(--text-primary);
+}
+
+.payment-demo-qr {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  margin: 20px 0;
+}
+
+.payment-demo-qr-box {
+  width: 200px;
+  height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px dashed var(--primary, #4f7cac);
+  border-radius: 16px;
+  background: #fff;
+  color: var(--primary, #4f7cac);
+}
+
+.payment-demo-qr-box i {
+  font-size: 96px;
+}
+
+.payment-demo-qr-info {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  color: var(--text-secondary);
+}
+
+.payment-demo-qr-img {
+  width: 220px;
+  max-width: 80vw;
+  height: auto;
+  aspect-ratio: 1 / 1;
+  border-radius: 12px;
+  background: #fff;
+  padding: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+@media (max-width: 400px) {
+  .payment-demo-qr-img,
+  .payment-demo-qr-box {
+    width: 180px;
+    height: 180px;
+  }
 }
