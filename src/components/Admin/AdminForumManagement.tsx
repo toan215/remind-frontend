@@ -185,14 +185,14 @@ export const AdminForumManagement: React.FC<AdminForumManagementProps> = () => {
 
   return (
     <div className="admin-dashboard-container">
-      <div className="admin-page-header flex justify-between items-center mb-6">
+      <div className="admin-page-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 24 }}>
         <div>
-          <h2 className="text-xl font-bold text-gray-800">Quản lý Diễn đàn</h2>
-          <p className="text-sm text-gray-500">
-            Tạo và cập nhật chủ đề/câu hỏi trên diễn đàn cộng đồng (chỉ thêm & sửa, không xóa).
+          <h2 className="admin-page-title">Quản lý Diễn đàn</h2>
+          <p className="admin-page-subtitle">
+            Tạo và cập nhật chủ đề/câu hỏi trên diễn đàn cộng đồng (chỉ thêm &amp; sửa, không xóa).
           </p>
         </div>
-        <button className="rm-btn rm-btn-primary text-xs" onClick={openCreate}>
+        <button className="admin-btn admin-btn-primary" onClick={openCreate} style={{ flexShrink: 0 }}>
           <i className="bx bx-plus"></i> Tạo bài viết
         </button>
       </div>
@@ -204,14 +204,14 @@ export const AdminForumManagement: React.FC<AdminForumManagementProps> = () => {
         </div>
       )}
 
-      <div className="flex items-center gap-3 mb-4">
-        <i className="bx bx-search" style={{ fontSize: 18, color: "var(--ink-500)" }}></i>
+      <div className="admin-search-bar" style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
+        <i className="bx bx-search" style={{ fontSize: 18, color: "var(--ink-500)", flexShrink: 0 }}></i>
         <input
-          className="rm-input-field"
+          className="admin-form-input"
           placeholder="Tìm kiếm bài viết..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          style={{ flex: 1 }}
+          style={{ flex: 1, marginBottom: 0 }}
         />
       </div>
 
@@ -229,19 +229,19 @@ export const AdminForumManagement: React.FC<AdminForumManagementProps> = () => {
           <tbody>
             {filtered.map((t) => (
               <tr key={t._id}>
-                <td className="font-medium max-w-[320px]">
-                  <div className="truncate">{t.title}</div>
-                  <div className="text-xs text-gray-400 truncate">{t.content}</div>
+                <td>
+                  <div style={{ fontWeight: 600, fontSize: 13.5, color: "var(--ink-900)", maxWidth: 320, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.title}</div>
+                  <div style={{ fontSize: 12, color: "var(--ink-500)", maxWidth: 320, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.content}</div>
                 </td>
                 <td>
-                  <div className="flex flex-wrap gap-1">
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
                     {t.tags.map((tag) => (
                       <span key={tag} className="admin-tag-chip">{tag}</span>
                     ))}
                   </div>
                 </td>
-                <td>{t.likes}</td>
-                <td className="text-xs text-gray-500">{formatTime(t.updatedAt)}</td>
+                <td style={{ fontWeight: 600, color: "var(--ink-700)" }}>{t.likes}</td>
+                <td style={{ fontSize: 12, color: "var(--ink-500)" }}>{formatTime(t.updatedAt)}</td>
                 <td>
                   <button className="admin-action-btn-sm approve" onClick={() => openEdit(t)}>
                     Sửa
@@ -264,7 +264,17 @@ export const AdminForumManagement: React.FC<AdminForumManagementProps> = () => {
         <div className="admin-modal-overlay" onClick={() => !saving && setModalOpen(false)}>
           <div className="admin-modal" onClick={(e) => e.stopPropagation()}>
             <div className="admin-modal-header">
-              <h3>{editing ? "Cập nhật bài viết" : "Tạo bài viết mới"}</h3>
+              <h3>
+                <span style={{
+                  width: 32, height: 32, borderRadius: 8, flexShrink: 0,
+                  background: "linear-gradient(135deg, var(--brand-100), var(--brand-050))",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  fontSize: 16, color: "var(--brand-700)",
+                }}>
+                  <i className={`bx ${editing ? "bx-edit" : "bx-plus-circle"}`}></i>
+                </span>
+                {editing ? "Cập nhật bài viết" : "Tạo bài viết mới"}
+              </h3>
               <button className="admin-modal-close" onClick={() => setModalOpen(false)} disabled={saving}>
                 <i className="bx bx-x"></i>
               </button>
@@ -322,14 +332,15 @@ export const AdminForumManagement: React.FC<AdminForumManagementProps> = () => {
                 </div>
               </div>
 
-              <div className="admin-form-group row items-center">
-                <label className="flex items-center gap-2 cursor-pointer">
+              <div className="admin-form-group" style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <label className="flex items-center gap-2 cursor-pointer" style={{ cursor: "pointer", userSelect: "none", textTransform: "none", letterSpacing: 0 }}>
                   <input
                     type="checkbox"
                     checked={form.isAnonymous}
                     onChange={(e) => setForm({ ...form, isAnonymous: e.target.checked })}
+                    style={{ width: 16, height: 16, accentColor: "var(--brand-600)", cursor: "pointer" }}
                   />
-                  Đăng ẩn danh
+                  <span style={{ fontSize: 13.5, fontWeight: 500, color: "var(--ink-700)" }}>Đăng ẩn danh</span>
                 </label>
               </div>
 

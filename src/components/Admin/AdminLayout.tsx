@@ -13,6 +13,7 @@ interface AdminLayoutProps {
 
 export function AdminLayout({ currentRoute, onNavigate, onBackToHome, children }: AdminLayoutProps) {
   const [pendingCount, setPendingCount] = useState(0);
+  const [newReportCount, setNewReportCount] = useState(0);
 
   useEffect(() => {
     const token = localStorage.getItem("accessToken");
@@ -30,10 +31,17 @@ export function AdminLayout({ currentRoute, onNavigate, onBackToHome, children }
       setPendingCount((prev) => prev + 1);
     };
 
+    const handleNewReport = () => {
+      // Only increment if NOT already on moderation page
+      setNewReportCount((prev) => prev + 1);
+    };
+
     socket.on("admin:new-expert", handleNewExpert);
+    socket.on("admin:new-report", handleNewReport);
 
     return () => {
       socket.off("admin:new-expert", handleNewExpert);
+      socket.off("admin:new-report", handleNewReport);
     };
   }, []);
 
@@ -63,11 +71,15 @@ export function AdminLayout({ currentRoute, onNavigate, onBackToHome, children }
                   const isActive = currentRoute === route.path;
                   const isExpertReview = route.path === "expert-review";
                   const isPriceRequest = route.path === "price-requests";
+                  const isModeration = route.path === "moderation";
                   return (
                     <button
                       key={route.path}
                       className={`admin-menu-item ${isActive ? "active" : ""}`}
-                      onClick={() => onNavigate(route.path)}
+                      onClick={() => {
+                        if (isModeration) setNewReportCount(0);
+                        onNavigate(route.path);
+                      }}
                       title={route.label}
                     >
                       <i className={`bx ${route.icon}`}></i>
@@ -77,6 +89,9 @@ export function AdminLayout({ currentRoute, onNavigate, onBackToHome, children }
                       )}
                       {isPriceRequest && (
                         <span className="admin-menu-badge amber">3</span>
+                      )}
+                      {isModeration && newReportCount > 0 && (
+                        <span className="admin-menu-badge red">{newReportCount}</span>
                       )}
                     </button>
                   );
