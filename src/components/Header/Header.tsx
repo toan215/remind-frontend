@@ -157,14 +157,13 @@ export default function Header({
           {userRole === "admin" && (
             <a
               href="#admin"
-              className="home-nav-link"
+              className={`home-nav-link ${currentScreen.startsWith("admin") ? "active" : ""}`}
               onClick={(e) => {
                 e.preventDefault();
                 onOpenAdminPortal();
               }}
-              style={{ color: "var(--brand-700)", fontWeight: "600" }}
             >
-              Quản trị <i className="bx bx-wrench"></i>
+              Quản trị
             </a>
           )}
         </nav>

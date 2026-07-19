@@ -1,13 +1,25 @@
 import { useState } from "react";
 import { AdminRoute } from "../../routes/adminRoutes";
 import "./Admin.css";
+import "./AdminPriceRequests.css";
+
+interface Certificate {
+  name: string;
+  image?: string;
+}
 
 interface PriceRequest {
   id: string;
   expertId: string;
   expertName: string;
   expertAvatar: string;
+  avatarUrl?: string;
+  email: string;
+  bio: string;
   professionalTitle: string;
+  education: string[];
+  experience: string[];
+  certificates: Certificate[];
   serviceName: string;
   currentPrice: number;
   requestedPrice: number;
@@ -22,12 +34,17 @@ interface AdminPriceRequestsProps {
   onNavigate: (route: AdminRoute) => void;
 }
 
+const formatVND = (val: number) =>
+  new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(val);
+
 export default function AdminPriceRequests({ onNavigate }: AdminPriceRequestsProps) {
   const [filterStatus, setFilterStatus] = useState<"all" | "pending" | "approved" | "rejected">("pending");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedRequest, setSelectedRequest] = useState<PriceRequest | null>(null);
   const [rejectionNote, setRejectionNote] = useState("");
   const [showRejectModal, setShowRejectModal] = useState(false);
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [showCerts, setShowCerts] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
   const [requests, setRequests] = useState<PriceRequest[]>([
@@ -36,7 +53,24 @@ export default function AdminPriceRequests({ onNavigate }: AdminPriceRequestsPro
       expertId: "EXP-101",
       expertName: "BS. Nguyễn Văn An",
       expertAvatar: "A",
+      avatarUrl: "https://i.pravatar.cc/150?img=12",
+      email: "nguyenvanan@remind.vn",
+      bio: "Bác sĩ chuyên khoa II Tâm thần với hơn 12 năm kinh nghiệm điều trị các rối loạn lo âu, trầm cảm và mất ngủ cho người trưởng thành.",
       professionalTitle: "Bác sĩ Chuyên khoa II Tâm thần",
+      education: [
+        "Bác sĩ Đa khoa — ĐH Y Hà Nội (2008)",
+        "Thạc sĩ Tâm thần học — ĐH Y Dược TP.HCM (2013)",
+        "Chuyên khoa II Tâm thần — Viện Sức khỏe Tâm thần (2018)",
+      ],
+      experience: [
+        "Trưởng khoa Tâm thần — Bệnh viện Đa khoa Tâm Anh (2019–nay)",
+        "Bác sĩ điều trị viên — Trung tâm Tâm lý ReMind (2016–nay)",
+      ],
+      certificates: [
+        { name: "Chứng chỉ Hành nghề" },
+        { name: "Certificate in CBT (UK)" },
+        { name: "Chuyên khoa II" },
+      ],
       serviceName: "Tư vấn tâm lý trực tuyến (60 phút)",
       currentPrice: 500000,
       requestedPrice: 650000,
@@ -49,7 +83,22 @@ export default function AdminPriceRequests({ onNavigate }: AdminPriceRequestsPro
       expertId: "EXP-104",
       expertName: "ThS. Lê Thị Mai",
       expertAvatar: "M",
+      avatarUrl: "https://i.pravatar.cc/150?img=45",
+      email: "lethimai@remind.vn",
+      bio: "Thạc sĩ Tâm lý học Lâm sàng, chuyên hỗ trợ liệu pháp quản lý căng thẳng, lo âu và cân bằng cảm xúc cho người trẻ.",
       professionalTitle: "Thạc sĩ Tâm lý học Lâm sàng",
+      education: [
+        "Cử nhân Tâm lý học — ĐH Khoa học Xã hội & Nhân văn (2014)",
+        "Thạc sĩ Tâm lý học Lâm sàng — ĐH Giáo dục (2017)",
+      ],
+      experience: [
+        "Chuyên viên tham vấn — Trung tâm ReMind (2018–nay)",
+        "Cộng tác viên — Dự án Sức khỏe học đường (2020–2023)",
+      ],
+      certificates: [
+        { name: "Chứng chỉ Tham vấn" },
+        { name: "EMDR Basic Training" },
+      ],
       serviceName: "Liệu pháp Quản lý Căng thẳng & Lo âu",
       currentPrice: 600000,
       requestedPrice: 750000,
@@ -62,7 +111,21 @@ export default function AdminPriceRequests({ onNavigate }: AdminPriceRequestsPro
       expertId: "EXP-108",
       expertName: "TS. Hoàng Quốc Bảo",
       expertAvatar: "B",
+      avatarUrl: "https://i.pravatar.cc/150?img=33",
+      email: "hoangquocbao@remind.vn",
+      bio: "Tiến sĩ Tâm lý học Hành vi, nghiên cứu và trị liệu chuyên sâu các rối loạn tâm lý phức tạp.",
       professionalTitle: "Tiến sĩ Tâm lý học Hành vi",
+      education: [
+        "Tiến sĩ Tâm lý học Hành vi — ĐH Quốc gia (2019)",
+        "Thạc sĩ Tâm lý học — ĐH Amsterdam (2015)",
+      ],
+      experience: [
+        "Giảng viên kiêm trị liệu viên — ReMind (2020–nay)",
+      ],
+      certificates: [
+        { name: "PhD Certificate" },
+        { name: "Licensed Psychologist" },
+      ],
       serviceName: "Đánh giá Chuyên sâu Rối loạn Tâm lý",
       currentPrice: 800000,
       requestedPrice: 1000000,
@@ -75,7 +138,13 @@ export default function AdminPriceRequests({ onNavigate }: AdminPriceRequestsPro
       expertId: "EXP-102",
       expertName: "BS. Phạm Thị Hương",
       expertAvatar: "H",
+      avatarUrl: "https://i.pravatar.cc/150?img=20",
+      email: "phamthihuong@remind.vn",
+      bio: "Chuyên gia tư vấn giấc ngủ và thiền định, đồng hành cùng khách hàng cải thiện chất lượng nghỉ ngơi.",
       professionalTitle: "Chuyên gia Tư vấn Giấc ngủ",
+      education: ["Cử nhân Y tế công cộng — ĐH Y tế công cộng (2012)"],
+      experience: ["Chuyên viên tư vấn — ReMind (2017–nay)"],
+      certificates: [{ name: "Sleep Coach Cert." }],
       serviceName: "Tư vấn Giấc ngủ & Thiền định",
       currentPrice: 450000,
       requestedPrice: 550000,
@@ -89,7 +158,13 @@ export default function AdminPriceRequests({ onNavigate }: AdminPriceRequestsPro
       expertId: "EXP-105",
       expertName: "ThS. Đặng Minh Tuấn",
       expertAvatar: "T",
+      avatarUrl: "https://i.pravatar.cc/150?img=51",
+      email: "dangminhtuan@remind.vn",
+      bio: "Tư vấn viên hôn nhân & gia đình với phương pháp tham vấn nhân văn.",
       professionalTitle: "Tư vấn Viên Hôn nhân & Gia đình",
+      education: ["Thạc sĩ Công tác xã hội — ĐH Mở (2016)"],
+      experience: ["Tham vấn viên — ReMind (2018–nay)"],
+      certificates: [{ name: "Counseling Cert." }],
       serviceName: "Tham vấn Mối quan hệ",
       currentPrice: 700000,
       requestedPrice: 1200000,
@@ -101,15 +176,16 @@ export default function AdminPriceRequests({ onNavigate }: AdminPriceRequestsPro
     },
   ]);
 
+  const showToast = (message: string, type: "success" | "error") => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 4000);
+  };
+
   const handleApprove = (req: PriceRequest) => {
     setRequests((prev) =>
       prev.map((r) =>
         r.id === req.id
-          ? {
-              ...r,
-              status: "approved",
-              reviewedAt: new Date().toLocaleString("vi-VN"),
-            }
+          ? { ...r, status: "approved", reviewedAt: new Date().toLocaleString("vi-VN") }
           : r
       )
     );
@@ -141,13 +217,10 @@ export default function AdminPriceRequests({ onNavigate }: AdminPriceRequestsPro
     setSelectedRequest(null);
   };
 
-  const showToast = (message: string, type: "success" | "error") => {
-    setToast({ message, type });
-    setTimeout(() => setToast(null), 4000);
-  };
-
-  const formatVND = (val: number) => {
-    return new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(val);
+  const openDetail = (req: PriceRequest) => {
+    setSelectedRequest(req);
+    setShowCerts(false);
+    setShowDetailModal(true);
   };
 
   const filteredRequests = requests.filter((r) => {
@@ -161,177 +234,140 @@ export default function AdminPriceRequests({ onNavigate }: AdminPriceRequestsPro
 
   const pendingCount = requests.filter((r) => r.status === "pending").length;
 
+  const tabs = [
+    { id: "pending", label: `Chờ xét duyệt (${pendingCount})` },
+    { id: "approved", label: "Đã phê duyệt" },
+    { id: "rejected", label: "Đã từ chối" },
+    { id: "all", label: "Tất cả" },
+  ] as const;
+
   return (
-    <div className="admin-price-requests-container">
+    <div className="pr-page">
       {toast && (
-        <div
-          className={`p-3 rounded-lg shadow-lg mb-4 flex items-center justify-between animate-fade-in text-sm font-medium ${
-            toast.type === "success" ? "bg-green-600 text-white" : "bg-red-600 text-white"
-          }`}
-        >
-          <div className="flex items-center gap-2">
-            <i className={`bx ${toast.type === "success" ? "bx-check-circle" : "bx-x-circle"} text-lg`}></i>
-            {toast.message}
-          </div>
-          <button onClick={() => setToast(null)} className="text-white">
-            <i className="bx bx-x"></i>
-          </button>
+        <div className={`pr-toast ${toast.type}`}>
+          <i className={`bx ${toast.type === "success" ? "bx-check-circle" : "bx-x-circle"}`}></i>
+          <span>{toast.message}</span>
         </div>
       )}
 
-      {/* Header Banner */}
-      <div className="admin-page-header flex justify-between items-center mb-6">
+      {/* Header */}
+      <div className="pr-header">
         <div>
-          <h2 className="text-xl font-bold text-gray-800">Xét duyệt Yêu cầu Đổi giá Dịch vụ</h2>
-          <p className="text-sm text-gray-500">
+          <h2 className="pr-title">Xét duyệt Yêu cầu Đổi giá Dịch vụ</h2>
+          <p className="pr-subtitle">
             Quản lý và xét duyệt các yêu cầu thay đổi bảng giá tư vấn do Chuyên gia gửi lên.
           </p>
         </div>
-        <div className="flex gap-2">
-          <button
-            className="rm-btn rm-btn-outline text-xs"
-            onClick={() => onNavigate("expert-review")}
-          >
-            <i className="bx bx-user-check"></i> Xét duyệt Hồ sơ Chuyên gia
-          </button>
+        <button className="rm-btn rm-btn-outline text-xs" onClick={() => onNavigate("expert-review")}>
+          <i className="bx bx-user-check"></i> Xét duyệt Hồ sơ Chuyên gia
+        </button>
+      </div>
+
+      {/* Tabs + Search */}
+      <div className="pr-toolbar">
+        <div className="pr-tabs">
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              className={`pr-tab ${filterStatus === tab.id ? "active" : ""}`}
+              onClick={() => setFilterStatus(tab.id)}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+        <div className="pr-search">
+          <i className="bx bx-search"></i>
+          <input
+            type="text"
+            placeholder="Tìm theo tên chuyên gia, dịch vụ..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
         </div>
       </div>
 
-      {/* Filter Tabs & Search Bar */}
-      <div className="admin-panel-card mb-6">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <div className="flex gap-2">
-            {[
-              { id: "pending", label: `Chờ xét duyệt (${pendingCount})` },
-              { id: "approved", label: "Đã phê duyệt" },
-              { id: "rejected", label: "Đã từ chối" },
-              { id: "all", label: "Tất cả" },
-            ].map((tab) => (
-              <button
-                key={tab.id}
-                className={`py-2 px-4 text-xs font-semibold rounded-xl border transition-all ${
-                  filterStatus === tab.id
-                    ? "bg-teal-600 text-white border-teal-600 shadow"
-                    : "bg-white text-gray-700 border-gray-200 hover:bg-gray-50"
-                }`}
-                onClick={() => setFilterStatus(tab.id as any)}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
-
-          <div className="relative w-full md:w-64">
-            <input
-              type="text"
-              className="rm-input-field text-xs pl-8 pr-3 py-2 w-full"
-              placeholder="Tìm theo tên chuyên gia, dịch vụ..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-            <i className="bx bx-search absolute left-2.5 top-2.5 text-gray-400 text-sm"></i>
-          </div>
-        </div>
-      </div>
-
-      {/* Requests List */}
-      <div className="space-y-4">
+      {/* List */}
+      <div className="pr-list">
         {filteredRequests.length > 0 ? (
           filteredRequests.map((req) => {
             const diffAmount = req.requestedPrice - req.currentPrice;
             const diffPercent = Math.round((diffAmount / req.currentPrice) * 100);
 
             return (
-              <div
-                key={req.id}
-                className="admin-panel-card hover:border-teal-300 transition-all border border-gray-200 shadow-sm"
-              >
-                <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 pb-4 border-b border-gray-100 mb-4">
-                  {/* Expert Profile & Service Details */}
-                  <div className="flex items-start gap-3">
-                    <div className="w-12 h-12 rounded-full bg-teal-100 text-teal-800 font-bold flex items-center justify-center text-lg flex-shrink-0">
-                      {req.expertAvatar}
-                    </div>
+              <div key={req.id} className="pr-card">
+                <div className="pr-card-top">
+                  <div className="pr-expert">
+                    {req.avatarUrl ? (
+                      <img
+                        className="pr-avatar"
+                        src={req.avatarUrl}
+                        alt={req.expertName}
+                        onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+                      />
+                    ) : (
+                      <div className="pr-avatar">{req.expertAvatar}</div>
+                    )}
                     <div>
-                      <div className="flex items-center gap-2">
-                        <h4 className="font-bold text-gray-900 text-base">{req.expertName}</h4>
-                        <span className="text-xs text-gray-400 font-mono">({req.id})</span>
-                      </div>
-                      <p className="text-xs text-teal-700 font-medium mb-1">{req.professionalTitle}</p>
-                      <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg bg-gray-100 text-gray-700 text-xs font-semibold">
-                        <i className="bx bx-bookmark-alt text-teal-600"></i> {req.serviceName}
-                      </div>
+                      <h4 className="pr-expert-name">
+                        {req.expertName}
+                        <span className={`pr-status-pill ${req.status}`}>
+                          {req.status === "pending" ? "CHỜ DUYỆT" : req.status === "approved" ? "ĐÃ DUYỆT" : "TỪ CHỐI"}
+                        </span>
+                      </h4>
+                      <span className="pr-req-id">{req.id}</span>
+                      <div className="pr-title-line">{req.professionalTitle}</div>
+                      <span className="pr-service-chip">
+                        <i className="bx bx-bookmark-alt"></i> {req.serviceName}
+                      </span>
                     </div>
                   </div>
 
-                  {/* Price Comparison Badge */}
-                  <div className="bg-gray-50 p-3 rounded-xl border border-gray-100 flex items-center gap-4">
-                    <div className="text-right">
-                      <span className="text-xs text-gray-400 block">Giá hiện tại</span>
-                      <span className="font-semibold text-gray-600 line-through">{formatVND(req.currentPrice)}</span>
+                  <div className="pr-price">
+                    <div className="pr-price-col">
+                      <span className="pr-label">Giá hiện tại</span>
+                      <span className="pr-price-old">{formatVND(req.currentPrice)}</span>
                     </div>
-
-                    <div className="text-teal-500 font-bold text-lg">→</div>
-
-                    <div>
-                      <span className="text-xs text-gray-500 font-semibold block">Mức giá mới đề xuất</span>
-                      <div className="flex items-center gap-2">
-                        <span className="font-extrabold text-teal-800 text-lg">{formatVND(req.requestedPrice)}</span>
-                        <span
-                          className={`px-2 py-0.5 rounded-full text-xs font-bold ${
-                            diffPercent > 0 ? "bg-amber-100 text-amber-800" : "bg-blue-100 text-blue-800"
-                          }`}
-                        >
+                    <span className="pr-price-arrow">→</span>
+                    <div className="pr-price-col">
+                      <span className="pr-label">Mức giá mới</span>
+                      <span className="pr-price-new">
+                        {formatVND(req.requestedPrice)}
+                        <span className={`pr-diff ${diffPercent > 0 ? "up" : "down"}`}>
                           {diffPercent > 0 ? `+${diffPercent}%` : `${diffPercent}%`}
                         </span>
-                      </div>
+                      </span>
                     </div>
                   </div>
                 </div>
 
-                {/* Reason Body & Action Footer */}
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                  <div className="flex-1 bg-teal-50/50 p-3 rounded-xl border border-teal-100">
-                    <span className="text-xs font-bold text-teal-800 block mb-1">
-                      Lý do điều chỉnh giá từ Chuyên gia:
-                    </span>
-                    <p className="text-xs text-gray-700 italic">"{req.reason}"</p>
-                    <span className="text-[11px] text-gray-400 block mt-1">Gửi lúc: {req.requestedAt}</span>
+                <div className="pr-card-bottom">
+                  <div className="pr-reason">
+                    <span className="pr-reason-label">Lý do điều chỉnh giá từ Chuyên gia:</span>
+                    <p className="pr-reason-text">"{req.reason}"</p>
+                    <span className="pr-reason-time">Gửi lúc: {req.requestedAt}</span>
                   </div>
 
-                  {/* Status or Actions */}
-                  <div className="flex items-center gap-2 self-end md:self-center">
+                  <div className="pr-actions">
                     {req.status === "pending" ? (
                       <>
-                        <button
-                          className="rm-btn rm-btn-outline text-xs text-red-600 hover:bg-red-50 border-red-200"
-                          onClick={() => handleOpenRejectModal(req)}
-                        >
+                        <button className="pr-btn pr-btn-detail" onClick={() => openDetail(req)}>
+                          <i className="bx bx-file-find"></i> Xem Chi tiết
+                        </button>
+                        <button className="pr-btn pr-btn-reject" onClick={() => handleOpenRejectModal(req)}>
                           <i className="bx bx-x"></i> Từ chối
                         </button>
-                        <button
-                          className="rm-btn rm-btn-primary text-xs"
-                          onClick={() => handleApprove(req)}
-                        >
+                        <button className="pr-btn pr-btn-approve" onClick={() => handleApprove(req)}>
                           <i className="bx bx-check"></i> Phê duyệt Mức Giá
                         </button>
                       </>
                     ) : (
-                      <div className="text-right">
-                        <span
-                          className={`px-3 py-1 rounded-full text-xs font-bold inline-block ${
-                            req.status === "approved"
-                              ? "bg-green-100 text-green-700"
-                              : "bg-red-100 text-red-700"
-                          }`}
-                        >
+                      <div className="pr-resolved">
+                        <span className={`pr-resolved-pill ${req.status}`}>
                           {req.status === "approved" ? "Đã Phê Duyệt" : "Đã Từ Chối"}
                         </span>
-                        {req.reviewedAt && (
-                          <span className="text-[11px] text-gray-400 block mt-1">
-                            Xử lý lúc: {req.reviewedAt}
-                          </span>
-                        )}
+                        {req.reviewedAt && <span className="pr-resolved-time">Xử lý lúc: {req.reviewedAt}</span>}
+                        {req.reviewNote && <div className="pr-resolved-note">Lý do: {req.reviewNote}</div>}
                       </div>
                     )}
                   </div>
@@ -340,48 +376,127 @@ export default function AdminPriceRequests({ onNavigate }: AdminPriceRequestsPro
             );
           })
         ) : (
-          <div className="admin-panel-card text-center py-12 text-gray-400">
-            <i className="bx bx-check-circle text-4xl text-teal-500 mb-2"></i>
-            <p className="text-sm font-medium text-gray-600">Không có yêu cầu đổi giá nào phù hợp.</p>
+          <div className="pr-empty">
+            <i className="bx bx-check-circle"></i>
+            <p style={{ fontSize: 14, fontWeight: 600, color: "var(--ink-600)", margin: 0 }}>
+              Không có yêu cầu đổi giá nào phù hợp.
+            </p>
           </div>
         )}
       </div>
 
       {/* Reject Modal */}
       {showRejectModal && selectedRequest && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl animate-fade-in">
-            <h3 className="text-lg font-bold text-gray-900 mb-2">Từ chối Yêu cầu Đổi giá</h3>
-            <p className="text-xs text-gray-600 mb-4">
-              Bạn đang từ chối đề xuất giá mới ({formatVND(selectedRequest.requestedPrice)}) của{" "}
-              <strong>{selectedRequest.expertName}</strong>.
-            </p>
-
-            <div className="mb-4">
-              <label className="block text-xs font-semibold text-gray-700 mb-1.5">
-                Lý do từ chối (Gửi thông báo cho chuyên gia)
-              </label>
-              <textarea
-                rows={3}
-                className="rm-input-field text-xs w-full"
-                placeholder="Nhập lý do từ chối (ví dụ: Mức giá đề xuất vượt khung quy định của nền tảng...)"
-                value={rejectionNote}
-                onChange={(e) => setRejectionNote(e.target.value)}
-              />
-            </div>
-
-            <div className="flex justify-end gap-2">
-              <button
-                className="rm-btn rm-btn-outline text-xs"
-                onClick={() => setShowRejectModal(false)}
-              >
-                Hủy bỏ
+        <div className="pr-overlay" onClick={() => setShowRejectModal(false)}>
+          <div className="pr-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="pr-modal-head">
+              <h3>Từ chối Yêu cầu Đổi giá</h3>
+              <button className="pr-modal-close" onClick={() => setShowRejectModal(false)}>
+                <i className="bx bx-x"></i>
               </button>
+            </div>
+            <div className="pr-modal-body">
+              <p style={{ fontSize: 13, color: "var(--ink-600)", margin: 0 }}>
+                Bạn đang từ chối đề xuất giá mới ({formatVND(selectedRequest.requestedPrice)}) của{" "}
+                <strong>{selectedRequest.expertName}</strong>.
+              </p>
+              <div>
+                <label className="pr-detail-section-title">Lý do từ chối (Gửi thông báo cho chuyên gia)</label>
+                <textarea
+                  rows={3}
+                  className="pr-reason-text"
+                  style={{ width: "100%", border: "1px solid var(--pr-border)", borderRadius: 12, padding: 12, fontSize: 13, fontFamily: "inherit", resize: "vertical", color: "var(--pr-ink-900)" }}
+                  placeholder="Nhập lý do từ chối (ví dụ: Mức giá đề xuất vượt khung quy định của nền tảng...)"
+                  value={rejectionNote}
+                  onChange={(e) => setRejectionNote(e.target.value)}
+                />
+              </div>
+            </div>
+            <div className="pr-modal-foot">
+              <button className="pr-btn pr-btn-outline" onClick={() => setShowRejectModal(false)}>Hủy bỏ</button>
               <button
-                className="rm-btn text-xs bg-red-600 text-white hover:bg-red-700"
+                className="pr-btn pr-btn-reject"
                 onClick={handleConfirmReject}
+                style={{ background: "#dc2626", color: "#fff", borderColor: "#dc2626" }}
               >
                 Xác nhận Từ chối
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Detail Modal */}
+      {showDetailModal && selectedRequest && (
+        <div className="pr-overlay" onClick={() => setShowDetailModal(false)}>
+          <div className="pr-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="pr-modal-head">
+              <h3>Hồ sơ Chuyên gia</h3>
+              <button className="pr-modal-close" onClick={() => setShowDetailModal(false)}>
+                <i className="bx bx-x"></i>
+              </button>
+            </div>
+            <div className="pr-modal-body">
+              <div className="pr-detail-hero">
+                {selectedRequest.avatarUrl ? (
+                  <img className="pr-avatar" src={selectedRequest.avatarUrl} alt={selectedRequest.expertName} />
+                ) : (
+                  <div className="pr-avatar">{selectedRequest.expertAvatar}</div>
+                )}
+                <div>
+                  <h4 className="pr-detail-name">{selectedRequest.expertName}</h4>
+                  <div className="pr-detail-title">{selectedRequest.professionalTitle}</div>
+                  <div className="pr-detail-email">{selectedRequest.email}</div>
+                </div>
+              </div>
+
+              <div>
+                <h5 className="pr-detail-section-title"><i className="bx bx-id-card"></i> Giới thiệu</h5>
+                <p className="pr-detail-bio">{selectedRequest.bio}</p>
+              </div>
+
+              <div>
+                <h5 className="pr-detail-section-title"><i className="bx bx-graduation"></i> Học vấn</h5>
+                <ul className="pr-detail-list">
+                  {selectedRequest.education.map((e, i) => <li key={i}>{e}</li>)}
+                </ul>
+              </div>
+
+              <div>
+                <h5 className="pr-detail-section-title"><i className="bx bx-briefcase"></i> Kinh nghiệm</h5>
+                <ul className="pr-detail-list">
+                  {selectedRequest.experience.map((e, i) => <li key={i}>{e}</li>)}
+                </ul>
+              </div>
+
+              <div>
+                <h5 className="pr-detail-section-title"><i className="bx bx-award"></i> Chứng chỉ</h5>
+                <button className="pr-cert-btn" onClick={() => setShowCerts((s) => !s)}>
+                  <i className="bx bx-image-alt"></i>
+                  {showCerts ? "Ẩn chứng chỉ" : `Xem Chứng chỉ (${selectedRequest.certificates.length})`}
+                </button>
+                {showCerts && (
+                  <div className="pr-cert-grid">
+                    {selectedRequest.certificates.map((c, i) => (
+                      c.image ? (
+                        <img key={i} className="pr-cert-thumb" src={c.image} alt={c.name} />
+                      ) : (
+                        <div key={i} className="pr-cert-placeholder" title={c.name}>
+                          <i className="bx bx-file"></i>
+                          {c.name}
+                        </div>
+                      )
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="pr-modal-foot">
+              <button className="pr-btn pr-btn-approve" onClick={() => { setShowDetailModal(false); handleApprove(selectedRequest); }}>
+                <i className="bx bx-check"></i> Phê duyệt Mức Giá
+              </button>
+              <button className="pr-btn pr-btn-reject" onClick={() => { setShowDetailModal(false); handleOpenRejectModal(selectedRequest); }}>
+                <i className="bx bx-x"></i> Từ chối
               </button>
             </div>
           </div>

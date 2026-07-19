@@ -74,10 +74,39 @@ function App() {
   const onboardingOverlayRef = useRef<HTMLDivElement>(null);
   const onboardingModalRef = useRef<HTMLDivElement>(null);
 
-  // Sync currentScreen with URL hash routing
+  // Sync currentScreen & adminRoute with URL hash routing
   useEffect(() => {
     const handleHashChange = () => {
-      const hash = window.location.hash.replace(/^#\/?/, "");
+      const rawHash = window.location.hash.replace(/^#\/?/, "");
+      if (!rawHash) {
+        setCurrentScreen("home");
+        return;
+      }
+
+      // Check if hash starts with admin (e.g., admin, admin/finances, admin/commission)
+      if (rawHash.startsWith("admin")) {
+        setCurrentScreen("admin");
+        const parts = rawHash.split("/");
+        const validAdminRoutes: AdminRoute[] = [
+          "dashboard",
+          "finances",
+          "commission",
+          "expert-review",
+          "price-requests",
+          "expert-crud",
+          "user-roles",
+          "moderation",
+          "forum-management",
+        ];
+        const subRoute = parts[1] as AdminRoute;
+        if (subRoute && validAdminRoutes.includes(subRoute)) {
+          setAdminRoute(subRoute);
+        } else {
+          setAdminRoute("dashboard");
+        }
+        return;
+      }
+
       const validScreens = [
         "home",
         "expert",
@@ -87,16 +116,15 @@ function App() {
         "about",
         "calendar",
         "settings",
-        "admin",
         "login",
         "register",
         "forgot-password",
         "payment",
       ];
 
-      if (hash && validScreens.includes(hash)) {
-        setCurrentScreen(hash);
-      } else if (!hash) {
+      if (validScreens.includes(rawHash)) {
+        setCurrentScreen(rawHash);
+      } else {
         setCurrentScreen("home");
       }
     };
@@ -109,18 +137,25 @@ function App() {
     };
   }, []);
 
+  // Update URL hash whenever currentScreen or adminRoute changes
   useEffect(() => {
-    const currentHash = window.location.hash.replace(/^#\/?/, "");
     if (currentScreen === "home") {
+      const currentHash = window.location.hash.replace(/^#\/?/, "");
       if (currentHash !== "" && currentHash !== "/") {
         window.location.hash = "#/";
       }
+    } else if (currentScreen === "admin") {
+      const expectedHash = `#/admin/${adminRoute}`;
+      if (window.location.hash !== expectedHash) {
+        window.location.hash = expectedHash;
+      }
     } else {
-      if (currentHash !== currentScreen) {
-        window.location.hash = `#/${currentScreen}`;
+      const expectedHash = `#/${currentScreen}`;
+      if (window.location.hash !== expectedHash) {
+        window.location.hash = expectedHash;
       }
     }
-  }, [currentScreen]);
+  }, [currentScreen, adminRoute]);
 
   useEffect(() => {
     const user = AuthController.getCurrentUser();
@@ -401,6 +436,7 @@ function App() {
           <AdminLayout
             currentRoute={adminRoute}
             onNavigate={(route) => setAdminRoute(route)}
+            onLogout={handleLogout}
             onBackToHome={() => setCurrentScreen("home")}
           >
             <AdminRouteDispatcher

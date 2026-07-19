@@ -12,6 +12,7 @@ import { DashboardStats } from "../../models/DashboardStats";
 import { Expert } from "../../models/Expert";
 import { AdminRoute } from "../../routes/adminRoutes";
 import { RevenueGrowthChart } from "./RevenueGrowthChart";
+import { getStoredCommissionRate, COMMISSION_RATE_EVENT } from "../../utils/commissionHelper";
 import "./Admin.css";
 
 interface AdminDashboardProps {
@@ -96,7 +97,7 @@ export function AdminDashboard({ onNavigate }: AdminDashboardProps) {
         activeConsultations: backendStats?.activeConsultations || 92,
         reportedPosts: backendStats?.reportedPosts || 2,
         averageRating: backendStats?.averageRating || 4.8,
-        commissionRate: backendStats?.commissionRate || 15,
+        commissionRate: getStoredCommissionRate(),
         recentActions: backendStats?.recentActions || [
           {
             id: "1",
@@ -134,6 +135,11 @@ export function AdminDashboard({ onNavigate }: AdminDashboardProps) {
 
   useEffect(() => {
     loadDashboardData();
+    const handleUpdate = () => {
+      setStats((prev) => prev ? { ...prev, commissionRate: getStoredCommissionRate() } : null);
+    };
+    window.addEventListener(COMMISSION_RATE_EVENT, handleUpdate);
+    return () => window.removeEventListener(COMMISSION_RATE_EVENT, handleUpdate);
   }, []);
 
   const handleApprove = async (id: string | number) => {
@@ -267,34 +273,38 @@ export function AdminDashboard({ onNavigate }: AdminDashboardProps) {
   return (
     <div className="admin-dashboard-container">
       {/* ===== PAGE HEADER ===== */}
-      <div className="admin-page-header flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="admin-status-badge green">● Hoạt động</span>
-            <span className="text-xs text-slate-400 font-medium">{today}</span>
-          </div>
-          <h2 className="text-2xl font-extrabold text-slate-900 tracking-tight">
-            Chào mừng trở lại, Admin!
-          </h2>
-          <p className="text-sm text-slate-500 font-medium mt-0.5">
-            Tổng quan các chỉ số vận hành chính của nền tảng ReMind.
-            {lastUpdated && (
-              <span className="ml-2 text-slate-400">
-                · Cập nhật lúc {lastUpdated.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })}
+      <div className="admin-dash-header-card mb-6">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <span className="admin-dash-live-badge">
+                <span className="admin-dash-live-dot" /> Hoạt động
               </span>
-            )}
-          </p>
-        </div>
-        <div className="flex gap-3">
-          <button className="rm-btn rm-btn-ghost text-xs px-4 py-2.5 font-bold" onClick={loadDashboardData}>
-            <i className="bx bx-refresh text-base mr-1"></i> Làm mới
-          </button>
-          <button
-            className="rm-btn rm-btn-primary text-xs px-4 py-2.5 font-bold shadow-sm"
-            onClick={() => onNavigate("finances")}
-          >
-            <i className="bx bx-dollar-circle text-base mr-1"></i> Chi tiết doanh thu
-          </button>
+              <span className="text-xs text-slate-400 font-medium capitalize">{today}</span>
+            </div>
+            <h2 className="text-2xl font-extrabold text-slate-900 tracking-tight">
+              Chào mừng trở lại, Admin!
+            </h2>
+            <p className="text-sm text-slate-500 font-medium mt-0.5">
+              Tổng quan các chỉ số vận hành chính của nền tảng ReMind.
+              {lastUpdated && (
+                <span className="ml-2 text-slate-400">
+                  · Cập nhật lúc {lastUpdated.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })}
+                </span>
+              )}
+            </p>
+          </div>
+          <div className="flex gap-3">
+            <button className="rm-btn rm-btn-ghost text-xs px-4 py-2.5 font-bold shadow-xs flex items-center gap-1.5" onClick={loadDashboardData}>
+              <i className="bx bx-refresh text-base"></i> Làm mới
+            </button>
+            <button
+              className="rm-btn rm-btn-primary text-xs px-4 py-2.5 font-bold shadow-md flex items-center gap-1.5"
+              onClick={() => onNavigate("finances")}
+            >
+              <i className="bx bx-dollar-circle text-base"></i> Chi tiết doanh thu
+            </button>
+          </div>
         </div>
       </div>
 
@@ -319,11 +329,11 @@ export function AdminDashboard({ onNavigate }: AdminDashboardProps) {
                 <span className="admin-stat-label">{kpi.label}</span>
                 <span className="admin-stat-value">{kpi.value}</span>
                 <span
-                  className={`text-xs font-bold mt-1 inline-flex items-center gap-1 ${
-                    positive ? "text-emerald-600" : "text-rose-600"
+                  className={`admin-stat-trend ${
+                    positive ? "positive" : "negative"
                   }`}
                 >
-                  <i className={`bx ${positive ? "bx-trending-up" : "bx-trending-down"} text-sm`}></i>
+                  <i className={`bx ${positive ? "bx-trending-up" : "bx-trending-down"}`}></i>
                   {positive ? "+" : ""}
                   {kpi.change}% · {kpi.hint}
                 </span>
@@ -342,21 +352,25 @@ export function AdminDashboard({ onNavigate }: AdminDashboardProps) {
         <div className="admin-panel-card">
           <h3 className="admin-dashboard-section-title">
             <span className="flex items-center gap-2">
-              <i className="bx bx-pie-chart-alt-2 text-teal-700 text-xl"></i>
+              <div className="w-8 h-8 rounded-xl bg-teal-100 text-teal-700 flex items-center justify-center text-lg">
+                <i className="bx bx-pie-chart-alt-2"></i>
+              </div>
               Cơ cấu doanh thu
             </span>
-            <span className="text-xs text-slate-400 font-medium">{formatVND(stats!.revenue)}</span>
+            <span className="text-xs text-slate-500 font-extrabold bg-slate-100 px-2.5 py-1 rounded-xl border border-slate-200">
+              {formatVND(stats!.revenue)}
+            </span>
           </h3>
           <div className="flex items-center gap-6">
-            <div style={{ width: 180, height: 180 }} className="flex-shrink-0">
+            <div style={{ width: 170, height: 170 }} className="flex-shrink-0">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
                     data={platformMix}
                     dataKey="value"
-                    innerRadius={55}
-                    outerRadius={85}
-                    paddingAngle={3}
+                    innerRadius={52}
+                    outerRadius={80}
+                    paddingAngle={4}
                     stroke="none"
                   >
                     {platformMix.map((entry, i) => (
@@ -369,6 +383,7 @@ export function AdminDashboard({ onNavigate }: AdminDashboardProps) {
                       borderRadius: 12,
                       border: "1px solid #e2e8f0",
                       fontSize: 12,
+                      fontWeight: 600,
                     }}
                   />
                 </PieChart>
@@ -377,22 +392,22 @@ export function AdminDashboard({ onNavigate }: AdminDashboardProps) {
             <div className="flex-1 space-y-3">
               {platformMix.map((m) => (
                 <div key={m.name}>
-                  <div className="flex items-center justify-between text-sm mb-1">
-                    <span className="flex items-center gap-2 font-semibold text-slate-700">
-                      <span className="w-3 h-3 rounded-sm" style={{ background: m.color }} />
+                  <div className="flex items-center justify-between text-xs mb-1">
+                    <span className="flex items-center gap-2 font-bold text-slate-700">
+                      <span className="w-3 h-3 rounded-sm shadow-xs" style={{ background: m.color }} />
                       {m.name}
                     </span>
-                    <span className="font-bold text-slate-900">
+                    <span className="font-extrabold text-slate-900">
                       {((m.value / stats!.revenue) * 100).toFixed(1)}%
                     </span>
                   </div>
-                  <div className="w-full h-2 rounded-full bg-slate-100 overflow-hidden">
+                  <div className="w-full h-2.5 rounded-full bg-slate-100 overflow-hidden border border-slate-200/60 p-0.5">
                     <div
                       className="h-full rounded-full"
                       style={{ width: `${(m.value / stats!.revenue) * 100}%`, background: m.color }}
                     />
                   </div>
-                  <p className="text-xs text-slate-400 mt-1">{formatVND(m.value)}</p>
+                  <p className="text-[11px] font-bold text-slate-400 mt-1">{formatVND(m.value)}</p>
                 </div>
               ))}
             </div>
@@ -403,17 +418,19 @@ export function AdminDashboard({ onNavigate }: AdminDashboardProps) {
         <div className="admin-panel-card">
           <h3 className="admin-dashboard-section-title">
             <span className="flex items-center gap-2">
-              <i className="bx bx-star text-amber-500 text-xl"></i>
+              <div className="w-8 h-8 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center text-lg">
+                <i className="bx bx-star"></i>
+              </div>
               Chất lượng nền tảng
             </span>
           </h3>
 
-          <div className="flex items-end gap-2 mb-4">
-            <span className="text-4xl font-extrabold text-slate-900 leading-none">
+          <div className="flex items-end gap-3 mb-5 bg-amber-50/60 border border-amber-200/60 rounded-2xl p-3.5">
+            <span className="text-4xl font-black text-amber-900 leading-none">
               {stats!.averageRating.toFixed(1)}
             </span>
-            <div className="pb-1">
-              <div className="flex gap-0.5 text-amber-400 text-lg">
+            <div className="pb-0.5">
+              <div className="flex gap-0.5 text-amber-500 text-base mb-1">
                 {Array.from({ length: 5 }).map((_, i) => (
                   <i
                     key={i}
@@ -421,26 +438,26 @@ export function AdminDashboard({ onNavigate }: AdminDashboardProps) {
                   />
                 ))}
               </div>
-              <p className="text-xs text-slate-400 font-medium">Đánh giá trung bình</p>
+              <p className="text-xs text-amber-800 font-bold">Điểm đánh giá dịch vụ trung bình</p>
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            <div className="rounded-xl bg-teal-50 border border-teal-100 p-3">
-              <p className="text-xs text-slate-500 font-medium">Chuyên gia đang hoạt động</p>
-              <p className="text-xl font-extrabold text-teal-700 mt-1">{stats!.activeExperts}</p>
+            <div className="rounded-xl bg-teal-50/80 border border-teal-100 p-3">
+              <p className="text-[11px] text-slate-500 font-bold uppercase tracking-wider">Chuyên gia hoạt động</p>
+              <p className="text-xl font-black text-teal-800 mt-1">{stats!.activeExperts}</p>
             </div>
-            <div className="rounded-xl bg-rose-50 border border-rose-100 p-3">
-              <p className="text-xs text-slate-500 font-medium">Bài viết bị báo cáo</p>
-              <p className="text-xl font-extrabold text-rose-600 mt-1">{stats!.reportedPosts}</p>
+            <div className="rounded-xl bg-rose-50/80 border border-rose-100 p-3">
+              <p className="text-[11px] text-slate-500 font-bold uppercase tracking-wider">Báo cáo vi phạm</p>
+              <p className="text-xl font-black text-rose-600 mt-1">{stats!.reportedPosts}</p>
             </div>
-            <div className="rounded-xl bg-amber-50 border border-amber-100 p-3">
-              <p className="text-xs text-slate-500 font-medium">Chờ duyệt hồ sơ</p>
-              <p className="text-xl font-extrabold text-amber-700 mt-1">{stats!.pendingApprovals}</p>
+            <div className="rounded-xl bg-amber-50/80 border border-amber-100 p-3">
+              <p className="text-[11px] text-slate-500 font-bold uppercase tracking-wider">Chờ duyệt hồ sơ</p>
+              <p className="text-xl font-black text-amber-700 mt-1">{stats!.pendingApprovals}</p>
             </div>
-            <div className="rounded-xl bg-blue-50 border border-blue-100 p-3">
-              <p className="text-xs text-slate-500 font-medium">Yêu cầu đổi giá</p>
-              <p className="text-xl font-extrabold text-blue-600 mt-1">{stats!.pendingPriceRequests}</p>
+            <div className="rounded-xl bg-blue-50/80 border border-blue-100 p-3">
+              <p className="text-[11px] text-slate-500 font-bold uppercase tracking-wider">Yêu cầu đổi giá</p>
+              <p className="text-xl font-black text-blue-600 mt-1">{stats!.pendingPriceRequests}</p>
             </div>
           </div>
         </div>
@@ -451,10 +468,15 @@ export function AdminDashboard({ onNavigate }: AdminDashboardProps) {
         {/* Pending Expert Approvals */}
         <div className="admin-panel-card">
           <h3 className="admin-dashboard-section-title">
-            <span>Yêu cầu phê duyệt chuyên gia ({pendingExperts.length})</span>
+            <span className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-xl bg-teal-100 text-teal-700 flex items-center justify-center text-lg">
+                <i className="bx bx-user-plus"></i>
+              </div>
+              Yêu cầu xét duyệt chuyên gia ({pendingExperts.length})
+            </span>
             <button
               onClick={() => onNavigate("expert-review")}
-              style={{ background: "none", border: "none", color: "var(--brand-700)", fontWeight: 600, cursor: "pointer", fontSize: "13px" }}
+              className="text-xs font-bold text-teal-700 hover:text-teal-900"
             >
               Xem tất cả
             </button>
@@ -504,10 +526,15 @@ export function AdminDashboard({ onNavigate }: AdminDashboardProps) {
         {/* Recent Activity Logs */}
         <div className="admin-panel-card">
           <h3 className="admin-dashboard-section-title">
-            <span>Nhật ký hoạt động hệ thống</span>
+            <span className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center text-lg">
+                <i className="bx bx-detail"></i>
+              </div>
+              Nhật ký hoạt động hệ thống
+            </span>
             <button
               onClick={() => onNavigate("moderation")}
-              style={{ background: "none", border: "none", color: "var(--brand-700)", fontWeight: 600, cursor: "pointer", fontSize: "13px" }}
+              className="text-xs font-bold text-teal-700 hover:text-teal-900"
             >
               Chi tiết
             </button>
@@ -553,12 +580,14 @@ export function AdminDashboard({ onNavigate }: AdminDashboardProps) {
         <div className="admin-panel-card">
           <h3 className="admin-dashboard-section-title">
             <span className="flex items-center gap-2">
-              <i className="bx bx-trophy text-amber-500 text-xl"></i>
-              Top chuyên gia được đánh giá cao
+              <div className="w-8 h-8 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center text-lg">
+                <i className="bx bx-trophy"></i>
+              </div>
+              Top chuyên gia xuất sắc
             </span>
             <button
               onClick={() => onNavigate("expert-crud")}
-              style={{ background: "none", border: "none", color: "var(--brand-700)", fontWeight: 600, cursor: "pointer", fontSize: "13px" }}
+              className="text-xs font-bold text-teal-700 hover:text-teal-900"
             >
               Danh sách
             </button>
@@ -567,19 +596,19 @@ export function AdminDashboard({ onNavigate }: AdminDashboardProps) {
           {topExperts.length > 0 ? (
             <div className="space-y-3">
               {topExperts.map((e, idx) => (
-                <div key={e._id || idx} className="flex items-center gap-3 p-2 rounded-xl hover:bg-teal-50 transition-colors">
-                  <div className="w-8 h-8 rounded-lg bg-teal-100 text-teal-700 flex items-center justify-center font-extrabold text-sm flex-shrink-0">
-                    {idx + 1}
+                <div key={e._id || idx} className="flex items-center gap-3 p-2.5 rounded-2xl hover:bg-teal-50/70 border border-transparent hover:border-teal-100 transition-all">
+                  <div className="w-8 h-8 rounded-xl bg-teal-100 text-teal-800 flex items-center justify-center font-extrabold text-xs flex-shrink-0">
+                    #{idx + 1}
                   </div>
-                  <div className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-lg flex-shrink-0">
+                  <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-xl flex-shrink-0 border border-slate-200">
                     {e.avatar}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-slate-800 truncate text-sm">{e.name}</p>
-                    <p className="text-xs text-slate-400 truncate">{e.specialty}</p>
+                    <p className="font-bold text-slate-900 truncate text-xs">{e.name}</p>
+                    <p className="text-[11px] text-slate-400 font-medium truncate">{e.specialty}</p>
                   </div>
-                  <div className="flex items-center gap-1 text-amber-500 font-bold text-sm flex-shrink-0">
-                    <i className="bx bxs-star"></i>
+                  <div className="flex items-center gap-1 bg-amber-50 text-amber-700 border border-amber-200/60 px-2.5 py-1 rounded-xl text-xs font-extrabold flex-shrink-0">
+                    <i className="bx bxs-star text-amber-500"></i>
                     {e.rating.toFixed(1)}
                   </div>
                 </div>
@@ -597,7 +626,9 @@ export function AdminDashboard({ onNavigate }: AdminDashboardProps) {
         <div className="admin-panel-card">
           <h3 className="admin-dashboard-section-title">
             <span className="flex items-center gap-2">
-              <i className="bx bx-grid-alt text-teal-700 text-xl"></i>
+              <div className="w-8 h-8 rounded-xl bg-teal-100 text-teal-700 flex items-center justify-center text-lg">
+                <i className="bx bx-grid-alt"></i>
+              </div>
               Truy cập nhanh
             </span>
           </h3>
@@ -611,7 +642,7 @@ export function AdminDashboard({ onNavigate }: AdminDashboardProps) {
                 <span className={`admin-shortcut-icon ${s.tone}`}>
                   <i className={`bx ${s.icon}`}></i>
                 </span>
-                <span className="text-sm font-semibold text-slate-700 mt-2 text-left leading-tight">
+                <span className="text-xs font-bold text-slate-800 mt-2.5 text-left leading-snug">
                   {s.label}
                 </span>
                 {s.badge ? (
