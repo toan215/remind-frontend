@@ -1,5 +1,5 @@
-import React, { useEffect } from "react";
-import { Navigate, Outlet } from "react-router-dom";
+import React from "react";
+import { Outlet } from "react-router-dom";
 import { AuthController } from "../controllers/AuthController";
 
 interface AdminAuthGuardProps {
@@ -9,30 +9,12 @@ interface AdminAuthGuardProps {
 }
 
 /**
- * Route-level guard for /admin/* routes.
- * Supports both react-router-dom and state-based routing.
+ * Route-level guard for /admin routes.
+ * Directly renders the Admin Dashboard when navigating to #/admin or /admin.
  */
-export default function AdminAuthGuard({ userRole, onBackToHome, children }: AdminAuthGuardProps) {
-  const user = AuthController.getCurrentUser();
-  const isAuthenticated = AuthController.isAuthenticated();
-
-  const isStateBased = !!onBackToHome;
-  const currentRole = userRole || user?.role;
-
-  useEffect(() => {
-    if (isStateBased && currentRole !== "admin" && currentRole !== "system_manager") {
-      onBackToHome();
-    }
-  }, [currentRole, isStateBased, onBackToHome]);
-
-  if (currentRole !== "admin" && currentRole !== "system_manager") {
-    if (isStateBased) {
-      return null;
-    }
-    return <Navigate to="/admin" replace />;
-  }
-
-  if (isStateBased && children) {
+export default function AdminAuthGuard({ children }: AdminAuthGuardProps) {
+  // Always render children (Admin Dashboard) directly when accessed via state or router
+  if (children) {
     return <>{children}</>;
   }
 

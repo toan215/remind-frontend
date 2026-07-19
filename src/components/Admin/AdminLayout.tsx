@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import "./Admin.css";
-import { ADMIN_ROUTES, AdminRoute } from "../../routes/adminRoutes";
+import { ADMIN_ROUTES, ADMIN_NAV_GROUPS, AdminRoute } from "../../routes/adminRoutes";
 import { getAdminSocket } from "../../utils/adminSocket";
 import { ExpertController } from "../../controllers/ExpertController";
 
@@ -49,22 +49,40 @@ export function AdminLayout({ currentRoute, onNavigate, onBackToHome, children }
             <span className="admin-logo-badge">Admin</span>
           </div>
 
-          {/* Navigation Links */}
+          {/* Navigation Links - grouped by use-case */}
           <nav className="admin-sidebar-menu">
-            {ADMIN_ROUTES.map((route) => {
-              const isActive = currentRoute === route.path;
-              return (
-                <button
-                  key={route.path}
-                  className={`admin-menu-item ${isActive ? "active" : ""}`}
-                  onClick={() => onNavigate(route.path)}
-                  title={route.label}
-                >
-                  <i className={`bx ${route.icon}`}></i>
-                  <span>{route.label}</span>
-                </button>
-              );
-            })}
+            {ADMIN_NAV_GROUPS.map((group) => (
+              <div key={group.id} className="admin-sidebar-group">
+                <div className="admin-sidebar-group-label">
+                  <i className={`bx ${group.icon}`}></i>
+                  <span>{group.label}</span>
+                </div>
+                {group.routes.map((routePath) => {
+                  const route = ADMIN_ROUTES.find((r) => r.path === routePath);
+                  if (!route) return null;
+                  const isActive = currentRoute === route.path;
+                  const isExpertReview = route.path === "expert-review";
+                  const isPriceRequest = route.path === "price-requests";
+                  return (
+                    <button
+                      key={route.path}
+                      className={`admin-menu-item ${isActive ? "active" : ""}`}
+                      onClick={() => onNavigate(route.path)}
+                      title={route.label}
+                    >
+                      <i className={`bx ${route.icon}`}></i>
+                      <span>{route.label}</span>
+                      {isExpertReview && pendingCount > 0 && (
+                        <span className="admin-menu-badge red">{pendingCount}</span>
+                      )}
+                      {isPriceRequest && (
+                        <span className="admin-menu-badge amber">3</span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            ))}
           </nav>
         </div>
 

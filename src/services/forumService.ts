@@ -9,9 +9,13 @@ export const getForums = async (): Promise<ForumType[]> => {
 
 export const getPosts = async (
   page: number = 1,
-  limit: number = 10
+  limit: number = 10,
+  forumId?: string
 ): Promise<{ posts: PostType[]; totalPages: number; currentPage: number; totalItems: number }> => {
-  const url = `${API_ENDPOINTS.FORUMS.LIST_POSTS}?limit=${limit}&page=${page}`;
+  let url = `${API_ENDPOINTS.FORUMS.LIST_POSTS}?limit=${limit}&page=${page}`;
+  if (forumId && forumId !== "all") {
+    url += `&forumId=${encodeURIComponent(forumId)}`;
+  }
   const response = await api.get(url);
   return response.data;
 };

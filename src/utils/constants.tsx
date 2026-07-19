@@ -23,6 +23,10 @@ export const API_ENDPOINTS = {
     PROFILE: `${API_BASE_URL}/users/profile`,
     CHANGE_PASSWORD: `${API_BASE_URL}/users/change-password`,
     AVATAR: `${API_BASE_URL}/users/avatar`,
+    LIST: `${API_BASE_URL}/admin/users`,
+    UPDATE_ROLE: (id: string | number) => `${API_BASE_URL}/admin/users/${id}/role`,
+    BAN: (id: string | number) => `${API_BASE_URL}/admin/users/${id}/ban`,
+    UNBAN: (id: string | number) => `${API_BASE_URL}/admin/users/${id}/unban`,
   },
 
   // Admin moderation and management endpoints

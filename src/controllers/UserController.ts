@@ -2,6 +2,14 @@ import { apiHelper } from "../utils/apiHelper";
 import { API_ENDPOINTS } from "../utils/constants";
 import { UserDto } from "./AuthController";
 
+export type UserRoleType = UserDto["role"];
+export type UserStatusType = UserDto["status"];
+
+export interface AdminUser extends UserDto {
+  _id: string;
+  createdAt?: string;
+}
+
 export class UserController {
   /**
    * Lấy thông tin cá nhân mới nhất từ server và lưu vào localStorage
@@ -83,5 +91,26 @@ export class UserController {
       const errorMsg = error.response?.data?.error || "Tải lên ảnh đại diện thất bại.";
       throw new Error(errorMsg);
     }
+  }
+
+  // === Admin: User role & permission management ===
+  static async listUsers(): Promise<AdminUser[]> {
+    const res = await apiHelper.get<{ users: AdminUser[] }>(API_ENDPOINTS.USERS.LIST);
+    return res.users || [];
+  }
+
+  static async updateUserRole(id: string | number, role: UserRoleType): Promise<AdminUser> {
+    const res = await apiHelper.put<{ user: AdminUser }>(API_ENDPOINTS.USERS.UPDATE_ROLE(id), { role });
+    return res.user;
+  }
+
+  static async banUser(id: string | number): Promise<AdminUser> {
+    const res = await apiHelper.post<{ user: AdminUser }>(API_ENDPOINTS.USERS.BAN(id), {});
+    return res.user;
+  }
+
+  static async unbanUser(id: string | number): Promise<AdminUser> {
+    const res = await apiHelper.post<{ user: AdminUser }>(API_ENDPOINTS.USERS.UNBAN(id), {});
+    return res.user;
   }
 }

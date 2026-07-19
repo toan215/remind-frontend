@@ -258,7 +258,10 @@ function App() {
             setUserRole(role);
             const user = AuthController.getCurrentUser();
             setCurrentUser(user);
-            if (user?.role === "expert" && user?.status === "pending") {
+            if (user?.role === "admin" || user?.role === "system_manager") {
+              setAdminRoute("dashboard");
+              setCurrentScreen("admin");
+            } else if (user?.role === "expert" && user?.status === "pending") {
               setCurrentScreen("home");
               setShowOnboardingPrompt(true);
             } else {
