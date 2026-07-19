@@ -62,6 +62,7 @@ function App() {
   const [adminRoute, setAdminRoute] = useState<AdminRoute>("dashboard");
   const [pendingBooking, setPendingBooking] = useState<any>(null);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
+  const [openChatAppointmentId, setOpenChatAppointmentId] = useState<string | null>(null);
 
   const [currentUser, setCurrentUser] = useState<UserDto | null>(null);
   const [expertKey, setExpertKey] = useState(0);
@@ -298,7 +299,15 @@ function App() {
         }, 0);
         return <LoadingFallback />;
       }
-      return <Chat onBack={() => setCurrentScreen("home")} />;
+      return (
+        <Chat
+          onBack={() => {
+            setOpenChatAppointmentId(null);
+            setCurrentScreen("home");
+          }}
+          initialAppointmentId={openChatAppointmentId}
+        />
+      );
     }
 
     if (currentScreen === "expert") {
@@ -323,6 +332,11 @@ function App() {
           onPaymentComplete={() => {
             setPendingBooking(null);
             setCurrentScreen("home");
+          }}
+          onOpenChat={(appointmentId) => {
+            setPendingBooking(null);
+            setOpenChatAppointmentId(appointmentId);
+            setCurrentScreen("chat");
           }}
           bookingDetails={pendingBooking}
         />
@@ -402,7 +416,10 @@ function App() {
         onOpenChat={() => {
           if (userRole === "guest") handleLoginRequired();
           else if (isExpertPending()) requireExpertOnboarding();
-          else setCurrentScreen("chat");
+          else {
+            setOpenChatAppointmentId(null);
+            setCurrentScreen("chat");
+          }
         }}
         onOpenExpertDirectory={() => setCurrentScreen("expert")}
         onOpenCalendar={() => {
@@ -452,7 +469,10 @@ function App() {
             onOpenChat={() => {
               if (userRole === "guest") handleLoginRequired();
               else if (isExpertPending()) requireExpertOnboarding();
-              else setCurrentScreen("chat");
+              else {
+                setOpenChatAppointmentId(null);
+                setCurrentScreen("chat");
+              }
             }}
             currentUser={currentUser}
             onGoToLogin={() => setCurrentScreen("login")}

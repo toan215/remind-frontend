@@ -6,6 +6,7 @@ import "./Payment.css";
 interface PaymentProps {
   onBack: () => void;
   onPaymentComplete: () => void;
+  onOpenChat?: (appointmentId: string) => void;
   bookingDetails: {
     expert: Expert;
     expertId?: string;
@@ -22,12 +23,13 @@ const PAYMENT_METHODS = [
   { id: "card", name: "Thẻ Tín dụng/Ghi nợ", icon: "bx bx-credit-card" }
 ];
 
-export default function Payment({ onBack, onPaymentComplete, bookingDetails }: PaymentProps) {
+export default function Payment({ onBack, onPaymentComplete, onOpenChat, bookingDetails }: PaymentProps) {
   const [selectedMethod, setSelectedMethod] = useState("vnpay");
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [isFailed, setIsFailed] = useState(false);
   const [paymentError, setPaymentError] = useState("");
+  const [bookedAppointmentId, setBookedAppointmentId] = useState<string | null>(null);
 
   const { expert, expertId, slotId, date, slot, totalCost } = bookingDetails;
 
@@ -51,6 +53,7 @@ export default function Payment({ onBack, onPaymentComplete, bookingDetails }: P
 
     try {
       const { appointment } = await ExpertController.bookAppointment(expertId, slotId);
+      setBookedAppointmentId(appointment._id);
       const response = await ExpertController.createAppointmentPayment(appointment._id);
 
       // Demo mode: instant success, no redirect
@@ -122,9 +125,19 @@ export default function Payment({ onBack, onPaymentComplete, bookingDetails }: P
               Cảm ơn bạn đã đặt lịch. Lịch hẹn của bạn với chuyên gia <strong>{expert.name}</strong> vào 
               <strong> {slot}</strong> ngày <strong>{formatDate(date)}</strong> đã được ghi nhận.
             </p>
-            <button className="payment-home-btn" onClick={onPaymentComplete}>
-              Quay về Trang chủ
-            </button>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', width: '100%' }}>
+              {onOpenChat && bookedAppointmentId && (
+                <button 
+                  className="payment-submit-btn" 
+                  onClick={() => onOpenChat(bookedAppointmentId)}
+                >
+                  Nhắn tin với chuyên gia
+                </button>
+              )}
+              <button className="payment-home-btn" onClick={onPaymentComplete}>
+                Quay về Trang chủ
+              </button>
+            </div>
           </div>
         </div>
       </div>

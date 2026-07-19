@@ -1,0 +1,32 @@
+const { chromium } = require('playwright-core');
+const CHROME = 'C:/Program Files/Google/Chrome/Application/chrome.exe';
+const BASE = 'http://localhost:5173';
+const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+(async () => {
+  const browser = await chromium.launch({ executablePath: CHROME, headless: true, args: ['--no-sandbox'] });
+  const page = await browser.newPage();
+  await page.goto(`${BASE}/`, { waitUntil: 'domcontentloaded', timeout: 15000 });
+  await sleep(1500);
+  await page.locator('.user-pill.guest-pill').first().click({ timeout: 5000 });
+  await sleep(400);
+  await page.locator('text=Đăng nhập tài khoản').first().click({ timeout: 5000 });
+  await sleep(700);
+  await page.locator('button:has-text("Đăng nhập ngay")').first().click({ timeout: 5000 });
+  await sleep(1400);
+  await page.fill('#login-identifier', 'student1@test.com');
+  await page.fill('#login-password', 'test123');
+  await page.click('#login-submit-btn');
+  await sleep(2200);
+  await page.evaluate(() => { window.location.hash = '#/expert'; });
+  await sleep(3000);
+  const html = await page.innerHTML('body');
+  const cards = [...html.matchAll(/class="([^"]*expert-card[^"]*|[^"]*book-expert[^"]*)"/g)].map(m=>m[1]);
+  console.log('CARD CLASSES:', [...new Set(cards)].join(' | '));
+  console.log('HAS book-expert id:', html.includes('book-expert-'));
+  console.log('HAS expert-empty:', html.includes('expert-empty'));
+  // count buttons
+  const btns = await page.locator('button').allInnerTexts();
+  console.log('BUTTONS:', JSON.stringify(btns.slice(0,50)));
+  const len = html.length; console.log('BODY LEN', len);
+  await browser.close();
+})().catch(e => { console.error('ERR', e); process.exit(1); });
