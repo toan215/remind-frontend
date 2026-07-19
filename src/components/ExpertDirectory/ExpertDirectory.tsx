@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { ExpertController } from "../../controllers/ExpertController";
 import { Expert, ExpertSlot } from "../../models/Expert";
+import { AppointmentController } from "../../controllers/AppointmentController";
 import "./ExpertDirectory.css";
 import gsap from "gsap";
 
@@ -9,14 +10,193 @@ interface ExpertDirectoryProps {
   userRole?: string;
   onLoginRequired?: () => void;
   onProceedToPayment?: (bookingDetails: any) => void;
+  onOpenChat?: () => void;
 }
 
-function ExpertDirectory({ onBack, userRole = "guest", onLoginRequired, onProceedToPayment }: ExpertDirectoryProps) {
+interface Review {
+  id: string;
+  author: string;
+  avatar: string;
+  rating: number;
+  date: string;
+  content: string;
+}
+
+const MOCK_REVIEWS: Record<number, Review[]> = {
+  1: [
+    {
+      id: "r1_1",
+      author: "Nguyễn Văn An",
+      avatar: "👨",
+      rating: 5,
+      date: "2026-07-18T10:30:00Z",
+      content: "Bác sĩ rất nhiệt tình và lắng nghe ý kiến của tôi. Sau 3 buổi tư vấn, tôi cảm thấy chứng mất ngủ và lo âu của mình đã được cải thiện rõ rệt."
+    },
+    {
+      id: "r1_2",
+      author: "Trần Thị Bình",
+      avatar: "👩",
+      rating: 5,
+      date: "2026-07-15T14:20:00Z",
+      content: "Không gian làm việc chuyên nghiệp, bác sĩ đưa ra những lời khuyên rất thiết thực cho cuộc sống hàng ngày."
+    },
+    {
+      id: "r1_3",
+      author: "Lê Hoàng Long",
+      avatar: "👨",
+      rating: 5,
+      date: "2026-07-10T08:00:00Z",
+      content: "Bác sĩ tư vấn rất nhẹ nhàng, giúp tôi giải tỏa được nhiều áp lực từ công việc và gia đình."
+    },
+    {
+      id: "r1_4",
+      author: "Phạm Minh Thư",
+      avatar: "👩",
+      rating: 4,
+      date: "2026-07-05T16:45:00Z",
+      content: "Phương pháp tư vấn khoa học và dễ tiếp cận. Sẽ tiếp tục đặt lịch."
+    }
+  ],
+  2: [
+    {
+      id: "r2_1",
+      author: "Vũ Thị Chi",
+      avatar: "👩",
+      rating: 5,
+      date: "2026-07-19T09:15:00Z",
+      content: "Tôi rất biết ơn bác sĩ đã giúp tôi vượt qua giai đoạn khủng hoảng tâm lý sau biến cố. Bác sĩ cực kỳ kiên nhẫn và thấu hiểu."
+    },
+    {
+      id: "r2_2",
+      author: "Hoàng Đức Duy",
+      avatar: "👨",
+      rating: 5,
+      date: "2026-07-16T11:00:00Z",
+      content: "Tư vấn rất tập trung vào vấn đề cốt lõi. Giúp tôi có cách nhìn nhận tích cực hơn về cuộc sống."
+    },
+    {
+      id: "r2_3",
+      author: "Đỗ Bảo Trâm",
+      avatar: "👩",
+      rating: 5,
+      date: "2026-07-12T15:30:00Z",
+      content: "Rất hài lòng với dịch vụ tư vấn trực tuyến. Tiết kiệm thời gian di chuyển mà vẫn đạt hiệu quả cao."
+    }
+  ],
+  3: [
+    {
+      id: "r3_1",
+      author: "Ngô Quốc Khánh",
+      avatar: "👨",
+      rating: 5,
+      date: "2026-07-17T14:00:00Z",
+      content: "Gia đình tôi đã giải quyết được nhiều bất đồng nhờ các buổi tham vấn của ThS. Emily. Rất đề xuất cho các gia đình."
+    },
+    {
+      id: "r3_2",
+      author: "Bùi Tuyết Mai",
+      avatar: "👩",
+      rating: 5,
+      date: "2026-07-13T10:30:00Z",
+      content: "Tư vấn viên giàu kinh nghiệm, lắng nghe không phán xét."
+    }
+  ]
+};
+
+const getExpertReviews = (expertId: number): Review[] => {
+  const reviews = MOCK_REVIEWS[expertId] || [
+    {
+      id: `r_${expertId}_1`,
+      author: "Lê Minh Triết",
+      avatar: "👨",
+      rating: 5,
+      date: "2026-07-18T12:00:00Z",
+      content: "Chuyên gia tư vấn rất có tâm, trả lời thấu đáo mọi câu hỏi của tôi."
+    },
+    {
+      id: `r_${expertId}_2`,
+      author: "Nguyễn Hà Linh",
+      avatar: "👩",
+      rating: 5,
+      date: "2026-07-15T09:30:00Z",
+      content: "Trải nghiệm tư vấn tuyệt vời, cảm ơn chuyên gia rất nhiều!"
+    },
+    {
+      id: `r_${expertId}_3`,
+      author: "Phan Anh Tuấn",
+      avatar: "👨",
+      rating: 5,
+      date: "2026-07-12T16:00:00Z",
+      content: "Phương pháp rất hiệu quả, tôi cảm thấy bớt lo âu đi rất nhiều sau buổi nói chuyện."
+    },
+    {
+      id: `r_${expertId}_4`,
+      author: "Đặng Khánh Vy",
+      avatar: "👩",
+      rating: 5,
+      date: "2026-07-08T14:20:00Z",
+      content: "Rất nhiệt tình, thân thiện và giàu kinh nghiệm chuyên môn."
+    }
+  ];
+  return [...reviews].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+};
+
+function ExpertDirectory({ onBack, userRole = "guest", onLoginRequired, onProceedToPayment, onOpenChat }: ExpertDirectoryProps) {
   const [showHero, setShowHero] = useState(true);
   const heroLeftRef = useRef<HTMLDivElement>(null);
 
   const [expertsData, setExpertsData] = useState<Expert[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedExpert, setSelectedExpert] = useState<Expert | null>(null);
+  const [hasBooked, setHasBooked] = useState(false);
+  const [reviewLimit, setReviewLimit] = useState(3);
+  const [activeTab, setActiveTab] = useState<"info" | "reviews">("info");
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (selectedExpert && userRole !== "guest") {
+      AppointmentController.getStudentAppointments()
+        .then((appts) => {
+          const booked = appts.some(
+            (appt) => String(appt.expertId) === String(selectedExpert._id) && appt.status !== 'cancelled'
+          );
+          setHasBooked(booked);
+        })
+        .catch((err) => {
+          console.error("Error checking appointments:", err);
+          setHasBooked(false);
+        });
+    } else {
+      setHasBooked(false);
+    }
+    setReviewLimit(3);
+    setActiveTab("info");
+  }, [selectedExpert, userRole]);
+
+  const handleTriggerAvatarEdit = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && selectedExpert) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64String = reader.result as string;
+        setSelectedExpert((prev) => {
+          if (!prev) return null;
+          const updated = { ...prev, avatar: base64String };
+          setExpertsData((currentList) =>
+            currentList.map((x) => (x.id === prev.id ? updated : x))
+          );
+          return updated;
+        });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   useEffect(() => {
     if (showHero) {
@@ -83,7 +263,9 @@ function ExpertDirectory({ onBack, userRole = "guest", onLoginRequired, onProcee
   }, [showHero]);
 
   const handleBack = () => {
-    if (!showHero) {
+    if (selectedExpert) {
+      setSelectedExpert(null);
+    } else if (!showHero) {
       setShowHero(true);
     } else {
       onBack();
@@ -250,195 +432,397 @@ function ExpertDirectory({ onBack, userRole = "guest", onLoginRequired, onProcee
           </div>
         </div>
       ) : (
-        /* ===== MAIN CONTAINER ===== */
         <main className="expert-container">
-          {/* Intro */}
-          <div className="expert-intro">
-            <h2>Tìm kiếm Chuyên gia Phù hợp</h2>
-            <p>
-              Kết nối với các bác sĩ tâm lý lâm sàng và tư vấn viên giàu kinh nghiệm để nhận được sự hỗ trợ chất lượng.
-            </p>
-          </div>
+          {selectedExpert ? (
+            <div className="expert-profile-view">
+              <button className="expert-back-floating-btn" onClick={() => setSelectedExpert(null)}>
+                <i className="bx bx-left-arrow-alt"></i> Quay lại
+              </button>
 
-          {/* ===== SEARCH & FILTER PANEL ===== */}
-          <section className="expert-search-panel" id="expert-search-panel">
-            <div className="rm-input-wrapper">
-              <i className="bx bx-search expert-search-icon"></i>
-              <input
-                type="text"
-                className="rm-input-field expert-search-input"
-                id="expert-search-input"
-                placeholder="Tìm theo tên chuyên gia, chuyên môn hoặc từ khóa..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-              {searchTerm && (
-                <button
-                  className="expert-clear-btn"
-                  id="expert-clear-search"
-                  onClick={handleClearSearch}
-                  title="Xóa tìm kiếm"
-                >
-                  <i className="bx bx-x"></i>
-                </button>
-              )}
-            </div>
-
-            <div className="expert-filters-section">
-              {/* Specialty filter */}
-              <div className="expert-filter-group" id="filter-group-specialty">
-                <span className="expert-filter-label">Chuyên môn</span>
-                <div className="expert-filter-chips">
-                  {["Tất cả", "Trầm cảm", "Lo âu", "Stress công việc", "Mối quan hệ", "LGBTQ+"].map((spec) => (
-                    <button
-                      key={spec}
-                      className={`expert-filter-chip ${selectedSpecialty === spec ? "active" : ""}`}
-                      onClick={() => setSelectedSpecialty(spec)}
-                    >
-                      {spec}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Language filter */}
-              <div className="expert-filter-group" id="filter-group-language">
-                <span className="expert-filter-label">Ngôn ngữ</span>
-                <div className="expert-filter-chips">
-                  {["Tất cả", "Tiếng Việt", "Tiếng Anh"].map((lang) => (
-                    <button
-                      key={lang}
-                      className={`expert-filter-chip ${selectedLanguage === lang ? "active" : ""}`}
-                      onClick={() => setSelectedLanguage(lang)}
-                    >
-                      {lang}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Cost filter */}
-              <div className="expert-filter-group" id="filter-group-cost">
-                <span className="expert-filter-label">Chi phí</span>
-                <div className="expert-filter-chips">
-                  {["Tất cả", "Miễn phí", "< 500k", ">= 500k"].map((cost) => (
-                    <button
-                      key={cost}
-                      className={`expert-filter-chip ${selectedCost === cost ? "active" : ""}`}
-                      onClick={() => setSelectedCost(cost)}
-                    >
-                      {cost}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </section>
-
-          {/* ===== LIST SECTION ===== */}
-          <section className="expert-list" id="expert-list">
-            {filteredExperts.length > 0 ? (
-              filteredExperts.map((expert) => (
-                <div
-                  key={expert.id}
-                  className="expert-card"
-                  id={`expert-card-${expert.id}`}
-                  onMouseEnter={(e) => {
-                    gsap.to(e.currentTarget, {
-                      y: -6,
-                      scale: 1.015,
-                      boxShadow: "0 20px 40px rgba(23, 107, 104, 0.08), 0 1px 5px rgba(23, 107, 104, 0.02)",
-                      borderColor: "#cbdcdb",
-                      duration: 0.3,
-                      ease: "power2.out"
-                    });
-                  }}
-                  onMouseLeave={(e) => {
-                    gsap.to(e.currentTarget, {
-                      y: 0,
-                      scale: 1,
-                      boxShadow: "0 10px 30px rgba(0, 0, 0, 0.03), 0 1px 3px rgba(0, 0, 0, 0.01)",
-                      borderColor: "rgba(23, 107, 104, 0.06)",
-                      duration: 0.3,
-                      ease: "power2.out"
-                    });
-                  }}
-                >
-                  <div className="expert-avatar-box">
-                    {expert.avatar}
+              <div className="expert-profile-grid">
+                {/* Left Column */}
+                <div className="expert-profile-left-col">
+                  <div className="expert-profile-avatar-large">
+                    {selectedExpert.avatar.startsWith("http") || selectedExpert.avatar.startsWith("/") || selectedExpert.avatar.startsWith("data:") ? (
+                      <img src={selectedExpert.avatar} alt={selectedExpert.name} className="expert-avatar-img-large" />
+                    ) : (
+                      selectedExpert.avatar
+                    )}
+                    {(userRole === "expert" || userRole === "admin") && (
+                      <button className="avatar-edit-overlay" onClick={handleTriggerAvatarEdit} title="Thay đổi ảnh đại diện">
+                        <i className="bx bx-camera"></i>
+                      </button>
+                    )}
                   </div>
 
-                  <div className="expert-card-details">
-                    <div className="expert-card-top">
-                      <h3 className="expert-name">{expert.name}</h3>
-                      <span className={`rm-badge rm-badge-${expert.status === 'available' ? 'success' : expert.status === 'limited' ? 'warning' : 'error'}`}>
-                        {expert.statusLabel}
-                      </span>
+                  <div className="expert-profile-left-section">
+                    <h4 className="expert-profile-left-title">Chuyên ngành</h4>
+                    <div className="expert-profile-work-item">
+                      <h5>{selectedExpert.specialty}</h5>
+                      <p>{selectedExpert.experience} kinh nghiệm</p>
                     </div>
+                  </div>
 
-                    <div className="expert-specialty-row">
-                      <i className="bx bx-purchase-tag-alt specialty-icon"></i>
-                      <span className="specialty-label">Chuyên môn:</span>
-                      <span className="specialty-value">{expert.specialty}</span>
-                    </div>
-
-                    <div className="expert-experience-row">
-                      <div className="expert-experience-item">
-                        <i className="bx bx-briefcase-alt-2 experience-icon"></i>
-                        <span>Kinh nghiệm: <strong>{expert.experience}</strong></span>
-                      </div>
-                      <div className="expert-rating-item">
-                        <span className="expert-rating-stars">★ {expert.rating}</span>
-                        <span className="expert-reviews-count">({expert.reviews} nhận xét)</span>
-                      </div>
-                    </div>
-
-                    <p className="expert-desc">{expert.desc}</p>
-
-                    <div className="expert-languages-tags">
-                      {expert.languages.map((l) => (
-                        <span key={l} className="expert-lang-tag">
-                          <i className="bx bx-globe"></i> {l}
+                  <div className="expert-profile-left-section">
+                    <h4 className="expert-profile-left-title">Ngôn ngữ</h4>
+                    <div className="expert-profile-left-chips">
+                      {selectedExpert.languages.map((l) => (
+                        <span key={l} className="expert-profile-left-chip">
+                          {l}
                         </span>
                       ))}
                     </div>
+                  </div>
+                </div>
 
-                    <div className="expert-card-footer">
-                      <div className="expert-price-box">
-                        <span className="expert-price-label">Chi phí tư vấn</span>
-                        <span className="expert-price-val">{expert.costDisplay}</span>
-                      </div>
+                {/* Right Column */}
+                <div className="expert-profile-right-col">
+                  <div className="expert-profile-header-main">
+                    <h2 className="expert-profile-name-large">{selectedExpert.name}</h2>
+                    <p className="expert-profile-specialty-title">{selectedExpert.specialty}</p>
 
-                      <div className="expert-actions">
-                        <button
-                          className="rm-btn rm-btn-outline"
-                          id={`view-profile-${expert.id}`}
-                          title="Xem chi tiết hồ sơ chuyên gia"
-                        >
-                          Hồ sơ
-                        </button>
-                        <button
-                          className="rm-btn rm-btn-primary"
-                          id={`book-expert-${expert.id}`}
-                          disabled={expert.status === "unavailable"}
-                          onClick={() => handleOpenBooking(expert)}
-                          title="Đặt lịch tư vấn trực tuyến"
-                        >
-                          Đặt lịch
-                        </button>
+                    <div className="expert-profile-ranking">
+                      <span className="ranking-score">{selectedExpert.rating}</span>
+                      <div className="ranking-stars">
+                        <i className="bx bxs-star"></i>
+                        <i className="bx bxs-star"></i>
+                        <i className="bx bxs-star"></i>
+                        <i className="bx bxs-star"></i>
+                        <i className="bx bxs-star"></i>
                       </div>
+                      <span className="ranking-reviews">({selectedExpert.reviews} nhận xét)</span>
+                    </div>
+                  </div>
+
+                  {/* Quick Actions Row */}
+                  <div className="expert-profile-actions-row">
+                    {hasBooked && (
+                      <button
+                        className="action-link-btn"
+                        onClick={() => {
+                          if (onOpenChat) onOpenChat();
+                          else alert("Vui lòng truy cập mục Nhắn tin từ thanh điều hướng chính.");
+                        }}
+                      >
+                        <i className="bx bx-message-square-detail"></i> Nhắn tin
+                      </button>
+                    )}
+
+                    <button
+                      className="action-link-btn primary-action"
+                      disabled={userRole === "guest" || selectedExpert.status === "unavailable"}
+                      onClick={() => handleOpenBooking(selectedExpert)}
+                      title={userRole === "guest" ? "Vui lòng đăng nhập để đặt lịch" : "Đặt lịch tư vấn trực tuyến"}
+                    >
+                      <i className="bx bx-calendar-check"></i> {userRole === "guest" ? "Đăng nhập để đặt lịch" : "Đặt lịch tư vấn"}
+                    </button>
+
+                    <button
+                      className="action-link-btn report-action"
+                      onClick={() => alert("Cảm ơn bạn đã báo cáo. Chúng tôi sẽ xem xét thông tin của chuyên gia.")}
+                    >
+                      Báo cáo chuyên gia
+                    </button>
+                  </div>
+
+                  {/* Tabs Navigation */}
+                  <div className="expert-profile-tabs-nav">
+                    <button 
+                      className={`tab-item ${activeTab === "info" ? "active" : ""}`}
+                      onClick={() => setActiveTab("info")}
+                      style={{ background: "none", border: "none", padding: "0 0 8px 0" }}
+                    >
+                      Thông tin chi tiết
+                    </button>
+                    <button 
+                      className={`tab-item ${activeTab === "reviews" ? "active" : ""}`}
+                      onClick={() => setActiveTab("reviews")}
+                      style={{ background: "none", border: "none", padding: "0 0 8px 0" }}
+                    >
+                      Nhận xét
+                    </button>
+                  </div>
+
+                  {/* Contact / Bio Information / Reviews */}
+                  <div className="expert-profile-details-content">
+                    {activeTab === "info" && (
+                      <>
+                        <div className="info-block">
+                          <h4 className="info-block-title">Giới thiệu chuyên gia</h4>
+                          <p className="expert-profile-bio-text">{selectedExpert.desc}</p>
+                        </div>
+
+                        <div className="info-block">
+                          <h4 className="info-block-title">Thông tin tư vấn</h4>
+                          <table className="info-table">
+                            <tbody>
+                              <tr>
+                                <td className="info-label">Chi phí:</td>
+                                <td className="info-value text-highlight">{selectedExpert.costDisplay} / buổi (50 phút)</td>
+                              </tr>
+                              <tr>
+                                <td className="info-label">Hình thức:</td>
+                                <td className="info-value">Tư vấn trực tuyến qua Video Call</td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                      </>
+                    )}
+
+                    {activeTab === "reviews" && (
+                      <div className="info-block">
+                        <h4 className="info-block-title">Đánh giá gần nhất</h4>
+                        <div className="expert-reviews-list">
+                          {getExpertReviews(selectedExpert.id)
+                            .slice(0, reviewLimit)
+                            .map((review) => (
+                              <div key={review.id} className="review-item-card">
+                                <div className="review-item-header">
+                                  <div className="review-item-author-avatar">
+                                    {review.avatar}
+                                  </div>
+                                  <div className="review-item-author-info">
+                                    <h5>{review.author}</h5>
+                                    <div className="review-item-rating">
+                                      <span className="review-stars">
+                                        {"★".repeat(Math.floor(review.rating))}
+                                      </span>
+                                      <span className="review-rating-num">{review.rating}</span>
+                                    </div>
+                                  </div>
+                                  <span className="review-item-date">
+                                    {new Date(review.date).toLocaleDateString("vi-VN", {
+                                      year: "numeric",
+                                      month: "long",
+                                      day: "numeric"
+                                    })}
+                                  </span>
+                                </div>
+                                <p className="review-item-content">{review.content}</p>
+                              </div>
+                            ))}
+                        </div>
+
+                        {getExpertReviews(selectedExpert.id).length > reviewLimit && (
+                          <button
+                            className="see-more-reviews-btn"
+                            onClick={() => setReviewLimit((prev) => prev + 3)}
+                          >
+                            Xem thêm nhận xét
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Hidden file input for avatar edit */}
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleAvatarChange}
+                style={{ display: "none" }}
+                accept="image/*"
+              />
+            </div>
+          ) : (
+            <>
+              {/* Intro */}
+              <div className="expert-intro">
+                <h2>Tìm kiếm Chuyên gia Phù hợp</h2>
+                <p>
+                  Kết nối với các bác sĩ tâm lý lâm sàng và tư vấn viên giàu kinh nghiệm để nhận được sự hỗ trợ chất lượng.
+                </p>
+              </div>
+
+              {/* ===== SEARCH & FILTER PANEL ===== */}
+              <section className="expert-search-panel" id="expert-search-panel">
+                <div className="rm-input-wrapper">
+                  <i className="bx bx-search expert-search-icon"></i>
+                  <input
+                    type="text"
+                    className="rm-input-field expert-search-input"
+                    id="expert-search-input"
+                    placeholder="Tìm theo tên chuyên gia, chuyên môn hoặc từ khóa..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+                  {searchTerm && (
+                    <button
+                      className="expert-clear-btn"
+                      id="expert-clear-search"
+                      onClick={handleClearSearch}
+                      title="Xóa tìm kiếm"
+                    >
+                      <i className="bx bx-x"></i>
+                    </button>
+                  )}
+                </div>
+
+                <div className="expert-filters-section">
+                  {/* Specialty filter */}
+                  <div className="expert-filter-group" id="filter-group-specialty">
+                    <span className="expert-filter-label">Chuyên môn</span>
+                    <div className="expert-filter-chips">
+                      {["Tất cả", "Trầm cảm", "Lo âu", "Stress công việc", "Mối quan hệ", "LGBTQ+"].map((spec) => (
+                        <button
+                          key={spec}
+                          className={`expert-filter-chip ${selectedSpecialty === spec ? "active" : ""}`}
+                          onClick={() => setSelectedSpecialty(spec)}
+                        >
+                          {spec}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Language filter */}
+                  <div className="expert-filter-group" id="filter-group-language">
+                    <span className="expert-filter-label">Ngôn ngữ</span>
+                    <div className="expert-filter-chips">
+                      {["Tất cả", "Tiếng Việt", "Tiếng Anh"].map((lang) => (
+                        <button
+                          key={lang}
+                          className={`expert-filter-chip ${selectedLanguage === lang ? "active" : ""}`}
+                          onClick={() => setSelectedLanguage(lang)}
+                        >
+                          {lang}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Cost filter */}
+                  <div className="expert-filter-group" id="filter-group-cost">
+                    <span className="expert-filter-label">Chi phí</span>
+                    <div className="expert-filter-chips">
+                      {["Tất cả", "Miễn phí", "< 500k", ">= 500k"].map((cost) => (
+                        <button
+                          key={cost}
+                          className={`expert-filter-chip ${selectedCost === cost ? "active" : ""}`}
+                          onClick={() => setSelectedCost(cost)}
+                        >
+                          {cost}
+                        </button>
+                      ))}
                     </div>
                   </div>
                 </div>
-              ))
-            ) : (
-              <div className="expert-empty" id="expert-empty">
-                <i className="bx bx-search-alt expert-empty-icon"></i>
-                <h3>Không tìm thấy chuyên gia</h3>
-                <p>Thử thay đổi từ khóa tìm kiếm hoặc điều chỉnh lại các bộ lọc xem sao bạn nhé.</p>
-              </div>
-            )}
-          </section>
+              </section>
+
+              {/* ===== LIST SECTION ===== */}
+              <section className="expert-list" id="expert-list">
+                {filteredExperts.length > 0 ? (
+                  filteredExperts.map((expert) => (
+                    <div
+                      key={expert.id}
+                      className="expert-card"
+                      id={`expert-card-${expert.id}`}
+                      onMouseEnter={(e) => {
+                        gsap.to(e.currentTarget, {
+                          y: -6,
+                          scale: 1.015,
+                          boxShadow: "0 20px 40px rgba(23, 107, 104, 0.08), 0 1px 5px rgba(23, 107, 104, 0.02)",
+                          borderColor: "#cbdcdb",
+                          duration: 0.3,
+                          ease: "power2.out"
+                        });
+                      }}
+                      onMouseLeave={(e) => {
+                        gsap.to(e.currentTarget, {
+                          y: 0,
+                          scale: 1,
+                          boxShadow: "0 10px 30px rgba(0, 0, 0, 0.03), 0 1px 3px rgba(0, 0, 0, 0.01)",
+                          borderColor: "rgba(23, 107, 104, 0.06)",
+                          duration: 0.3,
+                          ease: "power2.out"
+                        });
+                      }}
+                    >
+                      <div className="expert-avatar-box">
+                        {expert.avatar.startsWith("http") || expert.avatar.startsWith("/") || expert.avatar.startsWith("data:") ? (
+                          <img src={expert.avatar} alt={expert.name} className="expert-avatar-img" />
+                        ) : (
+                          expert.avatar
+                        )}
+                      </div>
+
+                      <div className="expert-card-details">
+                        <div className="expert-card-top">
+                          <h3 className="expert-name">{expert.name}</h3>
+                          <span className={`rm-badge rm-badge-${expert.status === 'available' ? 'success' : expert.status === 'limited' ? 'warning' : 'error'}`}>
+                            {expert.statusLabel}
+                          </span>
+                        </div>
+
+                        <div className="expert-specialty-row">
+                          <i className="bx bx-purchase-tag-alt specialty-icon"></i>
+                          <span className="specialty-label">Chuyên môn:</span>
+                          <span className="specialty-value">{expert.specialty}</span>
+                        </div>
+
+                        <div className="expert-experience-row">
+                          <div className="expert-experience-item">
+                            <i className="bx bx-briefcase-alt-2 experience-icon"></i>
+                            <span>Kinh nghiệm: <strong>{expert.experience}</strong></span>
+                          </div>
+                          <div className="expert-rating-item">
+                            <span className="expert-rating-stars">★ {expert.rating}</span>
+                            <span className="expert-reviews-count">({expert.reviews} nhận xét)</span>
+                          </div>
+                        </div>
+
+                        <p className="expert-desc">{expert.desc}</p>
+
+                        <div className="expert-languages-tags">
+                          {expert.languages.map((l) => (
+                            <span key={l} className="expert-lang-tag">
+                              <i className="bx bx-globe"></i> {l}
+                            </span>
+                          ))}
+                        </div>
+
+                        <div className="expert-card-footer">
+                          <div className="expert-price-box">
+                            <span className="expert-price-label">Chi phí tư vấn</span>
+                            <span className="expert-price-val">{expert.costDisplay}</span>
+                          </div>
+
+                          <div className="expert-actions">
+                            <button
+                              className="rm-btn rm-btn-outline"
+                              id={`view-profile-${expert.id}`}
+                              title="Xem chi tiết hồ sơ chuyên gia"
+                              onClick={() => setSelectedExpert(expert)}
+                            >
+                              Hồ sơ
+                            </button>
+                            <button
+                              className="rm-btn rm-btn-primary"
+                              id={`book-expert-${expert.id}`}
+                              disabled={userRole === "guest" || expert.status === "unavailable"}
+                              onClick={() => handleOpenBooking(expert)}
+                              title={userRole === "guest" ? "Vui lòng đăng nhập để đặt lịch" : "Đặt lịch tư vấn trực tuyến"}
+                            >
+                              {userRole === "guest" ? "Đăng nhập để đặt lịch" : "Đặt lịch"}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="expert-empty" id="expert-empty">
+                    <i className="bx bx-search-alt expert-empty-icon"></i>
+                    <h3>Không tìm thấy chuyên gia</h3>
+                    <p>Thử thay đổi từ khóa tìm kiếm hoặc điều chỉnh lại các bộ lọc xem sao bạn nhé.</p>
+                  </div>
+                )}
+              </section>
+            </>
+          )}
         </main>
       )}
 
@@ -459,7 +843,13 @@ function ExpertDirectory({ onBack, userRole = "guest", onLoginRequired, onProcee
 
             <div className="rm-modal-body" style={{ gap: "16px" }}>
               <div className="book-expert-summary">
-                <span style={{ fontSize: "24px" }}>{bookingExpert.avatar}</span>
+                <span style={{ fontSize: "24px", width: "40px", height: "40px", display: "inline-flex", alignItems: "center", justifyContent: "center", overflow: "hidden", borderRadius: "50%", background: "var(--brand-050)", border: "1px solid var(--brand-100)" }}>
+                  {bookingExpert.avatar.startsWith("http") || bookingExpert.avatar.startsWith("/") || bookingExpert.avatar.startsWith("data:") ? (
+                    <img src={bookingExpert.avatar} alt={bookingExpert.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  ) : (
+                    bookingExpert.avatar
+                  )}
+                </span>
                 <div>
                   <h4 className="book-expert-name">{bookingExpert.name}</h4>
                   <p className="book-expert-spec">{bookingExpert.specialty}</p>
