@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { ExpertController } from "../../controllers/ExpertController";
 import { apiHelper } from "../../utils/apiHelper";
 import { API_ENDPOINTS } from "../../utils/constants";
+import { getAdminSocket } from "../../utils/adminSocket";
 import "./AdminExpertReview.css";
 
 export const AdminExpertReview: React.FC = () => {
@@ -34,6 +35,21 @@ export const AdminExpertReview: React.FC = () => {
 
   useEffect(() => {
     fetchPendingExperts();
+
+    // ─── Realtime: lắng nghe khi expert nộp tài liệu mới ───────────────
+    const token = localStorage.getItem("accessToken") || "";
+    if (token) {
+      const socket = getAdminSocket(token);
+      const handleNewCredential = (data: { expertName: string; fileName: string }) => {
+        showToast(`🔔 ${data.expertName} vừa nộp tài liệu mới: "${data.fileName}". Đang tải lại...`);
+        // Tự động refresh danh sách để hiện expert nếu chưa có
+        setTimeout(() => fetchPendingExperts(), 800);
+      };
+      socket.on("admin:new-credential", handleNewCredential);
+      return () => {
+        socket.off("admin:new-credential", handleNewCredential);
+      };
+    }
   }, []);
 
   const handleApprove = async (id: string) => {
