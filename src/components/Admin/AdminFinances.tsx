@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AdminRoute } from "../../routes/adminRoutes";
 import { RevenueGrowthChart } from "./RevenueGrowthChart";
+import { getStoredCommissionRate, COMMISSION_RATE_EVENT } from "../../utils/commissionHelper";
 import "./Admin.css";
 
 interface Transaction {
@@ -9,8 +10,6 @@ interface Transaction {
   userName: string;
   serviceType: string;
   amount: number;
-  commissionAmount: number;
-  netPayout: number;
   status: "completed" | "pending" | "refunded";
   date: string;
 }
@@ -23,35 +22,42 @@ export default function AdminFinances({ onNavigate }: AdminFinancesProps) {
   const [timeRange, setTimeRange] = useState<"month" | "quarter" | "year">("month");
   const [filterStatus, setFilterStatus] = useState<"all" | "completed" | "pending" | "refunded">("all");
   const [searchTerm, setSearchTerm] = useState("");
+  const [commissionRate, setCommissionRate] = useState<number>(() => getStoredCommissionRate());
 
-  // Sample financial data
+  useEffect(() => {
+    const handleUpdate = (e: Event) => {
+      const customEvt = e as CustomEvent;
+      if (typeof customEvt.detail === "number") {
+        setCommissionRate(customEvt.detail);
+      } else {
+        setCommissionRate(getStoredCommissionRate());
+      }
+    };
+    window.addEventListener(COMMISSION_RATE_EVENT, handleUpdate);
+    return () => window.removeEventListener(COMMISSION_RATE_EVENT, handleUpdate);
+  }, []);
+
+  const totalRevenue = 154200000; // 154.2M VND
+  const platformCommission = Math.round((totalRevenue * commissionRate) / 100);
+  const expertPayouts = totalRevenue - platformCommission;
+
+  // Sample financial summary data
   const financialSummary = {
-    totalRevenue: 154200000, // 154.2M VND
-    platformCommission: 23130000, // 15% platform fee = 23.13M VND
-    expertPayouts: 131070000, // 131.07M VND
+    totalRevenue,
+    platformCommission,
+    expertPayouts,
     totalTransactions: 342,
     avgTransactionValue: 450877,
-    currentCommissionRate: 15,
+    currentCommissionRate: commissionRate,
   };
 
-  const monthlyChartData = [
-    { month: "Tháng 2", revenue: 18500000, commission: 2775000, consultations: 42 },
-    { month: "Tháng 3", revenue: 22400000, commission: 3360000, consultations: 51 },
-    { month: "Tháng 4", revenue: 26800000, commission: 4020000, consultations: 59 },
-    { month: "Tháng 5", revenue: 31200000, commission: 4680000, consultations: 68 },
-    { month: "Tháng 6", revenue: 38500000, commission: 5775000, consultations: 84 },
-    { month: "Tháng 7", revenue: 42100000, commission: 6315000, consultations: 92 },
-  ];
-
-  const transactions: Transaction[] = [
+  const rawTransactions: Transaction[] = [
     {
       id: "TXN-90812",
       expertName: "BS. Nguyễn Văn An",
       userName: "Trần Minh Khoa",
       serviceType: "Tư vấn tâm lý trực tuyến (60 phút)",
       amount: 500000,
-      commissionAmount: 75000,
-      netPayout: 425000,
       status: "completed",
       date: "2026-07-19 09:30",
     },
@@ -61,8 +67,6 @@ export default function AdminFinances({ onNavigate }: AdminFinancesProps) {
       userName: "Phạm Hồng Nhung",
       serviceType: "Liệu pháp quản lý căng thẳng",
       amount: 600000,
-      commissionAmount: 90000,
-      netPayout: 510000,
       status: "completed",
       date: "2026-07-18 16:45",
     },
@@ -72,8 +76,6 @@ export default function AdminFinances({ onNavigate }: AdminFinancesProps) {
       userName: "Vũ Tuấn Anh",
       serviceType: "Đánh giá rối loạn lo âu",
       amount: 800000,
-      commissionAmount: 120000,
-      netPayout: 680000,
       status: "completed",
       date: "2026-07-18 14:15",
     },
@@ -83,8 +85,6 @@ export default function AdminFinances({ onNavigate }: AdminFinancesProps) {
       userName: "Đỗ Gia Huy",
       serviceType: "Tư vấn giấc ngủ & thiền định",
       amount: 450000,
-      commissionAmount: 67500,
-      netPayout: 382500,
       status: "pending",
       date: "2026-07-18 10:20",
     },
@@ -94,8 +94,6 @@ export default function AdminFinances({ onNavigate }: AdminFinancesProps) {
       userName: "Bùi Khánh Linh",
       serviceType: "Tư vấn mối quan hệ & gia đình",
       amount: 700000,
-      commissionAmount: 105000,
-      netPayout: 595000,
       status: "completed",
       date: "2026-07-17 19:00",
     },
@@ -105,8 +103,6 @@ export default function AdminFinances({ onNavigate }: AdminFinancesProps) {
       userName: "Ngô Quốc Việt",
       serviceType: "Tư vấn tâm lý trực tuyến (60 phút)",
       amount: 500000,
-      commissionAmount: 75000,
-      netPayout: 425000,
       status: "refunded",
       date: "2026-07-17 11:10",
     },
@@ -116,7 +112,7 @@ export default function AdminFinances({ onNavigate }: AdminFinancesProps) {
     return new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(val);
   };
 
-  const filteredTransactions = transactions.filter((t) => {
+  const filteredTransactions = rawTransactions.filter((t) => {
     const matchesFilter = filterStatus === "all" || t.status === filterStatus;
     const matchesSearch =
       t.expertName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -124,8 +120,6 @@ export default function AdminFinances({ onNavigate }: AdminFinancesProps) {
       t.id.toLowerCase().includes(searchTerm.toLowerCase());
     return matchesFilter && matchesSearch;
   });
-
-  const maxRevenue = Math.max(...monthlyChartData.map((d) => d.revenue));
 
   return (
     <div className="admin-finances-container">
@@ -137,11 +131,12 @@ export default function AdminFinances({ onNavigate }: AdminFinancesProps) {
         </div>
         <div className="flex gap-2">
           <button
-            className="rm-btn rm-btn-outline"
+            className="rm-btn rm-btn-outline font-bold shadow-xs hover:border-teal-600 transition-all flex items-center gap-1.5"
             onClick={() => onNavigate("commission")}
             title="Điều chỉnh phí hoa hồng"
           >
-            <i className="bx bx-percentage"></i> Đổi phí hoa hồng ({financialSummary.currentCommissionRate}%)
+            <i className="bx bx-badge-percent text-teal-700 text-base"></i>
+            <span>Đổi phí hoa hồng ({commissionRate}%)</span>
           </button>
         </div>
       </div>
@@ -164,7 +159,7 @@ export default function AdminFinances({ onNavigate }: AdminFinancesProps) {
             <i className="bx bx-pie-chart-alt-2"></i>
           </div>
           <div className="admin-stat-details">
-            <span className="admin-stat-label">Phí Hoa Hồng Nền Tảng ({financialSummary.currentCommissionRate}%)</span>
+            <span className="admin-stat-label">Phí Hoa Hồng Nền Tảng ({commissionRate}%)</span>
             <span className="admin-stat-value">{formatVND(financialSummary.platformCommission)}</span>
             <span className="text-xs text-gray-500">Lợi nhuận ròng sàn</span>
           </div>
@@ -177,7 +172,7 @@ export default function AdminFinances({ onNavigate }: AdminFinancesProps) {
           <div className="admin-stat-details">
             <span className="admin-stat-label">Chi Trả Cho Chuyên Gia</span>
             <span className="admin-stat-value">{formatVND(financialSummary.expertPayouts)}</span>
-            <span className="text-xs text-blue-600 font-medium">85% tổng doanh thu</span>
+            <span className="text-xs text-blue-600 font-medium">{100 - commissionRate}% tổng doanh thu</span>
           </div>
         </div>
 
@@ -239,45 +234,49 @@ export default function AdminFinances({ onNavigate }: AdminFinancesProps) {
               <tr>
                 <th>Mã Giao Dịch</th>
                 <th>Chuyên Gia</th>
-                <th>Khách Hang</th>
+                <th>Khách Hàng</th>
                 <th>Dịch Vụ</th>
                 <th>Tổng Tiền</th>
-                <th>Phí Sàn (15%)</th>
+                <th>Phí Sàn ({commissionRate}%)</th>
                 <th>Thực Nhận CG</th>
                 <th>Trạng Thái</th>
                 <th>Thời Gian</th>
               </tr>
             </thead>
             <tbody>
-              {filteredTransactions.map((t) => (
-                <tr key={t.id}>
-                  <td className="font-mono text-xs font-bold text-teal-700">{t.id}</td>
-                  <td className="font-medium text-gray-900">{t.expertName}</td>
-                  <td className="text-gray-700">{t.userName}</td>
-                  <td className="text-xs text-gray-600">{t.serviceType}</td>
-                  <td className="font-bold text-gray-900">{formatVND(t.amount)}</td>
-                  <td className="text-amber-600 font-semibold">{formatVND(t.commissionAmount)}</td>
-                  <td className="text-teal-600 font-semibold">{formatVND(t.netPayout)}</td>
-                  <td>
-                    <span
-                      className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
-                        t.status === "completed"
-                          ? "bg-green-100 text-green-700"
+              {filteredTransactions.map((t) => {
+                const commissionVal = Math.round((t.amount * commissionRate) / 100);
+                const payoutVal = t.amount - commissionVal;
+                return (
+                  <tr key={t.id}>
+                    <td className="font-mono text-xs font-bold text-teal-700">{t.id}</td>
+                    <td className="font-medium text-gray-900">{t.expertName}</td>
+                    <td className="text-gray-700">{t.userName}</td>
+                    <td className="text-xs text-gray-600">{t.serviceType}</td>
+                    <td className="font-bold text-gray-900">{formatVND(t.amount)}</td>
+                    <td className="text-amber-600 font-semibold">{formatVND(commissionVal)}</td>
+                    <td className="text-teal-600 font-semibold">{formatVND(payoutVal)}</td>
+                    <td>
+                      <span
+                        className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
+                          t.status === "completed"
+                            ? "bg-green-100 text-green-700"
+                            : t.status === "pending"
+                            ? "bg-yellow-100 text-yellow-700"
+                            : "bg-red-100 text-red-700"
+                        }`}
+                      >
+                        {t.status === "completed"
+                          ? "Thành công"
                           : t.status === "pending"
-                          ? "bg-yellow-100 text-yellow-700"
-                          : "bg-red-100 text-red-700"
-                      }`}
-                    >
-                      {t.status === "completed"
-                        ? "Thành công"
-                        : t.status === "pending"
-                        ? "Đang chờ"
-                        : "Hoàn tiền"}
-                    </span>
-                  </td>
-                  <td className="text-xs text-gray-500">{t.date}</td>
-                </tr>
-              ))}
+                          ? "Đang chờ"
+                          : "Hoàn tiền"}
+                      </span>
+                    </td>
+                    <td className="text-xs text-gray-500">{t.date}</td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

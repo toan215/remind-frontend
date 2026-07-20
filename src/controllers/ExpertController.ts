@@ -26,11 +26,11 @@ export class ExpertController {
     return await apiHelper.post(API_ENDPOINTS.ADMIN.CREATE_EXPERT, data);
   }
 
-  static async updateExpert(id: number, data: Partial<ExpertFormData>): Promise<Expert> {
+  static async updateExpert(id: string | number, data: Partial<ExpertFormData>): Promise<Expert> {
     return await apiHelper.put(API_ENDPOINTS.ADMIN.UPDATE_EXPERT(id), data);
   }
 
-  static async deleteExpert(id: number): Promise<void> {
+  static async deleteExpert(id: string | number): Promise<void> {
     await apiHelper.delete(API_ENDPOINTS.ADMIN.DELETE_EXPERT(id));
   }
 
@@ -47,7 +47,7 @@ export class ExpertController {
     return data.experts || [];
   }
 
-  static async suspendExpert(id: number): Promise<void> {
+  static async suspendExpert(id: string | number): Promise<void> {
     await apiHelper.post(API_ENDPOINTS.ADMIN.SUSPEND_EXPERT(id), {});
   }
 

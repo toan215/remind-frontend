@@ -86,7 +86,7 @@ export const ADMIN_ROUTES: AdminRouteConfig[] = [
   {
     path: "commission",
     label: "Phí hoa hồng",
-    icon: "bx-percentage",
+    icon: "bx-badge-percent",
     component: AdminCommission,
   },
   {

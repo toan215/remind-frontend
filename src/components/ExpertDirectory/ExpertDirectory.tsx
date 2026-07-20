@@ -419,6 +419,12 @@ function ExpertDirectory({ onBack, userRole = "guest", onLoginRequired, onProcee
   };
 
   const selectedSlotObj = slots.find((s) => s._id === selectedSlotId);
+  const formatSlotRange = (s: ExpertSlot) => {
+    const start = new Date(s.startAt);
+    const end = new Date(s.endAt);
+    const t = (d: Date) => d.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
+    return `${t(start)} - ${t(end)}`;
+  };
   const formatSlotLabel = (s: ExpertSlot) => {
     const start = new Date(s.startAt);
     const end = new Date(s.endAt);
@@ -995,7 +1001,7 @@ function ExpertDirectory({ onBack, userRole = "guest", onLoginRequired, onProcee
                         className={`book-slot-btn ${selectedSlotId === slot._id ? "selected" : ""}`}
                         onClick={() => setSelectedSlotId(slot._id)}
                       >
-                        {formatSlotLabel(slot)}
+                        <span className="book-slot-time">{formatSlotRange(slot)}</span>
                         <span className="book-slot-price">{slot.price.toLocaleString("vi-VN")} VNĐ</span>
                       </button>
                     ))}
@@ -1006,25 +1012,19 @@ function ExpertDirectory({ onBack, userRole = "guest", onLoginRequired, onProcee
               </div>
 
               {selectedSlotObj ? (
-                <div className="book-cost-summary" style={{ marginTop: "16px", padding: "12px", background: "var(--brand-100)", borderRadius: "8px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <span style={{ fontWeight: 500, color: "var(--text-primary)" }}>Tổng chi phí:</span>
-                  <span style={{ fontSize: "18px", fontWeight: 700, color: "var(--brand-700)" }}>
-                    {selectedSlotObj.price.toLocaleString("vi-VN")} VNĐ
-                  </span>
+                <div className="book-cost-summary">
+                  <span className="book-cost-label">Tổng chi phí</span>
+                  <span className="book-cost-amount">{selectedSlotObj.price.toLocaleString("vi-VN")} VNĐ</span>
                 </div>
               ) : bookingExpert.cost > 0 ? (
-                <div className="book-cost-summary" style={{ marginTop: "16px", padding: "12px", background: "var(--brand-100)", borderRadius: "8px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <span style={{ fontWeight: 500, color: "var(--text-primary)" }}>Tổng chi phí:</span>
-                  <span style={{ fontSize: "18px", fontWeight: 700, color: "var(--brand-700)" }}>
-                    {bookingExpert.cost.toLocaleString("vi-VN")} VNĐ
-                  </span>
+                <div className="book-cost-summary">
+                  <span className="book-cost-label">Tổng chi phí</span>
+                  <span className="book-cost-amount">{bookingExpert.cost.toLocaleString("vi-VN")} VNĐ</span>
                 </div>
               ) : (
-                <div className="book-cost-summary" style={{ marginTop: "16px", padding: "12px", background: "var(--green-100)", borderRadius: "8px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <span style={{ fontWeight: 500, color: "var(--text-primary)" }}>Tổng chi phí:</span>
-                  <span style={{ fontSize: "18px", fontWeight: 700, color: "var(--green-700)" }}>
-                    Miễn phí
-                  </span>
+                <div className="book-cost-summary book-cost-summary--free">
+                  <span className="book-cost-label">Tổng chi phí</span>
+                  <span className="book-cost-amount">Miễn phí</span>
                 </div>
               )}
             </div>

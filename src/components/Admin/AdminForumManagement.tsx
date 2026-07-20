@@ -5,6 +5,7 @@ import { ForumController } from "../../controllers/ForumController";
 import { ForumPost, CreatePostData } from "../../models/ForumPost";
 import { AdminRoute } from "../../routes/adminRoutes";
 import "./Admin.css";
+import "./AdminForumManagement.css";
 
 interface ForumThread extends ForumPost {
   _id: string;
@@ -103,8 +104,8 @@ export const AdminForumManagement: React.FC<AdminForumManagementProps> = () => {
     setForm((prev) => ({ ...prev, tags: prev.tags.filter((x) => x !== t) }));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     const validation = ForumController.validate(form);
     setErrors(validation);
     if (Object.keys(validation).length > 0) return;
@@ -181,78 +182,122 @@ export const AdminForumManagement: React.FC<AdminForumManagementProps> = () => {
       month: "2-digit",
     });
 
-  if (loading) return <div className="admin-empty-state">Đang tải bài viết diễn đàn...</div>;
+  if (loading) {
+    return (
+      <div className="forum-mgmt">
+        <div className="fm-loading">
+          <span className="fm-spinner"></span>
+          Đang tải bài viết diễn đàn...
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="admin-dashboard-container">
-      <div className="admin-page-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 24 }}>
-        <div>
-          <h2 className="admin-page-title">Quản lý Diễn đàn</h2>
-          <p className="admin-page-subtitle">
-            Tạo và cập nhật chủ đề/câu hỏi trên diễn đàn cộng đồng (chỉ thêm &amp; sửa, không xóa).
-          </p>
+    <div className="forum-mgmt">
+      <div className="fm-header">
+        <div className="fm-header-title">
+          <div className="fm-header-icon">
+            <i className="bx bx-conversation"></i>
+          </div>
+          <div>
+            <h2 className="fm-title">Quản lý Diễn đàn</h2>
+            <p className="fm-subtitle">
+              Tạo và cập nhật chủ đề, câu hỏi trên diễn đàn cộng đồng. Chỉ hỗ trợ thêm &amp; sửa, không xóa.
+            </p>
+          </div>
         </div>
-        <button className="admin-btn admin-btn-primary" onClick={openCreate} style={{ flexShrink: 0 }}>
+        <button className="fm-btn fm-btn-primary" onClick={openCreate}>
           <i className="bx bx-plus"></i> Tạo bài viết
         </button>
       </div>
 
       {usingMock && (
-        <div className="admin-mock-banner">
+        <div className="fm-banner">
           <i className="bx bx-info-circle"></i>
-          Đang dùng dữ liệu mẫu (mock). Backend chưa có endpoint <code>POST /api/admin/forums</code> hoặc lỗi tải.
+          <span>
+            Đang dùng dữ liệu mẫu (mock). Backend chưa có endpoint <code>POST /api/admin/forums</code> hoặc đang gặp lỗi tải.
+          </span>
         </div>
       )}
 
-      <div className="admin-search-bar" style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
-        <i className="bx bx-search" style={{ fontSize: 18, color: "var(--ink-500)", flexShrink: 0 }}></i>
-        <input
-          className="admin-form-input"
-          placeholder="Tìm kiếm bài viết..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          style={{ flex: 1, marginBottom: 0 }}
-        />
+      <div className="fm-toolbar">
+        <div className="fm-search">
+          <i className="bx bx-search"></i>
+          <input
+            placeholder="Tìm kiếm theo tiêu đề hoặc nội dung..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+        <div className="fm-toolbar-meta">
+          <strong>{filtered.length}</strong> / {threads.length} bài viết
+        </div>
       </div>
 
-      <div className="admin-table-wrapper">
-        <table className="admin-table">
+      <div className="fm-table-wrap">
+        <table className="fm-table">
           <thead>
             <tr>
-              <th>Tiêu đề</th>
+              <th>Bài viết</th>
               <th>Thẻ</th>
               <th>Lượt thích</th>
               <th>Cập nhật</th>
-              <th>Hành động</th>
+              <th style={{ textAlign: "right" }}>Hành động</th>
             </tr>
           </thead>
           <tbody>
             {filtered.map((t) => (
               <tr key={t._id}>
                 <td>
-                  <div style={{ fontWeight: 600, fontSize: 13.5, color: "var(--ink-900)", maxWidth: 320, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.title}</div>
-                  <div style={{ fontSize: 12, color: "var(--ink-500)", maxWidth: 320, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.content}</div>
+                  <h4 className="fm-thread-title">{t.title}</h4>
+                  <p className="fm-thread-excerpt">{t.content}</p>
+                  <span className="fm-thread-author">
+                    {t.isAnonymous ? (
+                      <>
+                        <span className="fm-anon-dot"></span> Ẩn danh
+                      </>
+                    ) : (
+                      <>
+                        <span className="fm-anon-dot" style={{ background: "var(--brand-500)" }}></span>
+                        {t.author}
+                      </>
+                    )}
+                  </span>
                 </td>
                 <td>
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+                  <div className="fm-tags">
                     {t.tags.map((tag) => (
-                      <span key={tag} className="admin-tag-chip">{tag}</span>
+                      <span key={tag} className="fm-tag">{tag}</span>
                     ))}
                   </div>
                 </td>
-                <td style={{ fontWeight: 600, color: "var(--ink-700)" }}>{t.likes}</td>
-                <td style={{ fontSize: 12, color: "var(--ink-500)" }}>{formatTime(t.updatedAt)}</td>
                 <td>
-                  <button className="admin-action-btn-sm approve" onClick={() => openEdit(t)}>
-                    Sửa
-                  </button>
+                  <span className="fm-likes">
+                    <i className="bx bxs-heart"></i> {t.likes}
+                  </span>
+                </td>
+                <td>
+                  <span className="fm-date">{formatTime(t.updatedAt)}</span>
+                </td>
+                <td>
+                  <div className="fm-actions">
+                    <button className="fm-icon-btn" onClick={() => openEdit(t)} title="Chỉnh sửa">
+                      <i className="bx bx-pencil"></i>
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
             {filtered.length === 0 && (
               <tr>
-                <td colSpan={5} className="admin-empty-state">
-                  Không tìm thấy bài viết phù hợp.
+                <td colSpan={5}>
+                  <div className="fm-empty">
+                    <div className="fm-empty-icon">
+                      <i className="bx bx-search"></i>
+                    </div>
+                    <div className="fm-empty-text">Không tìm thấy bài viết phù hợp.</div>
+                  </div>
                 </td>
               </tr>
             )}
@@ -261,54 +306,49 @@ export const AdminForumManagement: React.FC<AdminForumManagementProps> = () => {
       </div>
 
       {modalOpen && (
-        <div className="admin-modal-overlay" onClick={() => !saving && setModalOpen(false)}>
-          <div className="admin-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="admin-modal-header">
+        <div className="fm-overlay" onClick={() => !saving && setModalOpen(false)}>
+          <div className="fm-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="fm-modal-head">
               <h3>
-                <span style={{
-                  width: 32, height: 32, borderRadius: 8, flexShrink: 0,
-                  background: "linear-gradient(135deg, var(--brand-100), var(--brand-050))",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  fontSize: 16, color: "var(--brand-700)",
-                }}>
+                <span className="fm-modal-badge">
                   <i className={`bx ${editing ? "bx-edit" : "bx-plus-circle"}`}></i>
                 </span>
                 {editing ? "Cập nhật bài viết" : "Tạo bài viết mới"}
               </h3>
-              <button className="admin-modal-close" onClick={() => setModalOpen(false)} disabled={saving}>
+              <button className="fm-modal-close" onClick={() => setModalOpen(false)} disabled={saving}>
                 <i className="bx bx-x"></i>
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="admin-modal-body">
-              <div className="admin-form-group">
+            <form onSubmit={handleSubmit} className="fm-modal-body">
+              <div className="fm-field">
                 <label>Tiêu đề</label>
                 <input
-                  className={`admin-form-input ${errors.title ? "error" : ""}`}
+                  className={`fm-input ${errors.title ? "error" : ""}`}
                   value={form.title}
                   onChange={(e) => setForm({ ...form, title: e.target.value })}
                   placeholder="Nhập tiêu đề..."
                 />
-                {errors.title && <span className="admin-form-error">{errors.title}</span>}
+                {errors.title && <span className="fm-error-text">{errors.title}</span>}
               </div>
 
-              <div className="admin-form-group">
+              <div className="fm-field">
                 <label>Nội dung</label>
                 <textarea
-                  className={`admin-form-input ${errors.content ? "error" : ""}`}
+                  className={`fm-textarea ${errors.content ? "error" : ""}`}
                   rows={5}
                   value={form.content}
                   onChange={(e) => setForm({ ...form, content: e.target.value })}
                   placeholder="Nhập nội dung..."
                 />
-                {errors.content && <span className="admin-form-error">{errors.content}</span>}
+                {errors.content && <span className="fm-error-text">{errors.content}</span>}
               </div>
 
-              <div className="admin-form-group">
+              <div className="fm-field">
                 <label>Thẻ (tags)</label>
-                <div className="flex gap-2">
+                <div className="fm-tag-editor">
                   <input
-                    className="admin-form-input"
+                    className="fm-input"
                     value={tagInput}
                     onChange={(e) => setTagInput(e.target.value)}
                     onKeyDown={(e) => {
@@ -316,13 +356,13 @@ export const AdminForumManagement: React.FC<AdminForumManagementProps> = () => {
                     }}
                     placeholder="Thêm thẻ rồi nhấn Enter"
                   />
-                  <button type="button" className="rm-btn rm-btn-outline" onClick={addTag}>
+                  <button type="button" className="fm-btn fm-btn-soft fm-tag-add" onClick={addTag}>
                     Thêm
                   </button>
                 </div>
-                <div className="flex flex-wrap gap-1 mt-2">
+                <div className="fm-tag-list">
                   {form.tags.map((tag) => (
-                    <span key={tag} className="admin-tag-chip">
+                    <span key={tag} className="fm-tag-pill">
                       {tag}
                       <button type="button" onClick={() => removeTag(tag)}>
                         <i className="bx bx-x"></i>
@@ -332,32 +372,35 @@ export const AdminForumManagement: React.FC<AdminForumManagementProps> = () => {
                 </div>
               </div>
 
-              <div className="admin-form-group" style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <label className="flex items-center gap-2 cursor-pointer" style={{ cursor: "pointer", userSelect: "none", textTransform: "none", letterSpacing: 0 }}>
+              <div className="fm-field">
+                <label className="fm-check">
                   <input
                     type="checkbox"
                     checked={form.isAnonymous}
                     onChange={(e) => setForm({ ...form, isAnonymous: e.target.checked })}
-                    style={{ width: 16, height: 16, accentColor: "var(--brand-600)", cursor: "pointer" }}
                   />
-                  <span style={{ fontSize: 13.5, fontWeight: 500, color: "var(--ink-700)" }}>Đăng ẩn danh</span>
+                  <span>Đăng ẩn danh</span>
                 </label>
               </div>
-
-              <div className="admin-modal-footer">
-                <button type="button" className="rm-btn rm-btn-outline" onClick={() => setModalOpen(false)} disabled={saving}>
-                  Hủy
-                </button>
-                <button type="submit" className="rm-btn rm-btn-primary" disabled={saving}>
-                  {saving ? "Đang lưu..." : editing ? "Cập nhật" : "Tạo mới"}
-                </button>
-              </div>
             </form>
+
+            <div className="fm-modal-foot">
+              <button type="button" className="fm-btn fm-btn-ghost" onClick={() => setModalOpen(false)} disabled={saving}>
+                Hủy
+              </button>
+              <button type="button" className="fm-btn fm-btn-primary" disabled={saving} onClick={() => handleSubmit()}>
+                {saving ? "Đang lưu..." : editing ? "Cập nhật" : "Tạo mới"}
+              </button>
+            </div>
           </div>
         </div>
       )}
 
-      {toast && <div className="admin-toast">{toast}</div>}
+      {toast && (
+        <div className="fm-toast">
+          <i className="bx bx-check-circle"></i> {toast}
+        </div>
+      )}
     </div>
   );
 };

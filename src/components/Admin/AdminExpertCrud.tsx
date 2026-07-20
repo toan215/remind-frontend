@@ -189,37 +189,75 @@ export function AdminExpertCrud() {
 
   return (
     <div className="admin-crud-container">
-      {/* ===== TOOLBAR ===== */}
-      <section className="admin-crud-toolbar">
-        <div className="admin-crud-toolbar-row1">
-          {/* Search bar */}
-          <div className="rm-input-wrapper admin-crud-search-box">
-            <i className="bx bx-search"></i>
+      {/* Header Banner */}
+      <div className="admin-dash-header-card mb-6">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <span className="admin-chip-badge teal">Vận hành & Danh bạ</span>
+              <span className="text-xs text-slate-400 font-medium">Tổng số {experts.length} chuyên gia</span>
+            </div>
+            <h2 className="text-2xl font-extrabold text-slate-900 tracking-tight">
+              Danh sách & Quản lý Chuyên gia
+            </h2>
+            <p className="text-sm text-slate-500 font-medium mt-1">
+              Tra cứu, điều chỉnh hồ sơ chuyên môn, cấp phép hoạt động và quản lý thông tin các chuyên gia tư vấn.
+            </p>
+          </div>
+          <button
+            className="rm-btn rm-btn-outline text-xs px-4 py-2.5 font-bold shadow-xs flex items-center gap-2"
+            onClick={loadExperts}
+          >
+            <i className="bx bx-refresh text-base"></i> Làm mới danh sách
+          </button>
+        </div>
+      </div>
+
+      {/* ===== TOOLBAR CARD ===== */}
+      <section className="admin-panel-card mb-6">
+        {/* Row 1: Search + Add Button */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
+          <div className="relative flex-1 max-w-lg">
+            <i className="bx bx-search absolute left-3.5 top-3 text-slate-400 text-lg pointer-events-none"></i>
             <input
               type="text"
-              className="rm-input-field"
-              placeholder="Tìm tên chuyên gia, chuyên môn..."
+              className="admin-form-input pl-10 text-xs font-medium"
+              placeholder="Tìm tên chuyên gia, chuyên môn hoặc từ khóa..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
+            {searchTerm && (
+              <button
+                type="button"
+                className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 text-base border-none bg-transparent cursor-pointer"
+                onClick={() => setSearchTerm("")}
+              >
+                <i className="bx bx-x"></i>
+              </button>
+            )}
           </div>
 
           <button
+            type="button"
             onClick={handleOpenAddModal}
-            className="rm-btn rm-btn-primary"
-            style={{ height: "40px" }}
+            className="rm-btn rm-btn-primary flex items-center justify-center gap-2 text-xs font-bold py-2.5 px-5 shadow-xs hover:shadow-md transition-all whitespace-nowrap"
           >
-            <i className="bx bx-plus"></i>
-            Thêm Chuyên gia
+            <i className="bx bx-plus text-base"></i>
+            <span>Thêm Chuyên gia mới</span>
           </button>
         </div>
 
-        {/* Filters bar */}
-        <div className="admin-crud-filters">
-          <div className="admin-filter-select-wrapper">
-            <span className="admin-filter-select-label">Chuyên môn:</span>
+        {/* Row 2: Inline Filter Chips */}
+        <div className="pt-3 flex flex-wrap items-center gap-3">
+          <span className="text-xs font-bold text-slate-500 flex items-center gap-1 mr-1">
+            <i className="bx bx-filter-alt text-teal-600"></i>
+            <span>Bộ lọc:</span>
+          </span>
+
+          <div className="flex items-center gap-2 bg-slate-50 border border-slate-200/80 px-3 py-1.5 rounded-xl">
+            <span className="text-xs font-bold text-slate-600 whitespace-nowrap">Chuyên môn:</span>
             <select
-              className="admin-filter-select"
+              className="bg-transparent text-xs font-semibold text-slate-800 outline-none cursor-pointer"
               value={filterSpecialty}
               onChange={(e) => setFilterSpecialty(e.target.value)}
             >
@@ -230,10 +268,10 @@ export function AdminExpertCrud() {
             </select>
           </div>
 
-          <div className="admin-filter-select-wrapper">
-            <span className="admin-filter-select-label">Lịch hẹn:</span>
+          <div className="flex items-center gap-2 bg-slate-50 border border-slate-200/80 px-3 py-1.5 rounded-xl">
+            <span className="text-xs font-bold text-slate-600 whitespace-nowrap">Lịch hẹn:</span>
             <select
-              className="admin-filter-select"
+              className="bg-transparent text-xs font-semibold text-slate-800 outline-none cursor-pointer"
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
             >
@@ -244,10 +282,10 @@ export function AdminExpertCrud() {
             </select>
           </div>
 
-          <div className="admin-filter-select-wrapper">
-            <span className="admin-filter-select-label">Phê duyệt:</span>
+          <div className="flex items-center gap-2 bg-slate-50 border border-slate-200/80 px-3 py-1.5 rounded-xl">
+            <span className="text-xs font-bold text-slate-600 whitespace-nowrap">Phê duyệt:</span>
             <select
-              className="admin-filter-select"
+              className="bg-transparent text-xs font-semibold text-slate-800 outline-none cursor-pointer"
               value={filterApproval}
               onChange={(e) => setFilterApproval(e.target.value)}
             >
@@ -257,6 +295,22 @@ export function AdminExpertCrud() {
               <option value="suspended">Bị đình chỉ</option>
             </select>
           </div>
+
+          {(filterSpecialty !== "all" || filterStatus !== "all" || filterApproval !== "all" || searchTerm) && (
+            <button
+              type="button"
+              className="text-xs font-bold text-rose-600 hover:text-rose-700 bg-rose-50 border border-rose-200 px-3 py-1.5 rounded-xl transition-all flex items-center gap-1 cursor-pointer"
+              onClick={() => {
+                setSearchTerm("");
+                setFilterSpecialty("all");
+                setFilterStatus("all");
+                setFilterApproval("all");
+              }}
+            >
+              <i className="bx bx-reset text-sm"></i>
+              <span>Đặt lại bộ lọc</span>
+            </button>
+          )}
         </div>
       </section>
 

@@ -184,42 +184,74 @@ export default function Payment({ onBack, onPaymentComplete, onOpenChat, booking
     return (
       <div className="payment-page">
         <div className="payment-container" style={{ maxWidth: "480px" }}>
-          <div className="payment-success-content">
-            <h2>Quét mã QR (Demo)</h2>
-            <p>{demoQr.note}</p>
+          <div className="payment-success-content payment-qr-container">
+            {/* Header & Security Badge */}
+            <div className="payment-qr-header-badge">
+              <span className="payment-qr-tag">VIETQR / PAYOS</span>
+              <span className="payment-qr-secure-text">
+                <i className="bx bx-shield-quarter"></i> Thanh toán an toàn
+              </span>
+            </div>
+
+            <h2 className="payment-qr-title">Quét mã QR để thanh toán</h2>
+            <p className="payment-qr-subtitle">
+              Sử dụng App Ngân hàng hoặc Ví điện tử (VNPay, MoMo, ZaloPay...) để quét mã
+            </p>
+
+            {/* QR Card Container */}
             <div className="payment-demo-qr">
-              {demoQr.qrCode && !qrImgError ? (
-                <img
-                  className="payment-demo-qr-img"
-                  src={`https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(demoQr.qrCode)}`}
-                  alt="PayOS QR"
-                  onError={() => setQrImgError(true)}
-                />
-              ) : (
-                <div className="payment-demo-qr-box"><i className="bx bx-qr-scan"></i></div>
-              )}
-              <div className="payment-demo-qr-info">
-                <div><strong>Mã đơn:</strong> {demoQr.orderCode}</div>
-                <div><strong>Số tiền:</strong> {demoQr.amount.toLocaleString('vi-VN')} VNĐ</div>
+              <div className="payment-qr-frame">
+                {demoQr.qrCode && !qrImgError ? (
+                  <img
+                    className="payment-demo-qr-img"
+                    src={`https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(demoQr.qrCode)}`}
+                    alt="VietQR PayOS"
+                    onError={() => setQrImgError(true)}
+                  />
+                ) : (
+                  <div className="payment-demo-qr-box">
+                    <i className="bx bx-qr-scan"></i>
+                  </div>
+                )}
+              </div>
+
+              {/* Order Info Breakdown */}
+              <div className="payment-qr-details-card">
+                <div className="payment-qr-row">
+                  <span className="payment-qr-label">Mã đơn hàng</span>
+                  <span className="payment-qr-value">{demoQr.orderCode}</span>
+                </div>
+                <div className="payment-qr-row highlight">
+                  <span className="payment-qr-label">Số tiền thanh toán</span>
+                  <span className="payment-qr-amount">{demoQr.amount.toLocaleString('vi-VN')} VNĐ</span>
+                </div>
               </div>
             </div>
-            <button
-              className="payment-submit-btn"
-              onClick={() => {
-                setDemoQr(null);
-                setIsSuccess(true);
-              }}
-            >
-              Tôi đã quét — Xác nhận thanh toán
-            </button>
-            {demoQr.checkoutUrl && (
-              <a className="payment-cancel-btn" href={demoQr.checkoutUrl} target="_blank" rel="noreferrer">
-                Mở trang thanh toán PayOS
-              </a>
-            )}
-            <button className="payment-cancel-btn" onClick={onBack}>
-              Quay lại
-            </button>
+
+            {/* Action Buttons (Retained for testing) */}
+            <div className="payment-qr-actions">
+              <button
+                className="payment-submit-btn payment-confirm-btn"
+                onClick={() => {
+                  setDemoQr(null);
+                  setIsSuccess(true);
+                }}
+              >
+                <i className="bx bx-check-circle text-lg"></i>
+                <span>Tôi đã quét — Xác nhận thanh toán</span>
+              </button>
+
+              {demoQr.checkoutUrl && (
+                <a className="payment-payos-link-btn" href={demoQr.checkoutUrl} target="_blank" rel="noreferrer">
+                  <i className="bx bx-link-external"></i>
+                  <span>Mở trang thanh toán PayOS</span>
+                </a>
+              )}
+
+              <button className="payment-cancel-btn w-full" onClick={onBack}>
+                Quay lại
+              </button>
+            </div>
           </div>
         </div>
       </div>

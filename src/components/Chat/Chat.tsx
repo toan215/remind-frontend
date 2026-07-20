@@ -323,7 +323,7 @@ function Chat({ onBack, initialAppointmentId }: ChatProps) {
         </div>
 
         <div className="chatbox-user-list">
-          {rooms.map((room) => {
+          {rooms.slice(0, 6).map((room) => {
             const partner = getRoomPartner(room);
             const name = partner ? partner.fullName : "Người dùng";
             const avatar = partner ? partner.avatarUrl : null;
@@ -340,9 +340,9 @@ function Chat({ onBack, initialAppointmentId }: ChatProps) {
               >
                 <div className="chatbox-avatar-wrapper">
                   {avatar ? (
-                    <img src={avatar} alt={name} className="chatbox-avatar-img" style={{ width: "40px", height: "40px", borderRadius: "50%", objectFit: "cover" }} />
+                    <img src={avatar} alt={name} className="chatbox-avatar-img" />
                   ) : (
-                    <span className="chatbox-avatar">{role === "expert" ? "👩‍⚕️" : "👤"}</span>
+                    <span className="chatbox-avatar">{name?.charAt(0)?.toUpperCase() || "?"}</span>
                   )}
                   {/* Trạng thái online mặc định giả định */}
                   <span className="chatbox-online-dot"></span>
@@ -357,7 +357,7 @@ function Chat({ onBack, initialAppointmentId }: ChatProps) {
                       )}
                     </div>
                   </div>
-                  <p className="chatbox-user-lastmsg">{lastMsgText}</p>
+                  <p className={`chatbox-user-lastmsg ${lastMsgText === "Chưa có tin nhắn" ? "empty" : ""}`}>{lastMsgText}</p>
                 </div>
               </div>
             );
@@ -383,9 +383,9 @@ function Chat({ onBack, initialAppointmentId }: ChatProps) {
                 </button>
                 <div className="chatbox-avatar-wrapper">
                   {activePartnerAvatar ? (
-                    <img src={activePartnerAvatar} alt={activePartnerName} className="chatbox-avatar-img" style={{ width: "40px", height: "40px", borderRadius: "50%", objectFit: "cover" }} />
+                    <img src={activePartnerAvatar} alt={activePartnerName} className="chatbox-avatar-img" />
                   ) : (
-                    <span className="chatbox-avatar">{activePartnerRole === "expert" ? "👩‍⚕️" : "👤"}</span>
+                    <span className="chatbox-avatar">{activePartnerName?.charAt(0)?.toUpperCase() || "?"}</span>
                   )}
                   <span className="chatbox-online-dot"></span>
                 </div>
@@ -422,14 +422,21 @@ function Chat({ onBack, initialAppointmentId }: ChatProps) {
               {messages.map((msg) => {
                 const senderIdStr = typeof msg.senderId === "object" ? msg.senderId?._id : msg.senderId;
                 const isMe = senderIdStr === currentUserId;
+                if (msg.type === "system" || msg.system) {
+                  return (
+                    <div key={msg._id} className="chatbox-system-msg">
+                      {msg.text}
+                    </div>
+                  );
+                }
                 return (
                   <div key={msg._id} className={`chatbox-msg-row ${isMe ? "msg-me" : "msg-them"}`}>
                     {!isMe && (
                       <span className="chatbox-msg-avatar">
                         {activePartnerAvatar ? (
-                          <img src={activePartnerAvatar} alt={activePartnerName} style={{ width: "32px", height: "32px", borderRadius: "50%", objectFit: "cover" }} />
+                          <img src={activePartnerAvatar} alt={activePartnerName} style={{ width: "30px", height: "30px", borderRadius: "10px", objectFit: "cover" }} />
                         ) : (
-                          activePartnerRole === "expert" ? "👩‍⚕️" : "👤"
+                          activePartnerName?.charAt(0)?.toUpperCase() || "?"
                         )}
                       </span>
                     )}
@@ -470,25 +477,21 @@ function Chat({ onBack, initialAppointmentId }: ChatProps) {
 
             {/* Chat Input */}
             <div className="chatbox-input-area">
-              <button className="chatbox-icon-btn" type="button" title="Đính kèm tệp">
-                <i className="bx bx-plus-circle"></i>
-              </button>
-              <button className="chatbox-icon-btn" type="button" title="Gửi ảnh">
-                <i className="bx bx-image-alt"></i>
-              </button>
               <form className="chatbox-input-form" onSubmit={handleSendMessage}>
+                {activePartnerAvatar ? (
+                  <img src={activePartnerAvatar} alt={activePartnerName} className="chatbox-partner-thumb" />
+                ) : (
+                  <span className="chatbox-partner-thumb">{activePartnerName?.charAt(0)?.toUpperCase() || "?"}</span>
+                )}
                 <input
                   type="text"
                   placeholder="Nhập tin nhắn..."
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
                 />
-                <button className="chatbox-icon-btn emoji-btn" type="button" title="Biểu tượng cảm xúc">
-                  <i className="bx bx-smile"></i>
-                </button>
                 <button
                   type="submit"
-                  className={`chatbox-send-btn ${inputValue.trim() ? "active" : ""}`}
+                  className="chatbox-send-btn"
                   disabled={!inputValue.trim()}
                 >
                   <i className="bx bxs-send"></i>
