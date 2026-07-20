@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { UserController, AdminUser } from "../../controllers/UserController";
 import { AdminRoute } from "../../routes/adminRoutes";
 import "./Admin.css";
@@ -50,62 +50,6 @@ const STATUS_CONFIG: Record<string, { label: string; className: string; style: R
   },
 };
 
-const DEFAULT_SAMPLE_USERS: AdminUser[] = [
-  {
-    _id: "USR-001",
-    id: "USR-001",
-    fullName: "Trần Minh Khoa",
-    email: "khoa.tran@gmail.com",
-    role: "student",
-    status: "active",
-    avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=80",
-  },
-  {
-    _id: "USR-002",
-    id: "USR-002",
-    fullName: "BS. Nguyễn Văn An",
-    email: "an.nguyen@remind.vn",
-    role: "expert",
-    status: "active",
-    avatar: "https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=100&auto=format&fit=crop&q=80",
-  },
-  {
-    _id: "USR-003",
-    id: "USR-003",
-    fullName: "ThS. Lê Thị Mai",
-    email: "mai.le@remind.vn",
-    role: "expert",
-    status: "pending", // CHỜ DUYỆT -> MÀU VÀNG
-    avatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=100&auto=format&fit=crop&q=80",
-  },
-  {
-    _id: "USR-004",
-    id: "USR-004",
-    fullName: "Phạm Hồng Nhung",
-    email: "nhung.pham@gmail.com",
-    role: "student",
-    status: "rejected", // BỊ TỪ CHỐI -> MÀU ĐỎ
-    avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80",
-  },
-  {
-    _id: "USR-005",
-    id: "USR-005",
-    fullName: "Hoàng Quốc Bảo",
-    email: "bao.hoang@remind.vn",
-    role: "admin",
-    status: "active",
-    avatar: "https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=100&auto=format&fit=crop&q=80",
-  },
-  {
-    _id: "USR-006",
-    id: "USR-006",
-    fullName: "Ngô Quốc Việt",
-    email: "viet.ngo@gmail.com",
-    role: "student",
-    status: "banned",
-    avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80",
-  },
-];
 
 interface AdminUserRolesProps {
   onNavigate?: (route: AdminRoute) => void;
@@ -131,14 +75,10 @@ export const AdminUserRoles: React.FC<AdminUserRolesProps> = () => {
     setError(null);
     try {
       const data = await UserController.listUsers();
-      if (data && data.length > 0) {
-        setUsers(data);
-      } else {
-        setUsers(DEFAULT_SAMPLE_USERS);
-      }
+      setUsers(data || []);
     } catch (err: any) {
-      console.warn("Backend listUsers unavailable, falling back to sample data:", err?.message);
-      setUsers(DEFAULT_SAMPLE_USERS);
+      console.error("listUsers error:", err?.message);
+      setError(err?.message || "Không thể tải danh sách người dùng. Hãy kiểm tra kết nối backend.");
     } finally {
       setLoading(false);
     }
@@ -147,6 +87,16 @@ export const AdminUserRoles: React.FC<AdminUserRolesProps> = () => {
   useEffect(() => {
     loadUsers();
   }, []);
+
+  // Stats tổng hợp từ dữ liệu thực
+  const stats = useMemo(() => ({
+    total: users.length,
+    student: users.filter((u) => u.role === "student").length,
+    expert: users.filter((u) => u.role === "expert").length,
+    admin: users.filter((u) => u.role === "admin" || u.role === "system_manager").length,
+    banned: users.filter((u) => u.status === "banned").length,
+    pending: users.filter((u) => u.status === "pending").length,
+  }), [users]);
 
   const handleToggleBan = async (user: AdminUser) => {
     setSavingId(user._id);
@@ -246,7 +196,6 @@ export const AdminUserRoles: React.FC<AdminUserRolesProps> = () => {
       </div>
     );
   }
-
   return (
     <div className="admin-user-roles-container">
       {/* Toast Alert */}
@@ -263,7 +212,7 @@ export const AdminUserRoles: React.FC<AdminUserRolesProps> = () => {
           <div>
             <div className="flex items-center gap-2 mb-1">
               <span className="admin-chip-badge teal">Hệ thống & Phân quyền</span>
-              <span className="text-xs text-slate-400 font-medium">Tổng cộng {users.length} tài khoản</span>
+              <span className="text-xs text-slate-400 font-medium">Tổng cộng {stats.total} tài khoản thực</span>
             </div>
             <h2 className="text-2xl font-extrabold text-slate-900 tracking-tight">
               Quản lý Người dùng & Phân quyền Vai trò
@@ -278,6 +227,26 @@ export const AdminUserRoles: React.FC<AdminUserRolesProps> = () => {
           >
             <i className="bx bx-refresh text-base text-teal-700"></i> Làm mới dữ liệu
           </button>
+        </div>
+
+        {/* Stats Bar — dữ liệu thực từ DB */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(110px, 1fr))", gap: "12px", marginTop: "20px" }}>
+          {[
+            { label: "Tổng cộng", value: stats.total, color: "#0f172a", bg: "#f1f5f9", icon: "bx-group" },
+            { label: "Người dùng", value: stats.student, color: "#475569", bg: "#e2e8f0", icon: "bx-user" },
+            { label: "Chuyên gia", value: stats.expert, color: "#0d9488", bg: "#ccfbf1", icon: "bx-briefcase" },
+            { label: "Quản trị", value: stats.admin, color: "#7c3aed", bg: "#ede9fe", icon: "bx-shield" },
+            { label: "Chờ duyệt", value: stats.pending, color: "#d97706", bg: "#fef3c7", icon: "bx-time" },
+            { label: "Đã khóa", value: stats.banned, color: "#dc2626", bg: "#fee2e2", icon: "bx-lock-alt" },
+          ].map((s) => (
+            <div key={s.label} style={{ background: s.bg, borderRadius: "12px", padding: "12px 14px", display: "flex", flexDirection: "column", gap: 4 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <i className={`bx ${s.icon}`} style={{ color: s.color, fontSize: 16 }}></i>
+                <span style={{ fontSize: 11, fontWeight: 700, color: s.color, textTransform: "uppercase", letterSpacing: "0.03em" }}>{s.label}</span>
+              </div>
+              <span style={{ fontSize: 22, fontWeight: 900, color: s.color, lineHeight: 1 }}>{s.value}</span>
+            </div>
+          ))}
         </div>
       </div>
 
